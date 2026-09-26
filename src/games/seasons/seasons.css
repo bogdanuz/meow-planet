@@ -1,0 +1,415 @@
+/* Времена года — P15: двор-площадка, погода слева, сезоны с подписью */
+
+.seasons-game {
+  flex: 1;
+  min-height: 0;
+  height: 100%;
+  display: grid;
+  grid-template-columns: minmax(4.5rem, 11vw) minmax(0, 1fr);
+  gap: clamp(0.35rem, 1vw, 0.65rem);
+  padding: 0;
+  overflow: hidden;
+}
+
+.seasons-game__panel-title {
+  margin: 0 0 0.25rem;
+  font-weight: 700;
+  font-size: clamp(0.78rem, 1.6vw, 0.95rem);
+  text-align: center;
+  opacity: 0.88;
+}
+
+.seasons-game__weather-panel {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  padding: 0.15rem 0.1rem;
+}
+
+.seasons-game__weather-col {
+  display: flex;
+  flex-direction: column;
+  gap: clamp(0.3rem, 0.8vh, 0.45rem);
+  flex: 1;
+  justify-content: center;
+}
+
+.seasons-game__weather-pick {
+  min-height: clamp(2.75rem, 7vh, 3.5rem);
+  padding: 0.35rem 0.25rem;
+  font-size: clamp(0.82rem, 1.7vw, 0.98rem);
+  font-weight: 700;
+  line-height: 1.15;
+  border-radius: 0.85rem;
+  background: rgb(255 255 255 / 90%);
+  box-shadow: 0 2px 8px rgb(26 42 51 / 10%);
+}
+
+.seasons-game__weather-pick.is-active {
+  outline: 3px solid var(--accent);
+  outline-offset: 2px;
+}
+
+.seasons-game__main {
+  display: grid;
+  grid-template-rows: auto minmax(0, 1fr);
+  gap: clamp(0.2rem, 0.5vh, 0.35rem);
+  min-height: 0;
+}
+
+.seasons-game__season-panel {
+  padding: 0 0.15rem;
+}
+
+.seasons-game__season-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: clamp(0.35rem, 0.9vw, 0.55rem);
+  justify-content: center;
+  align-items: stretch;
+}
+
+.seasons-game__season-pick {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.12rem;
+  min-width: clamp(3.5rem, 9vw, 4.75rem);
+  min-height: clamp(3.5rem, 9vh, 4.5rem);
+  padding: 0.2rem 0.35rem;
+  border-radius: 1rem;
+  background: rgb(255 255 255 / 88%);
+  box-shadow: 0 2px 10px rgb(26 42 51 / 10%);
+}
+
+.seasons-game__season-pick.is-active {
+  outline: 3px solid var(--accent);
+  outline-offset: 2px;
+  background: #fff;
+}
+
+.seasons-game__season-pick-icon {
+  font-size: clamp(1.45rem, 4vh, 2rem);
+  line-height: 1;
+}
+
+.seasons-game__season-pick-label {
+  font-size: clamp(0.72rem, 1.5vw, 0.88rem);
+  font-weight: 700;
+}
+
+.seasons-game__stage {
+  position: relative;
+  min-height: 0;
+  border-radius: 1.25rem;
+  overflow: hidden;
+  border: 2px solid color-mix(in srgb, var(--accent) 30%, #1a2a33);
+  transition: background 480ms ease;
+}
+
+.seasons-game__stage[data-season='winter'] {
+  background: linear-gradient(#9ec4e8 0 38%, #dce8f2 38% 62%, #c8d0d8 62% 100%);
+}
+
+.seasons-game__stage[data-season='spring'] {
+  background: linear-gradient(#87d4f0 0 40%, #b8e8a8 40% 100%);
+}
+
+.seasons-game__stage[data-season='summer'] {
+  background: linear-gradient(#ffe566 0 36%, #8fce6b 36% 100%);
+}
+
+.seasons-game__stage[data-season='autumn'] {
+  background: linear-gradient(#f0a050 0 40%, #c87840 40% 100%);
+}
+
+.seasons-game__playground {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+
+.seasons-game__building {
+  position: absolute;
+  top: 8%;
+  right: 6%;
+  width: clamp(5rem, 18vw, 9rem);
+  height: clamp(4.5rem, 16vh, 7rem);
+  background: linear-gradient(180deg, #c8d0d8 0%, #9aa8b8 100%);
+  border-radius: 0.35rem 0.35rem 0 0;
+  box-shadow: inset -0.5rem 0 0 rgb(0 0 0 / 8%);
+}
+
+.seasons-game__building::before {
+  content: '';
+  position: absolute;
+  inset: 12% 15% auto;
+  height: 18%;
+  background: repeating-linear-gradient(
+    90deg,
+    rgb(255 255 255 / 55%) 0 12px,
+    transparent 12px 20px
+  );
+}
+
+.seasons-game__swings {
+  position: absolute;
+  bottom: 28%;
+  left: 12%;
+  width: clamp(4rem, 14vw, 6.5rem);
+  height: clamp(3.5rem, 12vh, 5rem);
+  border-top: 4px solid #6a5038;
+  border-left: 4px solid #6a5038;
+  border-right: 4px solid #6a5038;
+  border-radius: 0.5rem 0.5rem 0 0;
+}
+
+.seasons-game__swings::after {
+  content: '';
+  position: absolute;
+  bottom: -35%;
+  left: 25%;
+  width: 28%;
+  height: 35%;
+  background: #e85a9a;
+  border-radius: 0.35rem;
+  box-shadow: 32px 0 0 #5a9ee8;
+}
+
+.seasons-game__sandbox {
+  position: absolute;
+  bottom: 8%;
+  left: 38%;
+  width: clamp(3.5rem, 12vw, 5.5rem);
+  height: clamp(1.5rem, 4vh, 2.25rem);
+  border-radius: 0.35rem;
+  background: #e8c878;
+  box-shadow: inset 0 4px 0 rgb(0 0 0 / 12%);
+  transition: transform 400ms ease;
+}
+
+.seasons-game__sandbox[data-mood='happy'] {
+  transform: scale(1.05);
+}
+
+.seasons-game__fx {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 350ms ease;
+}
+
+.seasons-game__fx[data-weather='rain'] {
+  opacity: 1;
+  background: repeating-linear-gradient(
+    105deg,
+    transparent 0 8px,
+    rgb(255 255 255 / 35%) 8px 10px
+  );
+  animation: seasons-rain 900ms linear infinite;
+}
+
+.seasons-game__fx[data-weather='snow'] {
+  opacity: 1;
+  background-image:
+    radial-gradient(circle, #fff 2px, transparent 2px),
+    radial-gradient(circle, #fff 1.5px, transparent 1.5px);
+  background-size:
+    48px 48px,
+    32px 32px;
+  animation: seasons-snow 4s linear infinite;
+}
+
+.seasons-game__fx[data-weather='wind'] {
+  opacity: 0.45;
+  background: linear-gradient(90deg, transparent, rgb(255 255 255 / 40%), transparent);
+  animation: seasons-wind 1.2s ease-in-out infinite;
+}
+
+.seasons-game__fx[data-weather='rainbow'] {
+  opacity: 0.55;
+  background: linear-gradient(
+    180deg,
+    transparent 55%,
+    rgb(255 0 0 / 25%) 58%,
+    rgb(255 165 0 / 25%) 62%,
+    rgb(255 255 0 / 22%) 66%,
+    rgb(0 128 0 / 22%) 70%,
+    rgb(0 0 255 / 22%) 74%,
+    rgb(75 0 130 / 22%) 78%,
+    transparent 82%
+  );
+}
+
+.seasons-game__leaves {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  opacity: 0.35;
+  background-image: radial-gradient(circle, #c87830 3px, transparent 3px);
+  background-size: 40px 48px;
+  animation: seasons-leaves 5s linear infinite;
+}
+
+.seasons-game__leaves[hidden] {
+  display: none;
+}
+
+.seasons-game__meow-btn {
+  position: absolute;
+  bottom: 10%;
+  right: 14%;
+  padding: 0;
+  border: none;
+  background: transparent;
+  z-index: 2;
+}
+
+.seasons-game__meow-wrap {
+  position: relative;
+}
+
+.seasons-game__meow-wrap .seasons-game__meow {
+  width: clamp(5rem, 16vh, 7.5rem);
+  height: clamp(5rem, 16vh, 7.5rem);
+}
+
+.seasons-game__meow-wrap[data-outfit='coat']::before {
+  content: '';
+  position: absolute;
+  inset: -0.35rem -0.5rem 0.5rem;
+  border-radius: 1.2rem 1.2rem 0.8rem 0.8rem;
+  background: rgb(120 160 210 / 55%);
+  z-index: -1;
+}
+
+.seasons-game__meow-wrap[data-outfit='rain']::before {
+  content: '';
+  position: absolute;
+  inset: -0.25rem -0.45rem 0.4rem;
+  border-radius: 1rem;
+  background: rgb(255 220 80 / 50%);
+  z-index: -1;
+}
+
+.seasons-game__meow-wrap[data-outfit='light']::after {
+  content: '';
+  position: absolute;
+  top: -0.15rem;
+  right: -0.2rem;
+  width: 1.4rem;
+  height: 1.4rem;
+  border-radius: 50%;
+  background: rgb(255 240 120 / 85%);
+  box-shadow: 0 0 0 3px rgb(255 200 80 / 40%);
+}
+
+.seasons-game__snowman {
+  position: absolute;
+  bottom: 12%;
+  left: 22%;
+  width: clamp(3rem, 10vw, 4.25rem);
+  height: clamp(5rem, 16vh, 6.5rem);
+  padding: 0;
+  border: none;
+  background: transparent;
+  z-index: 1;
+}
+
+.seasons-game__snowman::before,
+.seasons-game__snowman::after {
+  content: '';
+  position: absolute;
+  left: 50%;
+  transform: translateX(-50%);
+  border-radius: 50%;
+  background: #fff;
+  box-shadow: 0 2px 6px rgb(0 0 0 / 12%);
+}
+
+.seasons-game__snowman::before {
+  bottom: 0;
+  width: 85%;
+  height: 55%;
+}
+
+.seasons-game__snowman::after {
+  bottom: 48%;
+  width: 65%;
+  height: 38%;
+}
+
+.seasons-game__snowman-carrot {
+  position: absolute;
+  top: 38%;
+  left: 58%;
+  width: 1.1rem;
+  height: 0.35rem;
+  border-radius: 0.2rem;
+  background: #e87830;
+  transform: rotate(-15deg);
+  opacity: 0;
+  transition: opacity 280ms ease;
+}
+
+.seasons-game__snowman.has-carrot .seasons-game__snowman-carrot {
+  opacity: 1;
+}
+
+@keyframes seasons-rain {
+  from {
+    background-position: 0 0;
+  }
+
+  to {
+    background-position: 0 24px;
+  }
+}
+
+@keyframes seasons-snow {
+  from {
+    background-position:
+      0 0,
+      10px 10px;
+  }
+
+  to {
+    background-position:
+      0 48px,
+      10px 58px;
+  }
+}
+
+@keyframes seasons-wind {
+  0%,
+  100% {
+    transform: translateX(-8%);
+    opacity: 0.2;
+  }
+
+  50% {
+    transform: translateX(8%);
+    opacity: 0.5;
+  }
+}
+
+@keyframes seasons-leaves {
+  from {
+    background-position: 0 0;
+  }
+
+  to {
+    background-position: 20px 48px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .seasons-game__fx[data-weather='rain'],
+  .seasons-game__fx[data-weather='snow'],
+  .seasons-game__fx[data-weather='wind'],
+  .seasons-game__leaves {
+    animation: none;
+  }
+}

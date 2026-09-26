@@ -1,0 +1,16 @@
+---
+description: Границы игровых модулей и shared — без cross-import и лишних абстракций
+globs: src/games/**/*,src/shared/**/*,src/app/**/*
+alwaysApply: false
+---
+
+# Границы модулей игр
+
+См. `docs/architecture/ARCHITECTURE.md`.
+
+- Каждая игра — `src/games/<id>/` с контрактом `GameModule` из `src/shared/game-module.ts`.
+- Игра **не импортирует** другую игру.
+- `shared/` не знает о конкретной игре; `content/` — только данные, без DOM/логики игр.
+- Новая игра = новая папка + строка в `registry.ts`; оболочку не раздувать.
+- Не добавлять factories/adapters/extension points без второго реального потребителя и тестируемого контракта.
+- `unmount()` обязан снимать слушатели, таймеры, аудио, временное состояние.

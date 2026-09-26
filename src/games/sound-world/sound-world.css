@@ -1,0 +1,936 @@
+/* Изучаем звуки — рамка как у «Лопни шарик»: фон на весь экран, назад + звук */
+
+.app-shell--sound-world {
+  grid-template-rows: 1fr;
+  gap: 0;
+  height: 100dvh;
+  max-height: 100dvh;
+  overflow: hidden;
+  padding: 0;
+}
+
+.app-shell--sound-world .chrome__main {
+  min-height: 0;
+  height: 100%;
+}
+
+.app-shell--sound-world .screen--game {
+  height: 100%;
+  min-height: 100%;
+}
+
+.sound-world {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  min-height: 100%;
+  overflow: hidden;
+}
+
+.sound-world__bg {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  pointer-events: none;
+}
+
+.sound-world__game-bar {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.65rem;
+  padding:
+    max(0.85rem, env(safe-area-inset-top))
+    max(0.85rem, env(safe-area-inset-right))
+    0
+    max(0.85rem, env(safe-area-inset-left));
+  border: none;
+  background: none;
+  box-shadow: none;
+  z-index: 6;
+  pointer-events: none;
+}
+
+.sound-world__bar-start,
+.sound-world__bar-nav,
+.sound-world__pager,
+.sound-world__bar-end,
+.sound-world__main-tabs,
+.sound-world__letter-lang {
+  pointer-events: auto;
+}
+
+.sound-world__bar-start {
+  display: flex;
+  align-items: center;
+  gap: 0.7rem;
+  flex: 0 1 auto;
+  min-width: 0;
+}
+
+.sound-world__bar-nav {
+  display: flex;
+  gap: 0.55rem;
+  flex-shrink: 0;
+}
+
+.sound-world__bar-end {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 0.65rem;
+  min-width: 0;
+}
+
+.sound-world__bar-btn.touch-btn {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 4.5rem;
+  height: 4.5rem;
+  min-width: 4.5rem;
+  min-height: 4.5rem;
+  padding: 0;
+  border: none;
+  border-radius: 50%;
+  background: rgb(255 252 246 / 88%);
+  box-shadow:
+    0 0 0 3px rgb(126 184 218 / 55%),
+    0 6px 14px rgb(26 74 107 / 16%);
+}
+
+.sound-world__bar-btn .ui-icon {
+  display: block;
+  width: 2.85rem;
+  height: 2.85rem;
+  margin: 0;
+  object-fit: contain;
+}
+
+.sound-world__bar-btn[data-on='0'] .ui-icon {
+  filter: grayscale(0.9) opacity(0.72);
+}
+
+.sound-world__bar-btn[data-on='0']::after {
+  content: '';
+  position: absolute;
+  inset: 16%;
+  border-radius: 50%;
+  background: linear-gradient(
+    135deg,
+    transparent 44%,
+    rgb(106 118 130 / 62%) 48%,
+    rgb(106 118 130 / 62%) 52%,
+    transparent 56%
+  );
+  pointer-events: none;
+}
+
+.sound-world__main-tabs {
+  display: flex;
+  flex-wrap: nowrap;
+  gap: 0.55rem;
+  justify-content: flex-end;
+  align-items: center;
+  flex: 0 1 auto;
+  min-width: 0;
+}
+
+.sound-world__main-tab.touch-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  height: 4.5rem;
+  min-height: 4.5rem;
+  padding: 0 1.35rem;
+  font-size: 1.2rem;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  color: #1a2a33;
+  border: none;
+  border-radius: 999px;
+  background: rgb(255 252 246 / 88%);
+  box-shadow:
+    0 0 0 3px #7eb8da,
+    0 6px 14px rgb(26 74 107 / 14%);
+  touch-action: manipulation;
+}
+
+.sound-world__main-tab.is-active {
+  font-weight: 800;
+  background: rgb(255 252 246 / 98%);
+  box-shadow:
+    0 0 0 4px #4f9bc8,
+    0 8px 16px rgb(26 74 107 / 18%);
+}
+
+.sound-world__letter-lang {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+  flex-shrink: 0;
+  margin: 0;
+  padding: 0.28rem;
+  border-radius: 999px;
+  background: rgb(126 184 218 / 22%);
+  box-shadow: inset 0 0 0 2px rgb(79 155 200 / 35%);
+}
+
+.sound-world__letter-lang[hidden] {
+  display: none;
+}
+
+.sound-world__letter-lang-btn.touch-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  height: 3.9rem;
+  min-height: 3.9rem;
+  min-width: 3.9rem;
+  padding: 0 1.1rem;
+  border: none;
+  border-radius: 999px;
+  background: rgb(255 252 246 / 72%);
+  box-shadow:
+    0 0 0 3px rgb(126 184 218 / 40%),
+    0 6px 14px rgb(26 74 107 / 10%);
+  font-weight: 700;
+  font-size: 1.2rem;
+  color: #1a2a33;
+  touch-action: manipulation;
+}
+
+.sound-world__letter-lang-btn.is-active {
+  font-weight: 800;
+  background: rgb(255 252 246 / 98%);
+  box-shadow:
+    0 0 0 4px #4f9bc8,
+    0 8px 16px rgb(26 74 107 / 18%);
+}
+
+/* Зона сетки — вся оставшаяся высота экрана */
+.sound-world__stage {
+  position: relative;
+  z-index: 1;
+  flex: 1 1 0;
+  min-height: 0;
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  padding:
+    calc(6.2rem + max(0.35rem, env(safe-area-inset-top)))
+    1.15rem
+    max(1.1rem, env(safe-area-inset-bottom))
+    1.15rem;
+  box-sizing: border-box;
+}
+
+.sound-world__grid[hidden] {
+  display: none !important;
+}
+
+.sound-world__grid {
+  --gap: clamp(0.55rem, 1.4vmin, 0.85rem);
+  --cols: 6;
+  --rows: 3;
+  display: grid;
+  gap: var(--gap);
+  margin: 0;
+  padding: 0;
+  min-height: 0;
+  min-width: 0;
+  flex: 0 0 auto;
+  align-self: center;
+  aspect-ratio: calc(var(--cols) / var(--rows));
+  max-width: 100%;
+  max-height: 100%;
+}
+
+/* Объекты: упираемся в ширину (6×3 ≈ 2:1) */
+.sound-world__grid--objects {
+  width: 100%;
+  height: auto;
+}
+
+/* Алфавит: упираемся в высоту — крупные квадраты на весь экран */
+.sound-world__grid--alphabet {
+  height: 100%;
+  width: auto;
+  max-width: 100%;
+  --gap: clamp(0.4rem, 1.1vmin, 0.7rem);
+}
+
+.sound-world__grid--objects[data-count='18'] {
+  --cols: 6;
+  --rows: 3;
+}
+
+.sound-world__grid--objects[data-count='9'] {
+  --cols: 3;
+  --rows: 3;
+}
+
+.sound-world__grid--objects[data-count='6'] {
+  --cols: 3;
+  --rows: 2;
+  width: auto;
+  height: 100%;
+}
+
+.sound-world__grid--instruments {
+  display: flex !important;
+  flex-wrap: wrap;
+  justify-content: center;
+  align-content: center;
+  align-items: center;
+  gap: clamp(0.75rem, 2vmin, 1.25rem);
+  width: 100%;
+  height: 100%;
+  max-width: none;
+  aspect-ratio: auto;
+  grid-template-columns: none;
+  grid-template-rows: none;
+}
+
+.sound-world__grid--instruments::before {
+  content: '';
+  width: 100%;
+  height: 0;
+  order: 1;
+}
+
+.sound-world__grid--instruments .sound-world__card.touch-btn {
+  flex: 0 0 auto;
+  width: min(32vh, 24vw);
+  height: auto;
+  max-height: none;
+  aspect-ratio: 1 / 1;
+}
+
+.sound-world__grid--instruments .sound-world__card:nth-child(-n + 3) {
+  order: 0;
+}
+
+.sound-world__grid--instruments .sound-world__card:nth-child(n + 4) {
+  order: 2;
+  width: min(38vh, 28vw);
+}
+
+.sound-world__grid--objects[data-count='4'] {
+  --cols: 2;
+  --rows: 2;
+}
+
+.sound-world__grid--objects[data-count='3'] {
+  --cols: 3;
+  --rows: 1;
+}
+
+.sound-world__grid--objects[data-count='2'] {
+  --cols: 2;
+  --rows: 1;
+}
+
+.sound-world__grid--objects[data-count='1'] {
+  --cols: 1;
+  --rows: 1;
+}
+
+.sound-world__grid--objects,
+.sound-world__grid--alphabet {
+  grid-template-columns: repeat(var(--cols), 1fr);
+  grid-template-rows: repeat(var(--rows), 1fr);
+}
+
+.sound-world__pager {
+  position: relative;
+  z-index: 5;
+  display: flex;
+  gap: 0.2rem;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.sound-world__pager[hidden] {
+  display: none;
+}
+
+.sound-world__page-dot {
+  position: relative;
+  width: 2.75rem;
+  height: 2.75rem;
+  min-width: 56px;
+  min-height: 56px;
+  padding: 0;
+  border: none;
+  border-radius: 50%;
+  background: transparent;
+  box-shadow: none;
+}
+
+.sound-world__page-dot::after {
+  content: '';
+  position: absolute;
+  inset: 0.72rem;
+  border-radius: 50%;
+  background: rgb(255 252 246 / 78%);
+  box-shadow: 0 0 0 3px rgb(126 184 218 / 50%);
+}
+
+.sound-world__page-dot.is-active::after {
+  background: rgb(255 252 246 / 98%);
+  box-shadow: 0 0 0 4px #4f9bc8;
+}
+
+.sound-world--letters .sound-world__stage {
+  padding-top: calc(6.2rem + max(0.35rem, env(safe-area-inset-top)));
+}
+
+/* Карточка = квадрат 1:1 в ячейке */
+.sound-world__card.touch-btn {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  aspect-ratio: 1 / 1;
+  min-width: 56px;
+  min-height: 56px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0;
+  padding: clamp(0.12rem, 0.6vmin, 0.28rem);
+  border: none;
+  border-radius: clamp(0.85rem, 1.6vmin, 1.25rem);
+  background: rgb(255 252 246 / 38%);
+  box-shadow:
+    0 0 0 3px rgb(126 184 218 / 42%),
+    0 10px 18px rgb(26 74 107 / 12%),
+    inset 0 1px 0 rgb(255 255 255 / 55%);
+  backdrop-filter: blur(8px);
+  touch-action: manipulation;
+  transition: transform 0.12s ease;
+  overflow: visible;
+}
+
+.sound-world__card:active {
+  transform: scale(0.98);
+}
+
+.sound-world__card.is-playing {
+  outline: 3px solid var(--accent);
+  outline-offset: 2px;
+}
+
+.sound-world__art {
+  flex: 0 1 auto;
+  width: auto;
+  height: auto;
+  max-width: 96%;
+  max-height: 92%;
+  min-height: 0;
+  object-fit: contain;
+  pointer-events: none;
+  user-select: none;
+  filter: drop-shadow(0 12px 9px rgb(42 74 98 / 32%));
+}
+
+.sound-world__card--titled-art .sound-world__art {
+  max-width: 98%;
+  max-height: 96%;
+}
+
+.sound-world__art--letter {
+  max-width: 90%;
+  max-height: 90%;
+  filter: drop-shadow(0 6px 5px rgb(42 74 98 / 22%));
+}
+
+.sound-world__label {
+  position: absolute;
+  left: 50%;
+  bottom: 0.42rem;
+  transform: translateX(-50%);
+  z-index: 2;
+  margin: 0;
+  padding: 0.16rem 0.58rem;
+  flex: 0 0 auto;
+  font-size: clamp(0.84rem, 1.7vmin, 1.12rem);
+  font-weight: 800;
+  letter-spacing: 0.02em;
+  text-align: center;
+  line-height: 1.05;
+  color: #1a2a33;
+  max-width: calc(100% - 0.5rem);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  border-radius: 999px;
+  background: rgb(255 252 246 / 92%);
+  box-shadow:
+    0 0 0 2px rgb(126 184 218 / 55%),
+    0 4px 10px rgb(26 74 107 / 16%);
+  pointer-events: none;
+}
+
+.sound-world__card--letter {
+  padding: 0.15rem;
+  justify-content: center;
+  background: rgb(255 252 246 / 46%);
+}
+
+.sound-world__card--letter.is-playing {
+  transform: scale(1.04);
+  outline: 3px solid var(--accent);
+}
+
+.sound-world__card--no-sfx {
+  opacity: 0.78;
+}
+
+.sound-world__card--no-sfx.sound-world__card--letter {
+  filter: saturate(0.75);
+}
+
+.sound-world__card--tap-miss {
+  animation: sound-world-wiggle 0.35s ease;
+}
+
+@keyframes sound-world-wiggle {
+  0%,
+  100% {
+    transform: rotate(0deg);
+  }
+  25% {
+    transform: rotate(-2deg);
+  }
+  75% {
+    transform: rotate(2deg);
+  }
+}
+
+.sound-world--instrument-open .sound-world__main-tabs {
+  opacity: 0.92;
+}
+
+.sound-world--instrument-open .sound-world__stage {
+  padding-bottom: 0.35rem;
+  padding-inline: 0.55rem;
+}
+
+.sound-world__instrument {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0;
+  width: 100%;
+  height: 100%;
+  min-height: 0;
+  margin-inline: auto;
+  padding: 0.1rem 0.35rem 0.15rem;
+  box-sizing: border-box;
+}
+
+.sound-world__instrument .touch-btn {
+  box-sizing: border-box;
+  padding: 0;
+  border: none;
+}
+
+.sound-world__instrument-panel {
+  flex: 1 1 auto;
+  width: 100%;
+  max-width: min(100%, 62rem);
+  min-height: 0;
+  margin-inline: auto;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.sound-world--instrument-open[data-instrument-id='guitar'] .sound-world__stage {
+  padding-inline: 0 0.55rem;
+}
+
+.sound-world__instrument[data-instrument-id='guitar'] {
+  padding-inline: 0 0.15rem;
+}
+
+.sound-world__instrument-panel--guitar {
+  max-width: 100%;
+  height: 100%;
+  justify-content: flex-start;
+  width: 100%;
+}
+
+.sound-world__instrument-frame {
+  position: relative;
+  display: inline-block;
+  max-width: 100%;
+  max-height: 100%;
+  height: auto;
+}
+
+.sound-world__instrument-panel--guitar .sound-world__instrument-frame {
+  width: auto;
+  height: 100%;
+  max-height: 100%;
+  margin-right: auto;
+  margin-left: 0;
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+}
+
+.sound-world__instrument-art {
+  display: block;
+  width: auto;
+  height: auto;
+  max-width: 100%;
+  max-height: min(100%, 70vh);
+  object-fit: contain;
+  pointer-events: none;
+  user-select: none;
+  filter: drop-shadow(0 14px 10px rgb(42 74 98 / 38%));
+}
+
+.sound-world__instrument-art-box {
+  position: relative;
+  display: inline-block;
+  height: 100%;
+  max-width: 100%;
+}
+
+.sound-world__instrument-art-box .sound-world__instrument-art {
+  height: 100%;
+  width: auto;
+  max-width: 100%;
+  max-height: 100%;
+}
+
+.sound-world__instrument-panel--piano .sound-world__instrument-art {
+  max-height: min(100%, 72vh);
+}
+
+.sound-world__instrument-scene {
+  position: relative;
+  height: min(100%, 72vh);
+  max-width: 100%;
+  aspect-ratio: var(--scene-ar, 4 / 3);
+}
+
+.sound-world__layer-art {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  pointer-events: none;
+  user-select: none;
+  filter:
+    drop-shadow(0 22px 10px rgb(24 42 58 / 62%))
+    drop-shadow(0 8px 4px rgb(24 42 58 / 36%));
+}
+
+.sound-world__instrument-hits {
+  position: absolute;
+  inset: 0;
+}
+
+.sound-world__hit.touch-btn {
+  position: absolute;
+  min-width: 0;
+  min-height: 0;
+  background: transparent;
+  box-shadow: none;
+  border: none;
+  outline: none;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.sound-world__hit.touch-btn:focus-visible {
+  outline: 2px solid rgb(79 155 200 / 45%);
+  outline-offset: 2px;
+}
+
+.sound-world__drum-kit {
+  position: relative;
+  width: min(100%, 92vh);
+}
+
+.sound-world__drum-kit .sound-world__drum-pad.sound-world__hit {
+  position: absolute;
+  padding: 0;
+  overflow: visible;
+  background: transparent;
+}
+
+.sound-world__drum-kit .sound-world__layer-art {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  object-position: bottom center;
+}
+
+.sound-world__piano-scene {
+  position: relative;
+  height: min(100%, 72vh);
+  max-width: 100%;
+  aspect-ratio: var(--scene-ar, 2400 / 1792);
+}
+
+.sound-world__piano-body,
+.sound-world__piano-lid,
+.sound-world__piano-key-art {
+  position: absolute;
+  inset: 0;
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  pointer-events: none;
+}
+
+.sound-world__piano-body {
+  z-index: 1;
+  filter: drop-shadow(0 16px 10px rgb(24 42 58 / 42%));
+}
+
+.sound-world__piano-key-art {
+  z-index: 2;
+  transform-origin: 50% 34%;
+  transition:
+    transform 90ms cubic-bezier(0.22, 1.4, 0.36, 1),
+    filter 90ms ease-out;
+}
+
+.sound-world__piano-key-art.is-pressed {
+  transform: translateY(2.6%) scaleY(0.97);
+  filter: brightness(0.9);
+}
+
+.sound-world__piano-lid {
+  z-index: 3;
+}
+
+.sound-world__piano-key {
+  z-index: 4;
+  padding: 0;
+  overflow: visible;
+  background: transparent;
+}
+
+.sound-world__drum-pad.is-hit .sound-world__layer-art {
+  animation: sound-world-drum-bounce 0.48s ease-out;
+}
+
+.sound-world__drum-pad.is-hit::after {
+  content: '';
+  position: absolute;
+  inset: 16% 14% 20%;
+  border-radius: 50%;
+  pointer-events: none;
+  background: radial-gradient(circle, rgb(255 250 236 / 58%) 0%, transparent 72%);
+  animation: sound-world-drum-flash 0.42s ease-out;
+}
+
+.sound-world__piano-key.is-pressed {
+  background: transparent;
+  box-shadow: none;
+}
+
+.sound-world__guitar-string.is-plucked {
+  animation: sound-world-string-pluck 0.45s ease-out;
+  box-shadow:
+    0 0 0 2px rgb(255 214 120 / 55%),
+    0 0 14px rgb(255 200 90 / 35%);
+}
+
+.sound-world__instrument-scene--maracas {
+  perspective: 520px;
+}
+
+.sound-world__maraca .sound-world__layer-art {
+  transform-origin: 50% 90%;
+  animation: sound-world-maraca-breathe 2.8s ease-in-out infinite;
+  filter: drop-shadow(0 10px 6px rgb(24 42 58 / 26%));
+}
+
+.sound-world__maraca--right .sound-world__layer-art {
+  animation-delay: -1.35s;
+}
+
+.sound-world__maraca.is-shake .sound-world__layer-art {
+  animation: sound-world-maraca-z 0.7s ease-in-out;
+}
+
+.sound-world__instrument-frame--bell {
+  height: min(100%, 72vh);
+}
+
+.sound-world__instrument-frame--bell .sound-world__instrument-art {
+  height: 100%;
+  max-height: min(100%, 72vh);
+  transform-origin: 50% 7%;
+  filter: drop-shadow(0 18px 10px rgb(24 42 58 / 48%));
+}
+
+.sound-world__bell {
+  inset: 0;
+}
+
+.sound-world__sound-wave {
+  position: absolute;
+  z-index: 4;
+  width: 12px;
+  height: 12px;
+  margin: -6px 0 0 -6px;
+  border: 2px solid rgb(126 184 218 / 70%);
+  border-radius: 50%;
+  pointer-events: none;
+  animation: sound-world-wave-out 0.68s ease-out forwards;
+}
+
+@keyframes sound-world-wave-out {
+  0% {
+    opacity: 0.85;
+    transform: scale(0.35);
+  }
+  100% {
+    opacity: 0;
+    transform: scale(3.2);
+  }
+}
+
+@keyframes sound-world-drum-bounce {
+  0% {
+    transform: scale(1) rotate(0deg);
+  }
+  28% {
+    transform: scale(0.92, 0.96) rotate(-1.4deg);
+  }
+  58% {
+    transform: scale(1.05, 1.03) rotate(0.9deg);
+  }
+  100% {
+    transform: scale(1) rotate(0deg);
+  }
+}
+
+@keyframes sound-world-drum-flash {
+  0% {
+    opacity: 0.9;
+    transform: scale(0.7);
+  }
+  100% {
+    opacity: 0;
+    transform: scale(1.25);
+  }
+}
+
+@keyframes sound-world-key-press {
+  0% {
+    transform: translateY(0);
+  }
+  40% {
+    transform: translateY(3px);
+  }
+  100% {
+    transform: translateY(0);
+  }
+}
+
+@keyframes sound-world-string-pluck {
+  0%,
+  100% {
+    transform: scaleY(1);
+  }
+  25% {
+    transform: scaleY(1.35);
+  }
+  55% {
+    transform: scaleY(0.85);
+  }
+}
+
+@keyframes sound-world-maraca-breathe {
+  0%,
+  100% {
+    transform: rotateX(5deg) scaleY(1);
+  }
+  50% {
+    transform: rotateX(-6deg) scaleY(0.96);
+  }
+}
+
+@keyframes sound-world-maraca-z {
+  0%,
+  100% {
+    transform: rotateX(0deg) scaleY(1);
+  }
+  18%,
+  55% {
+    transform: rotateX(28deg) scaleY(0.88);
+  }
+  36%,
+  74% {
+    transform: rotateX(-24deg) scaleY(1.05);
+  }
+}
+
+.sound-world__instrument-panel--xylophone {
+  gap: clamp(0.2rem, 0.8vw, 0.45rem);
+  align-items: flex-end;
+  padding-bottom: 0.5rem;
+}
+
+.sound-world__xylo-bar {
+  width: clamp(2rem, 5vw, 2.75rem);
+  min-height: calc(clamp(3rem, 12vh, 4.5rem) + var(--bar-i, 0) * 0.35rem);
+  border-radius: 0.25rem;
+  background: hsl(calc(200 + var(--bar-i, 0) * 18), 70%, 55%);
+}
+
+.sound-world__xylo-bar.is-struck {
+  transform: translateY(3px);
+}
+
+@media (max-width: 1100px) {
+  .sound-world__main-tab.touch-btn {
+    padding: 0 0.95rem;
+    font-size: 1.1rem;
+  }
+
+  .sound-world__letter-lang-btn.touch-btn {
+    padding: 0 0.85rem;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .sound-world__card.touch-btn,
+  .sound-world__card:active,
+  .sound-world__card--letter.is-playing,
+  .sound-world__card--tap-miss,
+  .sound-world__drum-pad.is-hit .sound-world__layer-art,
+  .sound-world__maraca .sound-world__layer-art,
+  .sound-world__piano-key-art.is-pressed,
+  .sound-world__guitar-string.is-plucked,
+  .sound-world__maraca.is-shake,
+  .sound-world__xylo-bar.is-struck {
+    animation: none;
+    transition: none;
+    transform: none;
+  }
+}

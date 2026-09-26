@@ -1,0 +1,1852 @@
+/* Оболочка: chrome + touch-targets ≥ 56px (дети 2–3) + меню плиток */
+
+.app-shell {
+  min-height: 100dvh;
+  display: grid;
+  grid-template-rows: auto auto 1fr;
+  gap: 0.75rem;
+  padding: max(0.75rem, env(safe-area-inset-top))
+    max(1rem, env(safe-area-inset-right))
+    max(1rem, env(safe-area-inset-bottom))
+    max(1rem, env(safe-area-inset-left));
+}
+
+.app-shell--welcome {
+  grid-template-rows: 1fr;
+  padding: 0;
+}
+
+.app-shell--welcome .chrome,
+.app-shell--welcome .chrome__mascot {
+  display: none !important;
+}
+
+.app-shell--menu {
+  position: relative;
+  grid-template-rows: 1fr;
+  height: 100dvh;
+  max-height: 100dvh;
+  overflow: hidden;
+  padding: 0;
+}
+
+.app-shell--menu .chrome,
+.app-shell--menu .chrome__mascot {
+  display: none !important;
+}
+
+.app-shell--menu .chrome__main {
+  min-height: 0;
+  height: 100%;
+  overflow: hidden;
+}
+
+.chrome {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.chrome__nav {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.chrome__game-actions {
+  display: flex;
+  gap: 0.5rem;
+  margin-left: auto;
+  flex: 0 0 auto;
+}
+
+.chrome__title {
+  margin: 0;
+  flex: 1 1 12rem;
+  font-size: clamp(1.35rem, 4vw, 2rem);
+  letter-spacing: 0.02em;
+  text-align: center;
+}
+
+.chrome__mascot {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.25rem 0.5rem;
+}
+
+.chrome__task-cue {
+  flex: 0 0 auto;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 3.5rem;
+  min-height: 3.5rem;
+}
+
+.chrome__task-cue-inner {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.chrome__task-swatch {
+  display: block;
+  width: 2.75rem;
+  height: 2.75rem;
+  border-radius: 50%;
+  border: 3px solid #fff;
+  box-shadow: 0 2px 8px rgb(0 0 0 / 18%);
+}
+
+.chrome__task-size {
+  display: block;
+  border-radius: 50% 50% 45% 45%;
+  border: 3px solid #fff;
+  box-shadow: 0 2px 8px rgb(0 0 0 / 18%);
+  background: linear-gradient(180deg, #ff8a80, #e53935);
+}
+
+.chrome__task-size--lg {
+  width: 3rem;
+  height: 3.75rem;
+}
+
+.chrome__task-size--sm {
+  width: 2rem;
+  height: 2.5rem;
+}
+
+.chrome__task-target {
+  width: clamp(2.75rem, 6vh, 3.5rem);
+  height: clamp(2.75rem, 6vh, 3.5rem);
+  display: block;
+}
+
+.chrome__hint {
+  margin: 0;
+  flex: 1;
+  line-height: 1.35;
+  opacity: 0.85;
+  font-size: 1rem;
+}
+
+.chrome__main {
+  min-height: 0;
+}
+
+/* «Изучаем звуки» — без app chrome, как «Лопни шарик» */
+.app-shell--sound-world .chrome__mascot {
+  display: none !important;
+}
+
+.app-shell--sound-world .chrome[hidden] {
+  display: none !important;
+  pointer-events: none !important;
+}
+
+.app-shell--sound-world .chrome__main,
+.app-shell--sort-colors .chrome__main {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  overflow: hidden;
+}
+
+.app-shell--sort-colors .screen--game {
+  min-height: 0;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+/* «Куда положить?» — без Мяu сверхu, только строка тостов (chrome__hint) */
+.app-shell--sort-colors .chrome__mascot .mascot-ph,
+.app-shell--sort-colors .chrome__task-cue {
+  display: none !important;
+}
+
+.app-shell--sort-colors .chrome__mascot {
+  justify-content: center;
+  padding: 0.15rem 0.5rem 0.25rem;
+}
+
+.app-shell--sort-colors .chrome__hint {
+  flex: 1 1 auto;
+  text-align: center;
+  font-size: clamp(0.95rem, 2.2vh, 1.1rem);
+  font-weight: 600;
+}
+
+.app-shell--sort-colors {
+  grid-template-rows: auto auto 1fr;
+  gap: 0.25rem;
+}
+
+.app-shell--sort-colors .chrome {
+  padding-bottom: 0.1rem;
+}
+
+.app-shell--sort-colors .chrome__main {
+  height: 100%;
+  padding-top: 0.1rem;
+}
+
+/* «Прятки» — компактный chrome; задание в игре (mission), не task-cue */
+.app-shell--hide-seek {
+  grid-template-rows: auto auto minmax(0, 1fr);
+  gap: 0.08rem;
+  height: 100dvh;
+  max-height: 100dvh;
+  overflow: hidden;
+  padding: max(0.35rem, env(safe-area-inset-top))
+    max(0.5rem, env(safe-area-inset-right))
+    max(0.35rem, env(safe-area-inset-bottom))
+    max(0.5rem, env(safe-area-inset-left));
+}
+
+.app-shell--hide-seek .chrome {
+  gap: 0.35rem;
+  padding-bottom: 0;
+}
+
+.app-shell--hide-seek .chrome__nav {
+  gap: 0.35rem;
+}
+
+.app-shell--hide-seek .chrome__nav .touch-btn {
+  min-width: 52px;
+  min-height: 52px;
+  padding: 0.35rem;
+}
+
+.app-shell--hide-seek .chrome__title {
+  font-size: clamp(1rem, 2.4vw, 1.35rem);
+  flex: 1 1 auto;
+  text-align: left;
+}
+
+.app-shell--hide-seek .chrome__scene-label {
+  margin-left: auto;
+  font-size: clamp(0.95rem, 2.2vw, 1.2rem);
+  font-weight: 700;
+  opacity: 0.95;
+  padding-right: 0.15rem;
+}
+
+.app-shell--hide-seek .chrome__mascot .mascot-ph,
+.app-shell--hide-seek .chrome__task-cue {
+  display: none !important;
+}
+
+.app-shell--hide-seek .chrome__mascot {
+  justify-content: center;
+  padding: 0.05rem 0.35rem 0.08rem;
+  min-height: 0;
+}
+
+.app-shell--hide-seek .chrome__hint {
+  flex: 1 1 auto;
+  text-align: center;
+  font-weight: 600;
+  font-size: clamp(0.88rem, 2vh, 1.02rem);
+  line-height: 1.25;
+  opacity: 0.92;
+}
+
+.app-shell--hide-seek .chrome__main,
+.app-shell--hide-seek .screen--game {
+  min-height: 0;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.app-shell--hide-seek .chrome__main {
+  height: 100%;
+}
+
+/* «Времена года» — компактный chrome, тост без Мяu */
+.app-shell--seasons {
+  grid-template-rows: auto auto minmax(0, 1fr);
+  gap: 0.12rem;
+  height: 100dvh;
+  max-height: 100dvh;
+  overflow: hidden;
+}
+
+.app-shell--seasons .chrome__mascot .mascot-ph,
+.app-shell--seasons .chrome__task-cue {
+  display: none !important;
+}
+
+.app-shell--seasons .chrome__mascot {
+  justify-content: center;
+  padding: 0.08rem 0.45rem 0.12rem;
+  min-height: 0;
+}
+
+.app-shell--seasons .chrome__hint {
+  flex: 1 1 auto;
+  text-align: center;
+  font-weight: 600;
+  font-size: clamp(0.88rem, 2vh, 1.05rem);
+}
+
+.app-shell--seasons .chrome__main,
+.app-shell--seasons .screen--game {
+  min-height: 0;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.app-shell--seasons .chrome__main {
+  height: 100%;
+}
+
+/* «В гостях у Мяu» */
+.app-shell--meow-home {
+  grid-template-rows: auto auto minmax(0, 1fr);
+  gap: 0.12rem;
+  height: 100dvh;
+  max-height: 100dvh;
+  overflow: hidden;
+}
+
+.app-shell--meow-home .chrome__mascot .mascot-ph,
+.app-shell--meow-home .chrome__task-cue {
+  display: none !important;
+}
+
+.app-shell--meow-home .chrome__mascot {
+  justify-content: center;
+  padding: 0.08rem 0.45rem 0.12rem;
+  min-height: 0;
+}
+
+.app-shell--meow-home .chrome__hint {
+  flex: 1 1 auto;
+  text-align: center;
+  font-weight: 600;
+  font-size: clamp(0.88rem, 2vh, 1.05rem);
+}
+
+.app-shell--meow-home .chrome__main,
+.app-shell--meow-home .screen--game {
+  min-height: 0;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.app-shell--meow-home .chrome__main {
+  height: 100%;
+}
+
+/* «Считаем с Мяu» */
+.app-shell--counting {
+  grid-template-rows: auto auto minmax(0, 1fr);
+  gap: 0.12rem;
+  height: 100dvh;
+  max-height: 100dvh;
+  overflow: hidden;
+}
+
+.app-shell--counting .chrome__mascot .mascot-ph,
+.app-shell--counting .chrome__task-cue {
+  display: none !important;
+}
+
+.app-shell--counting .chrome__mascot {
+  justify-content: center;
+  padding: 0.08rem 0.45rem 0.12rem;
+  min-height: 0;
+}
+
+.app-shell--counting .chrome__hint {
+  flex: 1 1 auto;
+  text-align: center;
+  font-weight: 600;
+  font-size: clamp(0.88rem, 2vh, 1.05rem);
+}
+
+.app-shell--counting .chrome__main,
+.app-shell--counting .screen--game {
+  min-height: 0;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.app-shell--counting .chrome__main {
+  height: 100%;
+}
+
+/* «Собери фигurку» — без Мяu, тост */
+.app-shell--shape-build .chrome__mascot .mascot-ph,
+.app-shell--shape-build .chrome__task-cue {
+  display: none !important;
+}
+
+.app-shell--shape-build .chrome__mascot {
+  justify-content: center;
+  padding: 0.1rem 0.5rem 0.2rem;
+}
+
+.app-shell--shape-build .chrome__hint {
+  flex: 1 1 auto;
+  text-align: center;
+  font-weight: 600;
+}
+
+.app-shell--shape-build {
+  grid-template-rows: auto auto minmax(0, 1fr);
+  gap: 0.15rem;
+  height: 100dvh;
+  max-height: 100dvh;
+  overflow: hidden;
+}
+
+.app-shell--shape-build .chrome__main,
+.app-shell--shape-build .screen--game {
+  min-height: 0;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.app-shell--shape-build .chrome__main {
+  height: 100%;
+}
+
+/* «Собери пазл» — без Мяu, тост-подсказки */
+.app-shell--puzzle .chrome__mascot .mascot-ph,
+.app-shell--puzzle .chrome__task-cue {
+  display: none !important;
+}
+
+.app-shell--puzzle .chrome__mascot {
+  justify-content: center;
+  padding: 0.05rem 0.5rem 0.1rem;
+  min-height: 0;
+}
+
+.app-shell--puzzle .chrome__hint {
+  flex: 1 1 auto;
+  text-align: center;
+  font-weight: 600;
+}
+
+.app-shell--puzzle {
+  grid-template-rows: auto auto minmax(0, 1fr);
+  gap: 0.15rem;
+  height: 100dvh;
+  max-height: 100dvh;
+  overflow: hidden;
+}
+
+.app-shell--puzzle .chrome {
+  flex-wrap: nowrap;
+  align-items: center;
+}
+
+.app-shell--puzzle .chrome__title {
+  flex: 1 1 auto;
+  min-width: 0;
+  text-align: center;
+  font-size: clamp(1.05rem, 2.8vw, 1.55rem);
+}
+
+.app-shell--puzzle .chrome__main,
+.app-shell--puzzle .screen--game {
+  min-height: 0;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.app-shell--puzzle .chrome__main {
+  height: 100%;
+}
+
+.touch-btn {
+  min-width: 56px;
+  min-height: 56px;
+  padding: 0.65rem 1rem;
+  border: 2px solid color-mix(in srgb, var(--accent) 55%, #1a2a33);
+  border-radius: 1rem;
+  background: #fff;
+  color: var(--text);
+  font: inherit;
+  font-size: 1.05rem;
+  cursor: pointer;
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+  transition:
+    transform 160ms ease,
+    background-color 160ms ease,
+    border-color 160ms ease,
+    box-shadow 160ms ease;
+}
+
+.touch-btn:focus-visible {
+  outline: 3px solid var(--accent);
+  outline-offset: 2px;
+}
+
+.touch-btn:hover {
+  border-color: color-mix(in srgb, var(--accent) 80%, #1a2a33);
+  box-shadow: 0 2px 0 color-mix(in srgb, var(--accent) 35%, transparent);
+}
+
+.touch-btn:active {
+  transform: scale(0.97);
+  box-shadow: none;
+}
+
+.ui-icon {
+  display: block;
+  width: 1.65rem;
+  height: 1.65rem;
+  object-fit: contain;
+  pointer-events: none;
+}
+
+.welcome__dock-btn .ui-icon,
+.menu-sound .ui-icon,
+.menu-settings .ui-icon,
+.menu-back .ui-icon {
+  width: 3.2rem;
+  height: 3.2rem;
+}
+
+.touch-btn--icon {
+  width: 56px;
+  min-height: 56px;
+  padding: 0;
+  font-size: 1.35rem;
+  line-height: 1;
+}
+
+.touch-btn--quiet {
+  background: transparent;
+  border-style: dashed;
+  opacity: 0.85;
+}
+
+.screen {
+  display: grid;
+  gap: 1rem;
+  justify-items: stretch;
+  padding: 0.25rem 0 1rem;
+}
+
+.screen--game {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  height: 100%;
+  min-height: 0;
+  padding: 0;
+}
+
+.screen--game .balloon-pop {
+  flex: 1;
+  min-height: 0;
+}
+
+.screen__lead {
+  margin: 0;
+  font-size: clamp(1.2rem, 3.5vw, 1.6rem);
+  text-align: center;
+}
+
+.screen__lead--adult {
+  font-size: 1rem;
+  font-weight: 500;
+  opacity: 0.7;
+}
+
+.screen__hint {
+  margin: 0;
+  text-align: center;
+  opacity: 0.75;
+  line-height: 1.4;
+}
+
+/* —— Welcome: бренд-герой + один крупный Play (skill ux-ui-kids-hub) —— */
+
+.screen--welcome {
+  position: relative;
+  display: grid;
+  place-items: center;
+  height: 100dvh;
+  max-height: 100dvh;
+  margin: 0;
+  padding: max(0.75rem, env(safe-area-inset-top)) 1.5rem
+    max(1rem, env(safe-area-inset-bottom));
+  overflow: hidden;
+  background: #b7dd8a;
+  transition:
+    opacity 380ms ease,
+    transform 420ms cubic-bezier(0.34, 1.4, 0.64, 1);
+}
+
+.screen--welcome-leave {
+  opacity: 0;
+  transform: scale(1.05) translateY(-10px);
+  pointer-events: none;
+}
+
+.welcome__atmosphere {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  overflow: hidden;
+}
+
+.welcome__bg {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: center center;
+}
+
+.welcome__bg--drift {
+  left: -4%;
+  top: -3%;
+  width: 108%;
+  height: 108%;
+  animation: welcome-parallax 22s ease-in-out infinite alternate;
+}
+
+@keyframes welcome-parallax {
+  from {
+    transform: translate3d(0, 0, 0);
+  }
+  to {
+    transform: translate3d(-3.5%, -2%, 0);
+  }
+}
+
+.welcome__stage {
+  position: relative;
+  z-index: 2;
+  display: grid;
+  grid-template-columns: auto;
+  grid-template-areas:
+    'title'
+    'meow';
+  justify-content: center;
+  justify-items: center;
+  align-items: end;
+  row-gap: clamp(0.45rem, 1.6vh, 1rem);
+  width: min(96vw, 68rem);
+  margin: 0 auto 5vh;
+  overflow: visible;
+  text-align: center;
+}
+
+.welcome__greet {
+  margin: 0;
+  font-family: var(--font-display);
+  font-size: clamp(1.05rem, 2.6vw, 1.45rem);
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: #3d7aa8;
+  opacity: 0.9;
+}
+
+.welcome__title-wrap {
+  grid-area: title;
+  position: relative;
+  display: grid;
+  place-items: center;
+  width: min(88vw, 54rem);
+  margin-bottom: clamp(0.15rem, 0.8vh, 0.45rem);
+}
+
+.welcome__meow-slot {
+  grid-area: meow;
+  position: relative;
+  width: min(46vw, 26.5rem);
+  /* Кнопка справа от лапы — сдвиг, чтобы кот и Play вместе были по центру заголовка */
+  margin-left: calc(min(18.5vw, 10rem) * -0.78);
+}
+
+.welcome__meow-mover {
+  position: relative;
+  z-index: 3;
+  transform-origin: 42% 92%;
+  animation: welcome-meow-point 2.6s ease-in-out infinite alternate;
+}
+
+.welcome__meow {
+  position: relative;
+  z-index: 1;
+  display: block;
+  width: 100%;
+  height: auto;
+  pointer-events: none;
+}
+
+.welcome__meow-shadow {
+  position: absolute;
+  z-index: 0;
+  left: 14%;
+  bottom: 1%;
+  width: 72%;
+  height: 1.15rem;
+  margin: 0;
+  border-radius: 50%;
+  background: rgb(40 70 30 / 48%);
+  filter: blur(3px);
+  opacity: 1;
+  animation: welcome-meow-shadow-x 2.6s ease-in-out infinite alternate;
+}
+
+@keyframes welcome-meow-shadow-x {
+  from {
+    transform: translateX(0);
+  }
+  to {
+    transform: translateX(4px);
+  }
+}
+
+/* Целая картинка Мяу. Повтор на других экранах: класс meow-idle на img и meow-idle-shadow на тень. */
+.meow-idle {
+  transform-origin: 50% 92%;
+  animation: meow-idle 3.2s ease-in-out infinite alternate;
+}
+
+.meow-idle-shadow {
+  animation: meow-idle-shadow 3.2s ease-in-out infinite alternate;
+}
+
+@keyframes meow-idle {
+  from {
+    transform: translateY(0) rotate(0deg);
+  }
+  to {
+    transform: translateY(-4px) rotate(-1.5deg);
+  }
+}
+
+@keyframes welcome-meow-point {
+  from {
+    transform: translate(0, 0) rotate(-1deg) scale(1);
+  }
+  to {
+    transform: translate(4px, -5px) rotate(2.5deg) scale(1.03);
+  }
+}
+
+@keyframes meow-idle-shadow {
+  from {
+    transform: scaleX(1);
+    opacity: 1;
+  }
+  to {
+    transform: scaleX(0.78);
+    opacity: 0.55;
+  }
+}
+
+.welcome__title {
+  display: block;
+  width: min(84vw, 50rem);
+  height: auto;
+  margin: 0;
+}
+
+.welcome__title--breathe {
+  animation: welcome-title-breathe 3.4s ease-in-out infinite alternate;
+  filter: drop-shadow(0 6px 0 rgb(90 50 110 / 18%));
+}
+
+@keyframes welcome-title-breathe {
+  from {
+    transform: translateY(0) scale(1);
+  }
+  to {
+    transform: translateY(-6px) scale(1.035);
+  }
+}
+
+.welcome__cta {
+  position: absolute;
+  /* Кончик лапы — правый край PNG, ~42% высоты. Чуть заезжает под лапу, кот рисуется сверху. */
+  left: 100%;
+  top: 41.6%;
+  z-index: 1;
+  margin: 0;
+  padding: 0;
+  transform: translate(-8%, -50%);
+}
+
+.welcome__play {
+  position: relative;
+  overflow: hidden;
+  border-radius: 50%;
+  clip-path: circle(46.5% at 50% 50%);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 9.25rem;
+  min-height: 9.25rem;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  cursor: pointer;
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.welcome__play:active {
+  transform: translateY(4px) scale(0.98);
+}
+
+.welcome__play:focus-visible {
+  outline: 3px solid var(--accent);
+  outline-offset: 4px;
+  border-radius: 1.5rem;
+}
+
+.welcome__play-art {
+  display: block;
+  width: min(18.5vw, 10rem);
+  height: auto;
+  pointer-events: none;
+  animation: welcome-play-live 2.6s ease-in-out infinite alternate;
+}
+
+.welcome__play-shine {
+  position: absolute;
+  inset: 6% 8%;
+  border-radius: 50%;
+  background: linear-gradient(
+    115deg,
+    transparent 36%,
+    rgb(255 255 255 / 75%) 50%,
+    transparent 64%
+  );
+  mix-blend-mode: screen;
+  pointer-events: none;
+  animation: welcome-play-shine 3.2s ease-in-out infinite;
+}
+
+@keyframes welcome-play-live {
+  from {
+    transform: scale(1);
+  }
+  to {
+    transform: scale(1.045);
+  }
+}
+
+@keyframes welcome-play-shine {
+  0%,
+  58% {
+    transform: translateX(-35%);
+    opacity: 0;
+  }
+  72% {
+    opacity: 1;
+  }
+  100% {
+    transform: translateX(35%);
+    opacity: 0;
+  }
+}
+
+.welcome__dock {
+  position: absolute;
+  z-index: 3;
+  top: max(0.85rem, env(safe-area-inset-top));
+  right: max(0.85rem, env(safe-area-inset-right));
+  display: flex;
+  gap: 0.75rem;
+  align-items: center;
+}
+
+.welcome__dock-btn {
+  display: grid;
+  place-items: center;
+  width: 3.85rem;
+  height: 3.85rem;
+  min-width: 56px;
+  min-height: 56px;
+  border: 0;
+  border-radius: 1rem;
+  background: transparent;
+  color: #4a5a68;
+  font-size: 1.35rem;
+  font-weight: 700;
+  cursor: pointer;
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+  box-shadow:
+    0 5px 0 rgb(90 120 150 / 18%),
+    0 8px 18px rgb(26 42 51 / 14%);
+  opacity: 0.92;
+  transition:
+    opacity 160ms ease,
+    transform 140ms ease;
+}
+
+.welcome__dock-btn:hover,
+.welcome__dock-btn:focus-visible {
+  opacity: 1;
+  outline: 3px solid var(--accent);
+  outline-offset: 3px;
+}
+
+.welcome__dock-btn:active {
+  transform: translateY(2px) scale(0.98);
+}
+
+.welcome__dock-btn--sound[data-on='0'] {
+  opacity: 0.65;
+  color: #8a939c;
+}
+
+.welcome__dock-btn--parent {
+  font-size: 1.45rem;
+}
+
+@keyframes welcome-bounce {
+  0%,
+  100% {
+    transform: translateY(0) rotate(-1deg);
+  }
+  50% {
+    transform: translateY(-10px) rotate(1deg);
+  }
+}
+
+@keyframes welcome-glow {
+  0%,
+  100% {
+    transform: scale(1);
+    opacity: 0.75;
+  }
+  50% {
+    transform: scale(1.06);
+    opacity: 0.95;
+  }
+}
+
+@keyframes welcome-cta-pulse {
+  0%,
+  100% {
+    box-shadow:
+      0 8px 0 #d4487a,
+      0 14px 28px rgb(212 72 122 / 35%);
+  }
+  50% {
+    box-shadow:
+      0 8px 0 #d4487a,
+      0 14px 28px rgb(212 72 122 / 35%),
+      0 0 0 10px rgb(255 95 154 / 22%);
+  }
+}
+
+@keyframes welcome-hint-fade {
+  0%,
+  100% {
+    opacity: 0.45;
+  }
+  50% {
+    opacity: 0.9;
+  }
+}
+
+.app-shell--quiet .welcome__play {
+  animation: none;
+}
+
+/* —— Меню: 8 плиток 2×N + Мяу справа с «В гости» —— */
+
+.screen--menu {
+  position: relative;
+  display: grid;
+  height: 100%;
+  max-height: 100%;
+  min-height: 0;
+  padding: 0;
+  align-content: stretch;
+  overflow: hidden;
+  touch-action: pan-y;
+  background: #f4efe6;
+}
+
+.menu-bg {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.menu-layout {
+  position: relative;
+  z-index: 1;
+}
+
+.screen--menu-enter {
+  animation: menu-pop-in 480ms cubic-bezier(0.34, 1.45, 0.64, 1) both;
+}
+
+.screen--menu-leave {
+  animation: menu-leave 460ms ease forwards;
+  pointer-events: none;
+}
+
+@keyframes menu-leave {
+  to {
+    opacity: 0;
+    transform: scale(1.03);
+  }
+}
+
+@keyframes menu-pop-in {
+  from {
+    opacity: 0;
+    transform: scale(0.92) translateY(18px);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
+}
+
+.menu-layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 0.55rem 0.85rem;
+  align-items: stretch;
+  width: 100%;
+  margin: 0;
+  min-height: 0;
+  height: 100%;
+  max-height: 100%;
+  overflow: hidden;
+  padding: 0.1rem 0 0;
+}
+
+.menu-layout__games {
+  min-width: 0;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  background: transparent;
+}
+
+.menu-scroll {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  overflow-x: hidden;
+  -webkit-overflow-scrolling: touch;
+  overscroll-behavior: contain;
+  padding: 0.15rem 0.2rem 0.45rem 0;
+  touch-action: pan-y;
+  /* Полоса скролла невидима — жест пальцем остаётся */
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+
+.menu-scroll::-webkit-scrollbar {
+  width: 0;
+  height: 0;
+  display: none;
+}
+
+.menu-grid {
+  display: grid;
+  gap: 0.65rem;
+  /* Всегда ровно 2 колонки — 8 плиток без «хвоста». */
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  width: 92.15%;
+  margin-left: 2vw;
+  margin-right: auto;
+  padding-bottom: 0.2rem;
+}
+
+.game-tile {
+  display: grid;
+  grid-template-rows: 1fr auto;
+  justify-items: center;
+  align-content: center;
+  gap: 0.55rem;
+  aspect-ratio: 1 / 1;
+  width: 100%;
+  min-height: 0;
+  padding: 1rem 0.75rem;
+  font-size: 1rem;
+  font-weight: 600;
+  border-radius: 1.35rem;
+  background: #fff;
+  box-shadow:
+    0 5px 0 color-mix(in srgb, var(--tile-accent, var(--accent)) 50%, #1a2a33),
+    0 12px 24px rgb(26 42 51 / 12%);
+}
+
+.game-tile:active {
+  transform: translateY(2px);
+  box-shadow:
+    0 2px 0 color-mix(in srgb, var(--tile-accent, var(--accent)) 50%, #1a2a33),
+    0 6px 12px rgb(26 42 51 / 12%);
+}
+
+.tile-mark {
+  width: min(46%, 8.5rem);
+  height: min(46%, 8.5rem);
+  border-radius: 50%;
+  background: var(--tile-accent, var(--accent));
+  box-shadow: inset 0 -3px 0 rgb(0 0 0 / 8%);
+}
+
+.tile-label {
+  line-height: 1.2;
+  text-align: center;
+  font-size: clamp(0.9rem, 2.1vw, 1.1rem);
+}
+
+.touch-btn.game-tile--art {
+  position: relative;
+  padding: 0;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  box-shadow: none;
+  overflow: visible;
+  aspect-ratio: 1;
+  width: 100%;
+  min-height: 0;
+  filter: drop-shadow(0 5px 4px rgb(55 45 35 / 22%))
+    drop-shadow(0 1px 0 rgb(255 255 255 / 35%));
+  transition: transform 140ms ease, filter 140ms ease;
+}
+
+.touch-btn.game-tile--art:hover {
+  border: 0;
+  box-shadow: none;
+}
+
+.touch-btn.game-tile--art:active,
+.touch-btn.game-tile--art.is-pressed {
+  transform: translateY(5px) scale(0.97);
+  box-shadow: none;
+  filter: drop-shadow(0 2px 2px rgb(55 45 35 / 18%));
+}
+
+.game-tile--art .tile-mark,
+.game-tile--art .tile-label {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+}
+
+.tile-art {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  object-position: center;
+  pointer-events: none;
+}
+
+.game-tile--balloon-pop {
+  --tile-accent: #e57373;
+}
+.game-tile--balloon-pop .tile-mark {
+  border-radius: 50% 50% 50% 50% / 42% 42% 58% 58%;
+}
+
+.game-tile--sound-world {
+  --tile-accent: #5cb8a8;
+}
+.game-tile--sound-world .tile-mark {
+  border-radius: 40% 60% 55% 45%;
+}
+
+.game-tile--sort-colors {
+  --tile-accent: #64b5f6;
+}
+.game-tile--sort-colors .tile-mark {
+  border-radius: 0.65rem;
+}
+
+.game-tile--puzzle {
+  --tile-accent: #ba68c8;
+}
+.game-tile--puzzle .tile-mark {
+  clip-path: polygon(
+    0 20%,
+    35% 20%,
+    35% 0,
+    65% 0,
+    65% 20%,
+    100% 20%,
+    100% 80%,
+    65% 80%,
+    65% 100%,
+    35% 100%,
+    35% 80%,
+    0 80%
+  );
+  border-radius: 0;
+}
+
+.game-tile--shape-build {
+  --tile-accent: #81c784;
+}
+.game-tile--shape-build .tile-mark {
+  clip-path: polygon(50% 0%, 100% 100%, 0% 100%);
+  border-radius: 0;
+}
+
+.game-tile--hide-seek {
+  --tile-accent: #e8b86d;
+}
+.game-tile--hide-seek .tile-mark {
+  clip-path: polygon(50% 8%, 90% 35%, 75% 88%, 25% 88%, 10% 35%);
+  border-radius: 0;
+}
+
+.game-tile--seasons {
+  --tile-accent: #8fce6b;
+}
+.game-tile--seasons .tile-mark {
+  background: linear-gradient(135deg, #81d4fa, #fff176 45%, #ff8a65);
+}
+
+.game-tile--counting {
+  --tile-accent: #f0c85c;
+}
+.game-tile--counting .tile-mark {
+  clip-path: polygon(
+    50% 4%,
+    61% 35%,
+    95% 35%,
+    68% 57%,
+    79% 91%,
+    50% 72%,
+    21% 91%,
+    32% 57%,
+    5% 35%,
+    39% 35%
+  );
+  border-radius: 0;
+}
+
+.menu-presenter {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  justify-content: flex-end;
+  gap: 0;
+  padding: 0 0 max(0.05rem, env(safe-area-inset-bottom));
+  min-height: 0;
+  height: 100%;
+  overflow: visible;
+  background: transparent;
+}
+
+.menu-presenter__bubble {
+  margin: 0;
+  padding: 0.5rem 0.85rem;
+  max-width: 11rem;
+  border-radius: 1.1rem;
+  background: #fff;
+  border: 2px solid color-mix(in srgb, var(--accent) 45%, #1a2a33);
+  font-family: var(--font-display);
+  font-size: 1.05rem;
+  font-weight: 600;
+  text-align: center;
+  line-height: 1.25;
+  box-shadow: 0 4px 12px rgb(26 42 51 / 10%);
+}
+
+.menu-visit-stack {
+  position: relative;
+  flex: 0 1 auto;
+  align-self: flex-end;
+  width: min(22.66rem, calc(46vh * 0.8446));
+  margin: 0 2vw 0 0;
+}
+
+.menu-visit-bed {
+  position: relative;
+  display: block;
+  width: 100%;
+  max-height: none;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  cursor: pointer;
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+  overflow: visible;
+  filter: drop-shadow(0 6px 5px rgb(55 45 35 / 20%));
+  transition: transform 140ms ease, filter 140ms ease;
+}
+
+.menu-visit-bed__art {
+  display: block;
+  width: 100%;
+  height: auto;
+  max-height: 47.38vh;
+  object-fit: contain;
+  object-position: bottom center;
+  pointer-events: none;
+}
+
+/* Кот отдельно от кнопки лежанки: клик по нему не жмёт корзинку. */
+.menu-visit-cat {
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  pointer-events: none;
+}
+
+/* Лапы на верхней перекладине. Кот по ширине правого поля. */
+.menu-visit-cat__anchor {
+  position: absolute;
+  left: -2%;
+  width: 100%;
+  bottom: 90%;
+  display: grid;
+  place-items: end center;
+  pointer-events: none;
+}
+
+.menu-visit-bed__shadow {
+  position: absolute;
+  z-index: 0;
+  left: 30%;
+  bottom: 0.2%;
+  width: 40%;
+  height: 0.55rem;
+  margin: 0;
+  border-radius: 50%;
+  background: rgb(55 36 22 / 62%);
+  filter: blur(1.6px);
+  pointer-events: none;
+}
+
+.menu-visit-bed__meow {
+  position: relative;
+  z-index: 2;
+  width: 100%;
+  height: auto;
+  display: block;
+  margin: 0;
+  pointer-events: auto;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+  -webkit-touch-callout: none;
+  user-select: none;
+}
+
+.menu-visit-bed__meow:active,
+.menu-visit-bed__meow:focus {
+  outline: none;
+  background: transparent;
+  filter: none;
+}
+
+.menu-visit-bed__toast {
+  position: absolute;
+  z-index: 1;
+  left: 55%;
+  top: 52%;
+  -webkit-tap-highlight-color: transparent;
+  transform: translateX(-50%) translateY(18px);
+  margin: 0;
+  padding: 0.61rem 1.16rem;
+  border-radius: 999px;
+  border: 3px solid #6b4c78;
+  background: #fff6ea;
+  box-shadow:
+    0 4px 0 #e7a2b4,
+    0 10px 16px rgb(90 60 80 / 16%);
+  color: #e07a5f;
+  font-family: var(--font-display);
+  font-size: clamp(1.27rem, 2.75vw, 1.71rem);
+  font-weight: 700;
+  line-height: 1.1;
+  letter-spacing: 0.01em;
+  white-space: nowrap;
+  pointer-events: none;
+  cursor: pointer;
+  opacity: 0;
+  transition:
+    top 520ms ease,
+    transform 520ms ease,
+    opacity 420ms ease;
+}
+
+.menu-visit-bed__toast.is-on {
+  top: -10%;
+  transform: translateX(-50%) translateY(0);
+  opacity: 1;
+  pointer-events: auto;
+}
+
+.menu-visit-bed:active,
+.menu-visit-bed.is-pressed {
+  transform: translateY(4px) scale(0.98);
+  filter: drop-shadow(0 2px 3px rgb(55 45 35 / 16%));
+}
+
+.menu-visit-bed .mascot-ph--presenter {
+  cursor: inherit;
+  width: 100%;
+  height: auto;
+  aspect-ratio: 1;
+}
+
+.mascot-ph--presenter {
+  cursor: default;
+}
+
+/* Родители: тихо внизу блока Мяу, не конкурирует с «В гости» */
+.menu-back,
+.menu-sound,
+.menu-settings {
+  position: absolute;
+  z-index: 6;
+  display: grid;
+  place-items: center;
+  width: 3.65rem;
+  height: 3.65rem;
+  min-width: 56px;
+  min-height: 56px;
+  padding: 0;
+  border: 3px solid rgb(255 255 255 / 88%);
+  border-radius: 50%;
+  background: rgb(255 255 255 / 78%);
+  color: #5a6a78;
+  font-size: 1.35rem;
+  line-height: 1;
+  cursor: pointer;
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+  box-shadow:
+    0 4px 0 rgb(90 120 150 / 15%),
+    0 8px 16px rgb(26 42 51 / 12%);
+  opacity: 0.92;
+  transition:
+    transform 140ms ease,
+    opacity 160ms ease,
+    background-color 160ms ease,
+    border-color 160ms ease,
+    box-shadow 140ms ease;
+}
+
+.menu-back {
+  top: max(0.55rem, env(safe-area-inset-top));
+  left: max(0.65rem, env(safe-area-inset-left));
+}
+
+.menu-sound,
+.menu-settings {
+  top: max(0.55rem, env(safe-area-inset-top));
+  right: max(0.65rem, env(safe-area-inset-right));
+}
+
+.menu-sound {
+  right: calc(max(0.65rem, env(safe-area-inset-right)) + 4.3rem);
+}
+
+.menu-sound[data-on='1'] {
+  opacity: 1;
+  border-color: color-mix(in srgb, var(--accent) 50%, #fff);
+  background: linear-gradient(165deg, #fff 0%, rgb(214 238 248 / 92%) 100%);
+  box-shadow:
+    0 4px 0 color-mix(in srgb, var(--accent) 26%, transparent),
+    0 8px 16px rgb(26 42 51 / 14%);
+}
+
+.menu-sound[data-on='0'] {
+  opacity: 0.82;
+  border-color: rgb(176 186 196 / 80%);
+  background: rgb(236 240 244 / 92%);
+  box-shadow:
+    0 3px 0 rgb(120 130 140 / 14%),
+    0 6px 12px rgb(26 42 51 / 8%);
+}
+
+.menu-sound[data-on='0'] .ui-icon {
+  filter: grayscale(0.9) opacity(0.72);
+}
+
+.menu-sound[data-on='0']::after {
+  content: '';
+  position: absolute;
+  inset: 16%;
+  border-radius: 50%;
+  background: linear-gradient(
+    135deg,
+    transparent 44%,
+    rgb(106 118 130 / 62%) 48%,
+    rgb(106 118 130 / 62%) 52%,
+    transparent 56%
+  );
+  pointer-events: none;
+}
+
+.menu-back:hover,
+.menu-back:focus-visible,
+.menu-sound:hover,
+.menu-sound:focus-visible,
+.menu-settings:hover,
+.menu-settings:focus-visible {
+  opacity: 1;
+  background: #fff;
+  outline: 3px solid var(--accent);
+  outline-offset: 2px;
+}
+
+.menu-back:active,
+.menu-sound:active,
+.menu-settings:active,
+.menu-back.is-pressed,
+.menu-sound.is-pressed,
+.menu-settings.is-pressed {
+  transform: translateY(3px) scale(0.96);
+  box-shadow:
+    0 1px 0 rgb(90 120 150 / 12%),
+    0 4px 10px rgb(26 42 51 / 10%);
+}
+
+@media (max-width: 700px), (orientation: portrait) {
+  .menu-layout {
+    grid-template-columns: 1fr;
+    grid-template-rows: auto minmax(0, 1fr);
+    width: 100%;
+    max-height: 100%;
+    padding: 0.1rem;
+  }
+
+  .menu-presenter {
+    order: -1;
+    flex-direction: row;
+    flex-wrap: wrap;
+    justify-content: center;
+    align-items: flex-end;
+    gap: 0.5rem;
+    padding: 0.35rem 0.5rem;
+    height: auto;
+  }
+
+  .menu-presenter__bubble {
+    display: none;
+  }
+
+  .menu-presenter .mascot-ph--presenter {
+    width: 5.25rem;
+    height: 5.25rem;
+  }
+
+  .menu-visit-stack {
+    width: min(100%, 16rem);
+    margin-right: 0;
+  }
+
+  .menu-visit-bed {
+    width: 100%;
+    max-height: none;
+  }
+
+  .menu-visit-bed__art {
+    max-height: min(34vh, 12rem);
+  }
+
+  .menu-visit-cat__anchor {
+    bottom: 88%;
+    left: 0;
+    width: 100%;
+  }
+
+  .menu-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (orientation: landscape) and (max-height: 700px) {
+  .app-shell {
+    gap: 0.35rem;
+  }
+
+  .menu-grid {
+    gap: 0.65rem;
+  }
+
+  .tile-label {
+    font-size: 0.85rem;
+  }
+
+  .menu-visit {
+    min-height: 3.25rem;
+    font-size: 0.92rem;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .touch-btn {
+    transition: none;
+  }
+
+  .touch-btn:active {
+    transform: none;
+  }
+
+  .welcome__title--breathe,
+  .welcome__meow-mover,
+  .welcome__meow-shadow,
+  .meow-idle,
+  .meow-idle-shadow,
+  .welcome__play,
+  .welcome__play-art,
+  .welcome__play-shine,
+  .welcome__bg--drift,
+  .screen--welcome,
+  .screen--menu-enter,
+  .screen--menu-leave {
+    animation: none;
+    transition: none;
+  }
+
+  .screen--welcome-leave {
+    opacity: 0;
+    transform: none;
+  }
+}
+
+/* —— Только альбомная ориентация —— */
+
+.orientation-gate {
+  position: fixed;
+  inset: 0;
+  z-index: 10000;
+  display: grid;
+  place-items: center;
+  padding: max(1rem, env(safe-area-inset-top)) 1.5rem
+    max(1rem, env(safe-area-inset-bottom));
+  padding-left: max(1.2rem, env(safe-area-inset-left));
+  padding-right: max(1.2rem, env(safe-area-inset-right));
+  /* Цвет фона под иллюстрации гейтов (rotate-device / small-screen) */
+  background: #fbe3bd;
+}
+
+.orientation-gate[hidden] {
+  display: none !important;
+}
+
+.orientation-gate__card {
+  display: grid;
+  gap: 0.75rem;
+  justify-items: center;
+  max-width: 22rem;
+  text-align: center;
+  padding: 1.5rem;
+  border-radius: 1.5rem;
+  /* Прозрачно: иллюстрация содержит фон, чтобы не было “шва” */
+  background: transparent;
+  box-shadow: none;
+}
+
+.orientation-gate__icon {
+  display: flex;
+  align-items: center;
+  gap: 0.8rem;
+  justify-content: center;
+}
+
+.orientation-gate__img {
+  display: block;
+  width: min(60vw, 60vh);
+  max-width: 22rem;
+  max-height: 22rem;
+  height: auto;
+  object-fit: contain;
+  object-position: center;
+  pointer-events: none;
+}
+
+.orientation-gate__phone {
+  width: 2.2rem;
+  height: 3.2rem;
+  border: 4px solid #2a6f9e;
+  border-radius: 0.45rem;
+  background: #e8f4fc;
+  animation: orientation-tilt 1.6s ease-in-out infinite;
+}
+
+.orientation-gate__arrow {
+  color: #2a6f9e;
+  font-weight: 700;
+}
+
+.orientation-gate__title {
+  margin: 0;
+  font-family: var(--font-display);
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: #2a6f9e;
+}
+
+.orientation-gate__hint {
+  margin: 0;
+  line-height: 1.4;
+  opacity: 0.85;
+}
+
+@keyframes orientation-tilt {
+  0%,
+  100% {
+    transform: rotate(-18deg);
+  }
+  50% {
+    transform: rotate(72deg);
+  }
+}
+
+body.is-portrait-blocked {
+  overflow: hidden;
+}
+
+body.is-portrait-blocked #app {
+  visibility: hidden;
+  pointer-events: none;
+}
+
+body.is-small-screen-blocked {
+  overflow: hidden;
+}
+
+body.is-small-screen-blocked #app {
+  visibility: hidden;
+  pointer-events: none;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .orientation-gate__phone {
+    animation: none;
+    width: 3.2rem;
+    height: 2.2rem;
+  }
+
+  .orientation-gate__arrow {
+    display: none;
+  }
+}
+
+/* —— Boot splash (P15-05) —— */
+
+.boot-loader {
+  position: fixed;
+  inset: 0;
+  z-index: 9999;
+  display: grid;
+  place-items: center;
+  align-content: center;
+  gap: 0.85rem;
+  padding: max(1rem, env(safe-area-inset-top)) 1.5rem
+    max(1rem, env(safe-area-inset-bottom));
+  background: #b7dd8a;
+  overflow: hidden;
+  transition: opacity 360ms ease;
+}
+
+.boot-loader__bg {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: center center;
+}
+
+.boot-loader--leave {
+  opacity: 0;
+  pointer-events: none;
+}
+
+
+.boot-loader__title {
+  position: relative;
+  z-index: 1;
+  margin: 0;
+  font-family: var(--font-display);
+  font-size: clamp(2.8rem, 8vw, 4.8rem);
+  font-weight: 700;
+  letter-spacing: 0.03em;
+  line-height: 1.05;
+}
+
+.boot-loader__letter {
+  -webkit-text-stroke: 0.07em #5c3d78;
+  paint-order: stroke fill;
+  text-shadow: 0 0.08em 0 rgb(90 50 110 / 28%);
+}
+
+.boot-loader__message {
+  position: relative;
+  z-index: 1;
+  margin: 0;
+  font-family: var(--font-display);
+  font-size: clamp(1rem, 2.8vw, 1.25rem);
+  font-weight: 600;
+  color: #1a2a33;
+}
+
+.boot-loader__track {
+  position: relative;
+  z-index: 1;
+  width: min(22rem, 70vw);
+  height: 1.15rem;
+  border: 3px solid #6a4c9e;
+  border-radius: 999px;
+  background: #fff7ec;
+  overflow: hidden;
+}
+
+.boot-loader__fill {
+  height: 100%;
+  border-radius: inherit;
+  background: linear-gradient(90deg, #e07a5f, #f2c14e 55%, #7eb8da);
+  transition: width 180ms ease;
+}
+
+.boot-loader__percent {
+  position: relative;
+  z-index: 1;
+  margin: 0;
+  font-family: var(--font-display);
+  font-size: clamp(1.8rem, 5vw, 2.8rem);
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  line-height: 1;
+}
+

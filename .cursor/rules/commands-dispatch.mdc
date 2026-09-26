@@ -1,0 +1,14 @@
+---
+description: Slash-команды из .cursor/commands/ и триггеры game-screen-polish
+alwaysApply: true
+---
+
+# Команды чата
+
+Если сообщение начинается с **`/game-polish`** (опционально с аргументом `game-id`) или явно просит polish/аудит экрана игры в духе skill **`game-screen-polish`**:
+
+1. Прочитай **`.cursor/commands/game-polish.md`**
+2. Выполни сценарий из **`.cursor/skills/game-screen-polish/SKILL.md`**
+3. Этап 1 без редактирования файлов до AskQuestion и подтверждения владельца
+
+Другие slash-команды: при появлении файлов в `.cursor/commands/` — читать соответствующий markdown и linked skill.

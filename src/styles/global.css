@@ -1,0 +1,67 @@
+@font-face {
+  font-family: "Fredoka";
+  font-style: normal;
+  font-weight: 500 700;
+  font-display: swap;
+  src: url("../assets/fonts/Fredoka-variable.ttf") format("truetype");
+}
+
+:root {
+  color-scheme: light;
+  --bg: #f7fbff;
+  --text: #1a2a33;
+  --accent: #7eb8da;
+  --font-ui: "Fredoka", "Trebuchet MS", "Segoe UI Rounded", system-ui, sans-serif;
+  --font-display: "Fredoka", "Trebuchet MS", "Comic Sans MS", cursive, sans-serif;
+  font-family: var(--font-ui);
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body,
+#app {
+  margin: 0;
+  min-height: 100%;
+  min-height: 100dvh;
+  background: radial-gradient(circle at top, #e8f4fc 0%, var(--bg) 55%);
+  color: var(--text);
+}
+
+button {
+  font: inherit;
+}
+
+/* Soft-error: покачивание и подсветка (идея §7) */
+@keyframes soft-wiggle {
+  0%,
+  100% {
+    transform: translateX(0);
+  }
+  25% {
+    transform: translateX(-4px);
+  }
+  75% {
+    transform: translateX(4px);
+  }
+}
+
+.soft-wiggle {
+  animation: soft-wiggle 420ms ease;
+}
+
+.is-soft-highlight {
+  outline: 4px solid var(--accent);
+  outline-offset: 4px;
+  border-radius: 1rem;
+  box-shadow: 0 0 0 6px color-mix(in srgb, var(--accent) 35%, transparent);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .soft-wiggle {
+    animation: none;
+    opacity: 0.92;
+  }
+}

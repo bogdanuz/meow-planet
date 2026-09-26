@@ -1,0 +1,40 @@
+# Dependencies
+node_modules/
+assets-master/
+local-assets/
+dist/
+dist-ssr/
+*.local
+
+# TypeScript incremental build
+tsconfig.tsbuildinfo
+
+# Test / coverage
+coverage/
+playwright-report/
+test-results/
+blob-report/
+
+# Editor / OS
+.DS_Store
+Thumbs.db
+*.swp
+.idea/
+.vscode/*
+!.vscode/extensions.json
+
+# Env (never commit secrets)
+.env
+.env.*
+!.env.example
+
+# Logs
+*.log
+npm-debug.log*
+
+# Obsolete assets (S15 archive policy — docs/assets/ARCHIVE-POLICY.md)
+# Temporary drop-zone before move into archive/
+public/assets/_obsolete/
+# Large binaries kept out of git history even inside archive/
+archive/public-assets/_binaries/
+

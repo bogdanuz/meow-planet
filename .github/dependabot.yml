@@ -1,0 +1,18 @@
+version: 2
+updates:
+  # Библиотеки npm (Vite, TypeScript, Vitest, Playwright и т.д.)
+  - package-ecosystem: "npm"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+    open-pull-requests-limit: 5
+    commit-message:
+      prefix: "chore(deps)"
+
+  # Сами GitHub Actions (.github/workflows/ci.yml)
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+    commit-message:
+      prefix: "chore(ci)"

@@ -1,0 +1,15 @@
+---
+description: Взаимодействие для детей 2–3 — soft-error, без наказаний, touch targets
+globs: src/**/*.ts,src/**/*.css,tests/e2e/**/*
+alwaysApply: false
+---
+
+# Toddler interaction
+
+SSOT: `docs/product/PRODUCT_CONSTRAINTS.md`. UX-детали: skill `ux-ui-kids-hub`.
+
+- Без таймеров, жизней, штрафов, красных крестов, грустного Мяу, сравнения результатов.
+- Ошибка ребёнка → только **soft-error цепочка** (нейтрально → намёк → показ → взрослый).
+- Детские tap-цели: ориентир **56–64 CSS px**, с большим расстоянием между соседними целями; не полагаться только на цвет или звук.
+- Нет необратимых действий от случайного тапа.
+- E2E при изменении механики: coarse pointer, soft-error, reduced motion где уместно (skill `testing-and-verification`).

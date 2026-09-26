@@ -1,0 +1,106 @@
+/* CSS/SVG-заглушки до мегафайла (путь А). См. src/shared/placeholders.ts */
+
+.ph {
+  display: inline-block;
+  flex-shrink: 0;
+  width: 4.5rem;
+  height: 4.5rem;
+  border: 3px solid color-mix(in srgb, currentColor 35%, transparent);
+  background: currentColor;
+  opacity: 0.85;
+  touch-action: none;
+  user-select: none;
+}
+
+.ph--circle,
+.ph--balloon {
+  border-radius: 50%;
+}
+
+.ph--balloon {
+  width: 3.25rem;
+  height: 4.25rem;
+  border-radius: 50% 50% 50% 50% / 42% 42% 58% 58%;
+}
+
+.ph--square {
+  border-radius: 0.35rem;
+}
+
+.ph--rect {
+  width: 5.5rem;
+  height: 3.25rem;
+  border-radius: 0.35rem;
+}
+
+.ph--triangle {
+  width: 0;
+  height: 0;
+  border-style: solid;
+  border-width: 0 2.25rem 4rem 2.25rem;
+  border-color: transparent transparent currentColor transparent;
+  background: transparent;
+  border-radius: 0;
+  opacity: 1;
+}
+
+.ph--heart {
+  width: 4.25rem;
+  height: 4.25rem;
+  clip-path: polygon(
+    50% 92%,
+    6% 38%,
+    6% 22%,
+    22% 6%,
+    50% 28%,
+    78% 6%,
+    94% 22%,
+    94% 38%
+  );
+  border: none;
+  border-radius: 0;
+}
+
+.ph--star {
+  clip-path: polygon(
+    50% 0%,
+    61% 35%,
+    98% 35%,
+    68% 57%,
+    79% 91%,
+    50% 70%,
+    21% 91%,
+    32% 57%,
+    2% 35%,
+    39% 35%
+  );
+  border: none;
+}
+
+.ph-color--red {
+  color: #e85d5d;
+}
+
+.ph-color--orange {
+  color: #f0a04b;
+}
+
+.ph-color--yellow {
+  color: #e8d44d;
+}
+
+.ph-color--green {
+  color: #5cbf7a;
+}
+
+.ph-color--blue {
+  color: #5aa6e0;
+}
+
+.ph-color--indigo {
+  color: #6b7fd7;
+}
+
+.ph-color--violet {
+  color: #9b6bc7;
+}

@@ -1,0 +1,13 @@
+---
+description: Короткое ядро продукта Планета Мяу — ссылки на SSOT, без дублирования bans
+alwaysApply: true
+---
+
+# Планета Мяу — ядро
+
+1. Прочитай `HANDOFF.md` → `AGENTS.md` → `docs/05-CURRENT-STATE.md` перед нетривиальной работой.
+2. Продуктовые ограничения MVP — **`docs/product/PRODUCT_CONSTRAINTS.md`** (не копировать сюда).
+3. Текущий спринт и версия — только в `HANDOFF.md` / `05-CURRENT-STATE.md` (не зашивать номер спринта в другие rules).
+4. Викторины владельца — **AskQuestion** + «Свой вариант» → `.cursor/rules/interactive-quizzes.mdc`. S14 игры — skill **`s14-game-review`** + `docs/quality/S14-GAME-REVIEW-PLAYBOOK.md`. Polish экрана игры — **`/game-polish`** → skill **`game-screen-polish`** (двухэтапно).
+5. Коммиты — только владелец через **GitHub Desktop** → skill `git-workflow-github-desktop`.
+6. UI/экраны — skill **`ux-ui-kids-hub`**. Код — TDD строгий → skill **`testing-and-verification`**.

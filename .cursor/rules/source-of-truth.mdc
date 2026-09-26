@@ -1,0 +1,14 @@
+---
+description: Источник истины продукта Планета Мяу — что читать первым
+alwaysApply: true
+---
+
+# Источник истины
+
+1. Сначала прочитай `HANDOFF.md`, затем `AGENTS.md`, затем `docs/05-CURRENT-STATE.md`.
+2. Продуктовая идея: `Планета_Мяу_Идея_продукта.md` — единственный актуальный документ идеи.
+3. MVP-механики: `docs/11-MVP-GAMES-MECHANICS.md`. S14 polish по играм: **`docs/games/S14-GAMES-INDEX.md`**. Экран любой игры (назад+звук, фон на весь экран): **`docs/games/S16-GAME-SCREEN-PATTERN.md`**. Дорожная карта: `docs/06-ROADMAP.md`, спринты: `docs/07-SPRINTS.md`.
+   **Актуальный номер спринта** — только в `HANDOFF.md` и `docs/05-CURRENT-STATE.md`. Не перескакивать спринты.
+4. Ограничения продукта (запреты/обязательное) — `docs/product/PRODUCT_CONSTRAINTS.md`.
+5. Ассеты: `docs/assets/ASSET-PRODUCTION-PLAYBOOK.md` (что делать), `docs/assets/GENERATION-GUIDE.md` (промпты), `docs/assets/ASSET-MANIFEST.md` (реестр), `docs/assets/BRANDBOOK.md` (стиль). Папка `archive/` — только история, не SSOT.
+6. Не закрывать статусы `ОТКРЫТО` молча. Викторины — AskQuestion (см. `interactive-quizzes.mdc`).

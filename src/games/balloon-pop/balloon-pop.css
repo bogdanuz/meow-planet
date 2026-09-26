@@ -1,0 +1,444 @@
+/* Лопни шарик — своё небо + game-bar без app chrome */
+
+.app-shell--balloon-game {
+  grid-template-rows: 1fr;
+  gap: 0;
+  height: 100dvh;
+  max-height: 100dvh;
+  overflow: hidden;
+  padding: 0;
+}
+
+.app-shell--balloon-game .chrome[hidden],
+.app-shell--balloon-game .chrome__mascot[hidden] {
+  display: none !important;
+  pointer-events: none !important;
+}
+
+.app-shell--balloon-game .chrome__main {
+  min-height: 0;
+  height: 100%;
+}
+
+.balloon-pop {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  min-height: 100%;
+  overflow: hidden;
+}
+
+.balloon-pop__game-bar {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  padding:
+    max(0.85rem, env(safe-area-inset-top))
+    max(0.85rem, env(safe-area-inset-right))
+    0
+    max(0.85rem, env(safe-area-inset-left));
+  border: none;
+  background: none;
+  box-shadow: none;
+  z-index: 6;
+  pointer-events: none;
+}
+
+.balloon-pop__bar-nav,
+.balloon-pop__modes {
+  pointer-events: auto;
+}
+
+.balloon-pop__bar-nav {
+  display: flex;
+  gap: 0.55rem;
+}
+
+.balloon-pop__bar-btn.touch-btn {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 4.5rem;
+  height: 4.5rem;
+  min-width: 4.5rem;
+  min-height: 4.5rem;
+  padding: 0;
+  border: none;
+  border-radius: 50%;
+  background: rgb(255 252 246 / 88%);
+  box-shadow:
+    0 0 0 3px rgb(126 184 218 / 55%),
+    0 6px 14px rgb(26 74 107 / 16%);
+}
+
+.balloon-pop__bar-btn .ui-icon {
+  display: block;
+  width: 2.85rem;
+  height: 2.85rem;
+  margin: 0;
+  object-fit: contain;
+}
+
+.balloon-pop__bar-btn[data-on='0'] .ui-icon {
+  filter: grayscale(0.9) opacity(0.72);
+}
+
+.balloon-pop__bar-btn[data-on='0']::after {
+  content: '';
+  position: absolute;
+  inset: 16%;
+  border-radius: 50%;
+  background: linear-gradient(
+    135deg,
+    transparent 44%,
+    rgb(106 118 130 / 62%) 48%,
+    rgb(106 118 130 / 62%) 52%,
+    transparent 56%
+  );
+  pointer-events: none;
+}
+
+.balloon-pop__modes {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.55rem;
+  justify-content: flex-end;
+}
+
+.balloon-pop__mode-btn.touch-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  height: 4.5rem;
+  min-height: 4.5rem;
+  padding: 0 1.35rem;
+  font-size: 1.2rem;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  color: #1a2a33;
+  border: none;
+  border-radius: 999px;
+  background: rgb(255 252 246 / 88%);
+  box-shadow:
+    0 0 0 3px #7eb8da,
+    0 6px 14px rgb(26 74 107 / 14%);
+}
+
+.balloon-pop__mode-btn.is-active {
+  font-weight: 800;
+  background: rgb(255 252 246 / 98%);
+  box-shadow:
+    0 0 0 4px #4f9bc8,
+    0 8px 16px rgb(26 74 107 / 18%);
+}
+
+.balloon-pop__sky {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  background-color: #b9e0f8;
+}
+
+.balloon-pop__sky-art {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: center center;
+}
+
+.balloon-pop__sky-art--drift {
+  left: -4%;
+  top: -3%;
+  width: 108%;
+  height: 108%;
+  animation: welcome-parallax 22s ease-in-out infinite alternate;
+}
+
+.balloon-pop__aside {
+  position: absolute;
+  left: 5%;
+  bottom: 0;
+  z-index: 4;
+  display: flex;
+  align-items: flex-end;
+  gap: 0.55rem;
+  width: min(78%, 40rem);
+  max-width: 78%;
+  padding: 0;
+  pointer-events: none;
+}
+
+.balloon-pop__meow {
+  display: block;
+  flex-shrink: 0;
+  width: 11.4rem;
+  height: auto;
+  margin: 0;
+  object-fit: contain;
+  object-position: bottom center;
+  pointer-events: none;
+  filter: drop-shadow(0 6px 10px rgb(26 74 107 / 22%));
+}
+
+.balloon-pop__speech {
+  position: relative;
+  flex: 0 1 auto;
+  width: max-content;
+  max-width: min(22rem, 48vw);
+  min-width: min(8rem, 28vw);
+  margin: 0 0 calc(5.1rem - 4vh);
+  margin-left: 1%;
+  padding: 0.7rem 1.1rem;
+  border-radius: 1.15rem;
+  background: rgb(255 252 246 / 94%);
+  color: #1a2a33;
+  font-size: clamp(1.15rem, 2.4vw, 1.5rem);
+  font-weight: 600;
+  line-height: 1.35;
+  box-shadow:
+    0 0 0 3px #7eb8da,
+    0 6px 16px rgb(26 74 107 / 14%);
+}
+
+.balloon-pop__speech-color {
+  font-weight: 800;
+}
+
+.balloon-pop__speech-color--red {
+  color: #e85d5d;
+}
+
+.balloon-pop__speech-color--orange {
+  color: #f0a04b;
+}
+
+.balloon-pop__speech-color--yellow {
+  color: #c9a800;
+}
+
+.balloon-pop__speech-color--green {
+  color: #3a9e5c;
+}
+
+.balloon-pop__speech-color--violet {
+  color: #9b6bc7;
+}
+
+.balloon-pop__field {
+  --balloon-layout-scale: 1;
+  --balloon-task-scale: 1;
+  --balloon-free-scale: 1;
+
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  padding:
+    5.6rem 0.5rem 8.5rem 0.35rem;
+  overflow: hidden;
+  box-sizing: border-box;
+}
+
+.balloon-pop__balloon {
+  --balloon-glow: #7eb8da;
+
+  position: absolute;
+  z-index: 1;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  transform: translate(-50%, -50%);
+  min-width: 5rem;
+  min-height: 5rem;
+  border: none;
+  background: transparent;
+  padding: 0.35rem;
+  cursor: pointer;
+  touch-action: none;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.balloon-pop__balloon[data-color='red'] {
+  --balloon-glow: #e85d5d;
+}
+
+.balloon-pop__balloon[data-color='orange'] {
+  --balloon-glow: #f0a04b;
+}
+
+.balloon-pop__balloon[data-color='yellow'] {
+  --balloon-glow: #e8c84a;
+}
+
+.balloon-pop__balloon[data-color='green'] {
+  --balloon-glow: #4cba6e;
+}
+
+.balloon-pop__balloon[data-color='violet'] {
+  --balloon-glow: #b07ae0;
+}
+
+.balloon-pop__glow {
+  position: absolute;
+  z-index: 0;
+  left: 50%;
+  top: 38%;
+  width: 54%;
+  aspect-ratio: 1;
+  border-radius: 50%;
+  pointer-events: none;
+  opacity: 0;
+  transform: translate(-50%, -50%) scale(0.35);
+  background: radial-gradient(
+    circle at center,
+    #fff 0%,
+    color-mix(in srgb, var(--balloon-glow) 100%, #fff) 12%,
+    color-mix(in srgb, var(--balloon-glow) 86%, transparent) 42%,
+    color-mix(in srgb, var(--balloon-glow) 70%, transparent) 68%,
+    transparent 80%
+  );
+  filter: blur(8px);
+}
+
+.balloon-pop__balloon.is-soft-highlight {
+  outline: none;
+  box-shadow: none;
+  border-radius: 0;
+}
+
+.balloon-pop__balloon.is-soft-highlight .balloon-pop__glow {
+  opacity: 0.9;
+  box-shadow:
+    0 0 14px 5px color-mix(in srgb, var(--balloon-glow) 78%, transparent),
+    0 0 28px 11px color-mix(in srgb, var(--balloon-glow) 45%, transparent);
+  animation: balloon-neon-bloom 1.35s ease-in-out infinite alternate;
+}
+
+.balloon-pop__balloon-motion {
+  position: relative;
+  z-index: 1;
+  display: inline-flex;
+  animation:
+    balloon-bob var(--balloon-bob, 2.5s) ease-in-out infinite,
+    balloon-drift var(--balloon-drift, 5s) ease-in-out infinite alternate;
+}
+
+@keyframes balloon-bob {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-10px);
+  }
+}
+
+@keyframes balloon-drift {
+  0% {
+    translate: -3px 0;
+  }
+  100% {
+    translate: 4px -6px;
+  }
+}
+
+.balloon-pop__balloon-art {
+  display: block;
+  pointer-events: none;
+  object-fit: contain;
+  filter: drop-shadow(0 8px 12px rgb(26 74 107 / 22%));
+}
+
+.balloon-pop__balloon--sm .balloon-pop__balloon-art {
+  width: calc(
+    9.75rem * var(--balloon-layout-scale, 1) * var(--balloon-task-scale, 1) *
+      var(--balloon-free-scale, 1)
+  );
+  height: calc(
+    12.75rem * var(--balloon-layout-scale, 1) * var(--balloon-task-scale, 1) *
+      var(--balloon-free-scale, 1)
+  );
+}
+
+.balloon-pop__balloon--lg .balloon-pop__balloon-art {
+  width: calc(
+    20.25rem * var(--balloon-layout-scale, 1) * var(--balloon-task-scale, 1) *
+      var(--balloon-free-scale, 1)
+  );
+  height: calc(
+    26.25rem * var(--balloon-layout-scale, 1) * var(--balloon-task-scale, 1) *
+      var(--balloon-free-scale, 1)
+  );
+}
+
+.balloon-pop__balloon.is-popping .balloon-pop__balloon-motion {
+  animation: balloon-pop-burst 420ms ease-out forwards;
+}
+
+.balloon-pop__balloon.is-popping {
+  pointer-events: none;
+}
+
+.balloon-pop__balloon.is-popping .balloon-pop__glow {
+  animation: none;
+  opacity: 0;
+}
+
+@keyframes balloon-pop-burst {
+  0% {
+    transform: scale(1);
+    opacity: 1;
+  }
+  100% {
+    transform: scale(0.15);
+    opacity: 0;
+  }
+}
+
+@keyframes balloon-neon-bloom {
+  0% {
+    transform: translate(-50%, -50%) scale(0.63);
+    opacity: 0.9;
+    filter: blur(6px);
+  }
+  100% {
+    transform: translate(-50%, -50%) scale(1.77);
+    opacity: 0.9;
+    filter: blur(12px);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .balloon-pop__sky-art--drift {
+    animation: none;
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+  }
+
+  .balloon-pop__balloon-motion {
+    animation: none;
+  }
+
+  .balloon-pop__balloon.is-popping .balloon-pop__balloon-motion {
+    opacity: 0;
+  }
+
+  .balloon-pop__balloon.is-soft-highlight .balloon-pop__glow {
+    animation: none;
+    transform: translate(-50%, -50%) scale(1.38);
+    opacity: 0.9;
+    filter: blur(10px);
+  }
+}

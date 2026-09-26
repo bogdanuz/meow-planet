@@ -1,0 +1,15 @@
+---
+description: Privacy, localStorage, XSS — client-only PWA без сбора данных
+globs: src/shared/storage.ts,src/app/**/*,src/content/**/*
+alwaysApply: false
+---
+
+# Privacy и локальные данные
+
+SSOT bans: `docs/product/PRODUCT_CONSTRAINTS.md`. Чеклист: skill `security-hardening-pwa`.
+
+- Нет регистрации, аналитики, рекламы, камеры, микрофона, гео, облачного sync.
+- Данные localStorage/IndexedDB — **недоверенные**; валидация при чтении, безопасный fail.
+- Пользовательский текст (имя ребёнка) — `textContent` / безопасные DOM API; **не** `innerHTML` с вводом.
+- Секреты и API keys не в репозитории и не во frontend bundle.
+- Новая npm-зависимость или внешний asset → license/security review, запись в `THIRD_PARTY_NOTICES.md` при релизе.

@@ -1,0 +1,112 @@
+.mascot-ph {
+  display: inline-grid;
+  place-items: center;
+  width: 4rem;
+  height: 4rem;
+  border-radius: 50%;
+  background: #f4c27a;
+  color: #1a2a33;
+  font-size: 0.85rem;
+  font-weight: 600;
+  transition:
+    transform 280ms ease,
+    background-color 280ms ease;
+  animation: mascot-float 4s ease-in-out infinite;
+}
+
+.mascot-ph__face {
+  line-height: 1;
+}
+
+.mascot-ph[data-pose='idle'] {
+  transform: translateY(0);
+}
+
+.mascot-ph[data-pose='happy'] {
+  background: #f6d48a;
+  transform: translateY(-2px) scale(1.04);
+}
+
+.mascot-ph[data-pose='pointing'] {
+  background: #efb86a;
+  transform: translateX(4px);
+}
+
+.mascot-ph[data-pose='sleepy'] {
+  background: #e8c9a0;
+  opacity: 0.92;
+  transform: scale(0.96);
+  animation: none;
+}
+
+.mascot-ph[data-pose='dance'],
+.mascot-ph--presenter {
+  width: min(28vw, 12rem);
+  height: min(28vw, 12rem);
+  font-size: 1.35rem;
+  background: #f4c27a;
+  animation: mascot-dance 1.8s ease-in-out infinite;
+}
+
+.mascot-ph--presenter[data-pose='pointing'] {
+  animation: mascot-present 2s ease-in-out infinite;
+}
+
+.mascot-ph--presenter .mascot-ph__face {
+  font-size: 1.45rem;
+}
+
+@keyframes mascot-float {
+  0%,
+  100% {
+    translate: 0 0;
+  }
+  50% {
+    translate: 0 -3px;
+  }
+}
+
+@keyframes mascot-dance {
+  0%,
+  100% {
+    transform: translateY(0) rotate(-4deg) scale(1);
+  }
+  25% {
+    transform: translateY(-10px) rotate(3deg) scale(1.04);
+  }
+  50% {
+    transform: translateY(-2px) rotate(5deg) scale(1.02);
+  }
+  75% {
+    transform: translateY(-12px) rotate(-3deg) scale(1.05);
+  }
+}
+
+@keyframes mascot-present {
+  0%,
+  100% {
+    transform: translateX(0) rotate(-2deg);
+  }
+  50% {
+    transform: translateX(-8px) rotate(4deg) scale(1.03);
+  }
+}
+
+.app-shell--quiet .mascot-ph {
+  animation: none;
+}
+
+.app-shell--quiet .mascot-ph--presenter,
+.app-shell--quiet .mascot-ph[data-pose='dance'] {
+  animation: none;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .mascot-ph {
+    animation: none;
+  }
+
+  .mascot-ph {
+    transition: none;
+  }
+}

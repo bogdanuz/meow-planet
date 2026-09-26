@@ -1,0 +1,362 @@
+/* Прятки — компактный chrome, задание над сценой, паттерн-локации */
+
+.hide-seek {
+  flex: 1;
+  min-height: 0;
+  max-height: 100%;
+  height: 100%;
+  display: grid;
+  grid-template-columns: clamp(3.5rem, 9vw, 5rem) minmax(0, 1fr);
+  align-items: stretch;
+  gap: clamp(0.25rem, 0.6vw, 0.45rem);
+  padding: 0;
+  overflow: hidden;
+  position: relative;
+}
+
+.hide-seek__picker {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: clamp(0.2rem, 0.5vh, 0.35rem);
+  overflow-y: auto;
+  min-height: 0;
+  max-height: 100%;
+  align-self: center;
+  scrollbar-width: none;
+  padding: 0.05rem 0;
+}
+
+.hide-seek__picker::-webkit-scrollbar {
+  display: none;
+}
+
+.hide-seek__pick {
+  flex: 0 0 auto;
+  width: 100%;
+  padding: 0.15rem;
+  border-radius: 0.65rem;
+  background: rgb(255 255 255 / 80%);
+  min-width: unset;
+  box-shadow: 0 1px 6px rgb(26 42 51 / 8%);
+}
+
+.hide-seek__pick.is-active {
+  outline: 3px solid var(--accent);
+  outline-offset: 1px;
+  background: #fff;
+}
+
+.hide-seek__pick-preview {
+  display: block;
+  width: 100%;
+  aspect-ratio: 1;
+  border-radius: 0.45rem;
+  border: 1px solid rgb(26 42 51 / 8%);
+  background-size: cover;
+}
+
+.hide-seek__pick-preview[data-pattern='warm-room'] {
+  background:
+    repeating-linear-gradient(90deg, rgb(247 231 208 / 95%) 0 3px, rgb(232 212 184 / 95%) 3px 6px),
+    linear-gradient(180deg, #f7e7d0 55%, #e8d4b8 55%);
+}
+
+.hide-seek__pick-preview[data-pattern='meadow'] {
+  background: linear-gradient(180deg, #b8e4ff 48%, #8fce6b 48%);
+}
+
+.hide-seek__pick-preview[data-pattern='beach'] {
+  background: linear-gradient(180deg, #87ceeb 50%, #f0e0a8 50%);
+}
+
+.hide-seek__pick-preview[data-pattern='forest'] {
+  background: linear-gradient(180deg, #c5e8c0 52%, #6faf6a 52%);
+}
+
+.hide-seek__pick-preview[data-pattern='playground'] {
+  background: linear-gradient(180deg, #ffe8c8 50%, #8fce6b 50%);
+}
+
+.hide-seek__play {
+  min-width: 0;
+  min-height: 0;
+  display: grid;
+  grid-template-rows: auto minmax(0, 1fr);
+  gap: clamp(0.2rem, 0.5vh, 0.35rem);
+}
+
+.hide-seek__mission {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: clamp(0.5rem, 1.2vw, 0.85rem);
+  padding: clamp(0.35rem, 0.9vh, 0.55rem) clamp(0.5rem, 1.5vw, 0.85rem);
+  border-radius: 1rem;
+  background: rgb(255 255 255 / 88%);
+  box-shadow: 0 2px 12px rgb(26 42 51 / 10%);
+}
+
+.hide-seek__mission.is-pulse {
+  animation: hide-mission-pulse 700ms ease-out;
+}
+
+.hide-seek__mission-icon {
+  flex: 0 0 auto;
+  width: clamp(2.75rem, 7vh, 3.75rem);
+  height: clamp(2.75rem, 7vh, 3.75rem);
+}
+
+.hide-seek__mission-copy {
+  display: flex;
+  align-items: baseline;
+  flex-wrap: nowrap;
+  gap: clamp(0.3rem, 0.8vw, 0.5rem);
+  min-width: 0;
+  text-align: left;
+}
+
+.hide-seek__mission-text {
+  margin: 0;
+  font-weight: 800;
+  font-size: clamp(1.05rem, 2.8vh, 1.45rem);
+  line-height: 1.15;
+  color: #1a2a33;
+  white-space: nowrap;
+  flex: 0 1 auto;
+}
+
+.hide-seek__mission-sep {
+  flex: 0 0 auto;
+  font-weight: 700;
+  opacity: 0.45;
+  user-select: none;
+}
+
+.hide-seek__mission-status {
+  margin: 0;
+  font-weight: 600;
+  font-size: clamp(0.92rem, 2.2vh, 1.12rem);
+  line-height: 1.15;
+  color: #3d5a6a;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  min-width: 0;
+  flex: 1 1 auto;
+}
+
+.hide-seek__scene-wrap {
+  min-height: 0;
+  min-width: 0;
+  display: flex;
+  align-items: stretch;
+  justify-content: center;
+  container-type: size;
+}
+
+.hide-seek__scene {
+  position: relative;
+  width: min(100%, 100cqh * 4 / 3, 100%);
+  height: 100%;
+  max-height: 100%;
+  aspect-ratio: 4 / 3;
+  border-radius: 1.15rem;
+  overflow: hidden;
+  border: 2px solid color-mix(in srgb, var(--accent) 35%, #1a2a33);
+  container-type: size;
+  transition: box-shadow 480ms ease;
+}
+
+.hide-seek__scene.is-round-complete {
+  box-shadow:
+    0 0 0 3px color-mix(in srgb, var(--accent) 50%, #fff),
+    0 12px 36px color-mix(in srgb, var(--accent) 22%, transparent);
+}
+
+.hide-seek__scene[data-pattern='warm-room'] {
+  background:
+    repeating-linear-gradient(
+      90deg,
+      rgb(247 231 208 / 90%) 0 12px,
+      rgb(240 220 190 / 90%) 12px 24px
+    ),
+    linear-gradient(#f7e7d0 0 42%, #e8d4b8 42% 100%);
+}
+
+.hide-seek__scene[data-pattern='meadow'] {
+  background:
+    radial-gradient(circle at 20% 80%, rgb(143 206 107 / 35%) 0 8%, transparent 8%),
+    radial-gradient(circle at 70% 70%, rgb(143 206 107 / 30%) 0 6%, transparent 6%),
+    linear-gradient(#b8e4ff 0 45%, #8fce6b 45% 100%);
+}
+
+.hide-seek__scene[data-pattern='beach'] {
+  background:
+    repeating-linear-gradient(
+      -12deg,
+      rgb(240 224 168 / 55%) 0 6px,
+      transparent 6px 14px
+    ),
+    linear-gradient(#87ceeb 0 48%, #f0e0a8 48% 100%);
+}
+
+.hide-seek__scene[data-pattern='forest'] {
+  background:
+    radial-gradient(circle at 15% 30%, rgb(92 191 122 / 40%) 0 10%, transparent 10%),
+    radial-gradient(circle at 85% 25%, rgb(92 191 122 / 35%) 0 12%, transparent 12%),
+    linear-gradient(#c5e8c0 0 55%, #6faf6a 55% 100%);
+}
+
+.hide-seek__scene[data-pattern='playground'] {
+  background:
+    repeating-linear-gradient(
+      0deg,
+      rgb(255 220 180 / 40%) 0 10px,
+      transparent 10px 22px
+    ),
+    linear-gradient(#ffe8c8 0 50%, #8fce6b 50% 100%);
+}
+
+.hide-seek__target {
+  position: absolute;
+  transform: translate(-50%, -50%);
+  border: none;
+  background: transparent;
+  padding: 0.4rem;
+  min-width: clamp(4rem, 16cqw, 6.5rem);
+  min-height: clamp(4rem, 16cqw, 6.5rem);
+  cursor: pointer;
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+  transition:
+    transform 200ms ease,
+    filter 200ms ease,
+    opacity 280ms ease;
+  opacity: 0.48;
+  filter: saturate(0.7);
+}
+
+.hide-seek__target .ph {
+  width: clamp(3.75rem, 14cqw, 5.25rem);
+  height: clamp(3.75rem, 14cqw, 5.25rem);
+  pointer-events: none;
+}
+
+.hide-seek__target.is-soft-highlight,
+.hide-seek__target.is-hinting {
+  opacity: 0.92;
+  filter: saturate(1.1);
+}
+
+.hide-seek__target.is-found {
+  animation: hide-found 520ms ease-out forwards;
+  pointer-events: none;
+  opacity: 1;
+  filter: saturate(1.1) drop-shadow(0 6px 14px rgb(255 220 120 / 55%));
+}
+
+.hide-seek__target.is-hinting {
+  animation: hide-wobble 700ms ease-in-out infinite;
+  filter: saturate(1.15) drop-shadow(0 0 10px rgb(255 255 180 / 90%));
+}
+
+.hide-seek__miss {
+  position: absolute;
+  inset: 0;
+  border: none;
+  background: transparent;
+  cursor: default;
+}
+
+.hide-seek__picture-hint {
+  position: absolute;
+  left: 50%;
+  bottom: clamp(0.45rem, 1.5vh, 0.85rem);
+  transform: translate(-50%, 10px);
+  z-index: 40;
+  display: flex;
+  align-items: center;
+  gap: 0.65rem;
+  padding: 0.5rem 0.85rem;
+  border-radius: 1rem;
+  background: rgb(255 255 255 / 96%);
+  box-shadow: 0 8px 28px rgb(26 42 51 / 22%);
+  opacity: 0;
+  pointer-events: none;
+  transition:
+    opacity 280ms ease,
+    transform 280ms ease;
+}
+
+.hide-seek__picture-hint.is-visible {
+  opacity: 1;
+  transform: translate(-50%, 0);
+}
+
+.hide-seek__picture-hint .ph {
+  width: clamp(2.5rem, 6vh, 3.25rem);
+  height: clamp(2.5rem, 6vh, 3.25rem);
+  flex-shrink: 0;
+}
+
+.hide-seek__picture-hint-text {
+  margin: 0;
+  font-weight: 700;
+  font-size: clamp(0.95rem, 2.2vh, 1.1rem);
+  color: #1a2a33;
+}
+
+@keyframes hide-mission-pulse {
+  0% {
+    transform: scale(1);
+  }
+  45% {
+    transform: scale(1.03);
+    box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent) 35%, transparent);
+  }
+  100% {
+    transform: scale(1);
+  }
+}
+
+@keyframes hide-found {
+  0% {
+    transform: translate(-50%, -50%) scale(0.85);
+  }
+  45% {
+    transform: translate(-50%, -68%) scale(1.28);
+  }
+  100% {
+    transform: translate(-50%, -50%) scale(1.05);
+    opacity: 0.5;
+  }
+}
+
+@keyframes hide-wobble {
+  0%,
+  100% {
+    transform: translate(-50%, -50%) rotate(0deg);
+  }
+  25% {
+    transform: translate(-50%, -50%) rotate(-6deg);
+  }
+  75% {
+    transform: translate(-50%, -50%) rotate(6deg);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .hide-seek__target.is-hinting,
+  .hide-seek__target.is-found,
+  .hide-seek__picture-hint,
+  .hide-seek__mission.is-pulse {
+    animation: none;
+    transition: none;
+  }
+}
+
+.app-shell--quiet .hide-seek__target.is-hinting {
+  animation: none;
+  outline: 3px solid #f6e27a;
+}

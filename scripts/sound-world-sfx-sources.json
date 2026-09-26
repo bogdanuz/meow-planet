@@ -1,0 +1,162 @@
+{
+  "_comment": "CC0 / Pixabay → id карточки. URL только для bootstrap curl; Pixabay — файлы уже в public/.../sfx/",
+  "downloads": [
+    {
+      "id": "crow",
+      "file": "crow_caw.wav",
+      "url": "https://opengameart.org/sites/default/files/crow_caw.wav",
+      "license": "CC0",
+      "note": "воробей/птицы — временно для sparrow"
+    },
+    {
+      "id": "sparrow",
+      "file": "crow_caw.wav",
+      "url": "https://opengameart.org/sites/default/files/crow_caw.wav",
+      "license": "CC0"
+    },
+    {
+      "id": "cat",
+      "file": "cat.mp3",
+      "license": "Pixabay Content License",
+      "note": "dragon-studio #401729"
+    },
+    {
+      "id": "dog",
+      "file": "dog.mp3",
+      "license": "Pixabay Content License",
+      "note": "dragon-studio #419014 (замена OGA dog.wav)"
+    },
+    {
+      "id": "hen",
+      "file": "hen.mp3",
+      "license": "Pixabay Content License",
+      "note": "soumages #370337"
+    },
+    {
+      "id": "rooster",
+      "file": "rooster.mp3",
+      "license": "Pixabay Content License",
+      "note": "dragon-studio #364473"
+    },
+    {
+      "id": "duck",
+      "file": "duck.mp3",
+      "license": "Pixabay Content License",
+      "note": "iedurodrigues #112941"
+    },
+    {
+      "id": "goose",
+      "file": "goose.mp3",
+      "license": "Pixabay Content License",
+      "note": "jasonlee3071 #532228"
+    },
+    {
+      "id": "owl",
+      "file": "owl.mp3",
+      "license": "Pixabay Content License",
+      "note": "lazychillzone #223549"
+    },
+    {
+      "id": "seal",
+      "file": "seal.mp3",
+      "license": "Pixabay Content License",
+      "note": "seal.mp3 (Pixabay)"
+    },
+    {
+      "id": "wolf",
+      "file": "wolf.mp3",
+      "license": "Pixabay Content License",
+      "note": "freeeverythingxx #268619"
+    },
+    {
+      "id": "elephant",
+      "file": "elephant.mp3",
+      "license": "Pixabay Content License",
+      "note": "freesound_community #6047"
+    },
+    {
+      "id": "monkey",
+      "file": "monkey.mp3",
+      "license": "Pixabay Content License",
+      "note": "u_zpj3vbdres #128368"
+    },
+    {
+      "id": "ambulance",
+      "file": "ambulance.mp3",
+      "license": "Pixabay Content License",
+      "note": "u_xg7ssi08yr #363656"
+    },
+    {
+      "id": "police-car",
+      "file": "police-car.mp3",
+      "license": "Pixabay Content License",
+      "note": "cartoon_music #508704"
+    },
+    {
+      "id": "lion",
+      "file": "lion.mp3",
+      "license": "Pixabay Content License",
+      "note": "poorartistt #352860"
+    },
+    {
+      "id": "bear",
+      "file": "bear.mp3",
+      "license": "Pixabay Content License",
+      "note": "universfield #191995"
+    },
+    {
+      "id": "whale",
+      "file": "whale.mp3",
+      "license": "Pixabay Content License",
+      "note": "poorartistt #346774"
+    },
+    {
+      "id": "car",
+      "file": "car.mp3",
+      "license": "Pixabay Content License",
+      "note": "chrysalyn #537640 — обрезка в sfx-playback"
+    },
+    {
+      "id": "helicopter",
+      "file": "helicopter.mp3",
+      "license": "Pixabay Content License",
+      "note": "#241421"
+    },
+    {
+      "id": "drum",
+      "file": "drum.mp3",
+      "license": "Pixabay Content License",
+      "note": "soundreality #455452 loop → 2s"
+    },
+    {
+      "id": "tambourine",
+      "file": "tambourine.mp3",
+      "license": "Pixabay Content License",
+      "note": "freesound_community #84467"
+    },
+    {
+      "id": "maracas",
+      "file": "maracas.mp3",
+      "license": "Pixabay Content License",
+      "note": "alexis_gaming_cam #370388"
+    },
+    {
+      "id": "bell",
+      "file": "bell.mp3",
+      "license": "Pixabay Content License",
+      "note": "dragon-studio #390294"
+    },
+    {
+      "id": "piano",
+      "file": "piano.mp3",
+      "license": "Pixabay Content License",
+      "note": "freesound_community #69334 harp glissando (вместо zip piano)"
+    },
+    {
+      "id": "guitar",
+      "file": "guitar.mp3",
+      "license": "Pixabay Content License",
+      "note": "u_op8btczor7 #504874"
+    }
+  ]
+}
