@@ -55,6 +55,36 @@ export type AudioManager = {
   updateSettings: (settings: AudioSettingsSnapshot) => void
 }
 
+let backgroundStopAll: (() => void) | null = null
+let backgroundListenersInstalled = false
+
+function ensureBackgroundPauseListeners(): void {
+  if (backgroundListenersInstalled) return
+  if (typeof window === 'undefined' || typeof document === 'undefined') return
+
+  document.addEventListener('visibilitychange', () => {
+    if (document.hidden) backgroundStopAll?.()
+  })
+
+  window.addEventListener(
+    'pagehide',
+    () => {
+      backgroundStopAll?.()
+    },
+    { capture: true },
+  )
+
+  window.addEventListener(
+    'blur',
+    () => {
+      backgroundStopAll?.()
+    },
+    { capture: true },
+  )
+
+  backgroundListenersInstalled = true
+}
+
 function channelAllowed(
   channel: AudioChannel,
   settings: AudioSettingsSnapshot,
@@ -79,6 +109,7 @@ export function createAudioManager(
   },
 ): AudioManager {
   let settings = { ...initial }
+  ensureBackgroundPauseListeners()
   let unlocked = false
   let musicSession = 0
   let ctx: AudioContext | null = null
@@ -571,6 +602,16 @@ export function createAudioManager(
     }
     return true
   }
+
+  // iOS Safari / PWA: при уходе в background может продолжать играть звук.
+  // На скрытии экрана останавливаем активные каналы, чтобы избежать фонового аудио.
+  function stopAllSounds(): void {
+    stopSfx()
+    stopVoice()
+    stopMusic()
+  }
+
+  backgroundStopAll = stopAllSounds
 
   return {
     unlock,

@@ -1,7 +1,17 @@
 # CHANGELOG
 
 Формат версий — [Semantic Versioning](https://semver.org/) (MAJOR.MINOR.PATCH).
-Пока `0.y.z` — активная начальная разработка, обратная совместимость не гарантируется.
+
+## 0.16.2 — 2026-09-27 (второй релиз)
+
+- runtime-регистрация Service Worker без ручных диалогов (`registerType: autoUpdate`), с очисткой устаревших кэшей (`cleanupOutdatedCaches`).
+- precache ассетов для offline: JS/CSS/HTML + медиа/шрифты/JSON, загрузка ассетов до отображения welcome и корректное отображение статуса загрузки.
+- экраны-гейты: «Поверни планшет» (portrait) и «Планета Мяу ждёт тебя на планшете» (слишком маленькие экраны).
+- iPad background audio: остановка активного аудио при уходе в background (visibility/pagehide/blur).
+- iPad fullscreen: `apple-mobile-web-app-status-bar-style="black-translucent"` + safe-area/viewport правки для устранения обрезки.
+- загрузка: живой индикатор и согласованный текст.
+- оптимизация изображений в `public/assets` (без смены путей/расширений) — сокращение precache с ~68.8 MiB до ~59.9 MiB.
+- уборка/структура: `assets-master/` игнорируется, часть корневых legacy-файлов перенесена в существующие локальные директории; `CONTRIBUTING.md` и `SECURITY.md` удалены.
 
 ## 0.16.1 — 2026-09-26 (GitHub Pages: PWA-ready + актуальные кэши)
 

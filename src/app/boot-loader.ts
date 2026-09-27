@@ -35,7 +35,7 @@ export function mountBootLoader(container: HTMLElement): BootLoaderHandle {
 
   const message = document.createElement('p')
   message.className = 'boot-loader__message'
-  message.textContent = 'Готовим…'
+  message.textContent = 'Загрузка…'
 
   const track = document.createElement('div')
   track.className = 'boot-loader__track'

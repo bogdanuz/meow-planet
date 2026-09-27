@@ -339,7 +339,8 @@
   justify-content: center;
   gap: 1rem;
   background: rgb(20 30 40 / 55%);
-  padding: 1rem;
+  padding: max(1rem, env(safe-area-inset-top)) 1rem
+    max(1rem, env(safe-area-inset-bottom)) 1rem;
 }
 
 .puzzle-crop-modal__frame {
@@ -376,8 +377,8 @@
 
 .puzzle-adult-modal__close {
   position: absolute;
-  top: 0.35rem;
-  right: 0.35rem;
+  top: max(0.35rem, env(safe-area-inset-top));
+  right: max(0.35rem, env(safe-area-inset-right));
   font-size: 1.5rem;
   line-height: 1;
 }

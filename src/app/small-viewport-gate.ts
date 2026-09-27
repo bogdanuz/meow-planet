@@ -60,10 +60,13 @@ export function mountSmallViewportGate(host: HTMLElement): () => void {
     sync()
   }
 
+  const vv = window.visualViewport
   window.addEventListener('resize', onChange)
+  vv?.addEventListener('resize', onChange)
 
   return () => {
     window.removeEventListener('resize', onChange)
+    vv?.removeEventListener('resize', onChange)
     gate.remove()
     document.documentElement.classList.remove('is-small-screen-blocked')
     document.body.classList.remove('is-small-screen-blocked')

@@ -10,6 +10,7 @@ export function openPuzzleAdultModal(
   onSave: (next: PuzzleGameSettings) => void,
   onClearPhotos?: () => void,
 ): () => void {
+  void host
   let challenge: CaptchaChallenge = createMathCaptcha()
   const overlay = document.createElement('div')
   overlay.className = 'puzzle-adult-modal'
@@ -108,7 +109,9 @@ export function openPuzzleAdultModal(
   renderSettings()
   panel.append(closeBtn, gate, settingsBlock)
   overlay.append(panel)
-  host.append(overlay)
+  // iOS/PWA: fixed-оверлеи иногда клипятся внутренними контейнерами с overflow:hidden.
+  // Подвешиваем к body, чтобы overlay корректно занимал весь viewport.
+  document.body.append(overlay)
 
   return dispose
 }

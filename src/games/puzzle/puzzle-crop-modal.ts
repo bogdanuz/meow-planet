@@ -14,6 +14,7 @@ export function openPuzzleCropModal(
   host: HTMLElement,
   file: File,
 ): { done: Promise<PuzzleCropModalResult>; cancel: () => void } {
+  void host
   let cancel = (): void => {}
   const done = new Promise<PuzzleCropModalResult>((resolve) => {
     let disposed = false
@@ -47,7 +48,9 @@ export function openPuzzleCropModal(
 
     actions.append(cancelBtn, saveBtn)
     overlay.append(frame, actions)
-    host.append(overlay)
+    // iOS/PWA: fixed-оверлеи иногда клипятся ближайшими контейнерами с overflow:hidden.
+    // Подвешиваем к body, чтобы overlay корректно занимал весь viewport.
+    document.body.append(overlay)
 
     const ctx = canvas.getContext('2d')
     if (!ctx) {

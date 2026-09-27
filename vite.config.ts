@@ -52,7 +52,11 @@ export default defineConfig({
         ],
       },
       workbox: {
-        globPatterns: ['**/*.{js,css,html,svg,png,webp,jpg,jpeg,mp3,wav,ogg,woff2,ttf}'],
+        globPatterns: [
+          // Прекашируем всё, что реально используется в игре (включая ассеты из public/assets).
+          // Для offline-first нам важно покрыть не только JS/CSS/HTML, но и медиа/шрифты/JSON.
+          '**/*.{js,css,html,svg,png,webp,jpg,jpeg,mp3,wav,ogg,woff,woff2,ttf,json,txt,webmanifest}',
+        ],
         cleanupOutdatedCaches: true,
         maximumFileSizeToCacheInBytes: 6 * 1024 * 1024,
       },

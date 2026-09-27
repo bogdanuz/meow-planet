@@ -8,9 +8,18 @@
  */
 export const MIN_COMFORT_SHORT_SIDE_PX = 720
 
+function getViewportSize(): { width: number; height: number } {
+  if (typeof window === 'undefined') return { width: 0, height: 0 }
+  const vv = window.visualViewport
+  if (vv && typeof vv.width === 'number' && typeof vv.height === 'number') {
+    return { width: vv.width, height: vv.height }
+  }
+  return { width: window.innerWidth, height: window.innerHeight }
+}
+
 export function getShortSidePx(): number {
-  if (typeof window === 'undefined') return 0
-  return Math.min(window.innerWidth, window.innerHeight)
+  const { width, height } = getViewportSize()
+  return Math.min(width, height)
 }
 
 export function isSmallViewport(): boolean {

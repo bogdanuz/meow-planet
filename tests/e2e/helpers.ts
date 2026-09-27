@@ -11,6 +11,12 @@ export async function openMenu(page: Page): Promise<void> {
     .waitFor({ state: 'detached', timeout: 30000 })
     .catch(() => undefined)
   await expect(page.locator('.menu-grid')).toBeVisible({ timeout: 5000 })
+  // В отдельных прогонах menu-grid может появиться раньше, чем смонтируется кнопка
+  // «Настройки» (она абсолютная и может задержаться из-за очередей рендера/анимаций).
+  // Подождём её явно, чтобы тесты не ловили тайминговые гонки.
+  await expect(page.getByRole('button', { name: 'Настройки' })).toBeVisible({
+    timeout: 5000,
+  })
 }
 
 export async function openGame(

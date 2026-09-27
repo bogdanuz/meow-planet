@@ -12,7 +12,11 @@ export function isLandscape(): boolean {
       // jsdom / старые среды — fallback ниже
     }
   }
-  return window.innerWidth >= window.innerHeight
+  const vv = window.visualViewport
+  const width = vv && typeof vv.width === 'number' ? vv.width : window.innerWidth
+  const height =
+    vv && typeof vv.height === 'number' ? vv.height : window.innerHeight
+  return width >= height
 }
 
 export function mountOrientationGate(host: HTMLElement): () => void {
@@ -71,10 +75,13 @@ export function mountOrientationGate(host: HTMLElement): () => void {
     sync()
   }
   mq?.addEventListener('change', onChange)
+  const vv = window.visualViewport
+  vv?.addEventListener('resize', onChange)
   window.addEventListener('resize', onChange)
 
   return () => {
     mq?.removeEventListener('change', onChange)
+    vv?.removeEventListener('resize', onChange)
     window.removeEventListener('resize', onChange)
     gate.remove()
     document.documentElement.classList.remove('is-portrait-blocked')
