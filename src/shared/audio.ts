@@ -55,21 +55,34 @@ export type AudioManager = {
   updateSettings: (settings: AudioSettingsSnapshot) => void
 }
 
-let backgroundStopAll: (() => void) | null = null
+// На iPad разные игры могут создавать свои AudioManager-инстансы.
+// Фоновые обработчики должны останавливать ВСЕ активные инстансы,
+// а не только последний (иначе часть музыки может продолжить играть).
+const backgroundStopAllSet = new Set<() => void>()
 let backgroundListenersInstalled = false
+
+function stopAllBackgroundSounds(): void {
+  for (const stop of backgroundStopAllSet) {
+    try {
+      stop()
+    } catch {
+      // ignore
+    }
+  }
+}
 
 function ensureBackgroundPauseListeners(): void {
   if (backgroundListenersInstalled) return
   if (typeof window === 'undefined' || typeof document === 'undefined') return
 
   document.addEventListener('visibilitychange', () => {
-    if (document.hidden) backgroundStopAll?.()
+    if (document.hidden) stopAllBackgroundSounds()
   })
 
   window.addEventListener(
     'pagehide',
     () => {
-      backgroundStopAll?.()
+      stopAllBackgroundSounds()
     },
     { capture: true },
   )
@@ -77,7 +90,7 @@ function ensureBackgroundPauseListeners(): void {
   window.addEventListener(
     'blur',
     () => {
-      backgroundStopAll?.()
+      stopAllBackgroundSounds()
     },
     { capture: true },
   )
@@ -611,7 +624,7 @@ export function createAudioManager(
     stopMusic()
   }
 
-  backgroundStopAll = stopAllSounds
+  backgroundStopAllSet.add(stopAllSounds)
 
   return {
     unlock,

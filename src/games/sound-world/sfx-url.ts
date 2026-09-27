@@ -5,9 +5,13 @@ export function sfxAssetBaseUrl(): string {
   return `${base}assets/games/sound-world/sfx/`
 }
 
-/** Кириллица в letter-ru-* и пробелы в id — только encode базового имени. */
+/**
+ * Workbox precache (`dist/sw.js`) матчится по URL-строке с "живыми" unicode-именами файлов.
+ * Поэтому в runtime-URL нельзя делать percent-encoding (например `%D0%90` вместо `А`) — иначе
+ * Service Worker не найдёт ключ в Cache Storage.
+ */
 export function buildSfxFileUrl(sfxBase: string, ext: (typeof EXTENSIONS)[number]): string {
-  return `${sfxAssetBaseUrl()}${encodeURIComponent(sfxBase)}.${ext}`
+  return `${sfxAssetBaseUrl()}${sfxBase}.${ext}`
 }
 
 export function isAudioContentType(contentType: string | null): boolean {

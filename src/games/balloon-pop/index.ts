@@ -121,10 +121,13 @@ export const balloonPopGame: GameModule = {
       message: string,
       event: BalloonMeowEvent = 'idle',
       speechTask: BalloonTask | null = null,
+      options?: { playVoice?: boolean },
     ): void {
       fillSpeechElement(meowSpeech, message, taskSpeechColor(speechTask ?? task))
       const voiceFile = balloonVoiceFileForLine(message)
-      if (voiceFile) void audio.playUrl('voice', balloonVoiceUrl(voiceFile), { volume: 0.86 })
+      if (options?.playVoice !== false && voiceFile) {
+        void audio.playUrl('voice', balloonVoiceUrl(voiceFile), { volume: 0.86 })
+      }
       const pose = balloonMeowPoseForEvent(event)
       meowImg.src = meowPresenterUrl(pose)
       meowImg.classList.toggle('meow-idle', pose === 'idle')
@@ -251,12 +254,15 @@ export const balloonPopGame: GameModule = {
     }
 
     function enterFreeMode(message?: string): void {
+      const alreadyFree = task.type === 'none'
       cancelHeldRespawn()
       taskSessionEngaged = false
       resetSoftErrorChain(taskChain)
       clearTaskHighlights()
       loadField({ type: 'none' })
-      setMeowLine(message ?? hintForTask({ type: 'none' }))
+      setMeowLine(message ?? hintForTask({ type: 'none' }), 'idle', null, {
+        playVoice: !alreadyFree,
+      })
     }
 
     freeBtn.addEventListener('click', () => enterFreeMode())

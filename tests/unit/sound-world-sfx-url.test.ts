@@ -6,9 +6,10 @@ import {
 } from '../../src/games/sound-world/sfx-url'
 
 describe('sound-world sfx url', () => {
-  it('кодирует кириллицу в letter-ru', () => {
+  it('не делает percent-encoding для letter-ru', () => {
     const url = buildSfxFileUrl('letter-ru-А', 'wav')
-    expect(url).toContain('letter-ru-%D0%90.wav')
+    expect(url).toContain('letter-ru-А.wav')
+    expect(url).not.toContain('letter-ru-%D0%90.wav')
   })
 
   it('отсекает SPA fallback text/html при HEAD', () => {

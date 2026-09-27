@@ -2,7 +2,6 @@ import path from 'node:path'
 import sharp from 'sharp'
 import { describe, expect, it } from 'vitest'
 import {
-  BALLOON_ASSET_VERSION,
   balloonMeowPoseForEvent,
   balloonPngUrl,
   balloonSkyUrl,
@@ -32,7 +31,7 @@ async function countStringNearWhite(color: string): Promise<number> {
 describe('balloon-pop assets', () => {
   it('небо и 5 цветов шариков — публичные PNG/WebP', () => {
     expect(balloonSkyUrl()).toContain('balloon-sky-bg.webp')
-    expect(balloonSkyUrl()).toContain(`v=${BALLOON_ASSET_VERSION}`)
+    expect(balloonSkyUrl()).not.toContain('?v=')
     for (const color of BALLOON_FIELD_COLORS) {
       expect(balloonPngUrl(color)).toContain(`balloon-${color}.png`)
     }

@@ -1,7 +1,7 @@
 import type { BalloonFieldColor } from './logic'
 
-/** Cache-bust при замене мастеров в assets-master/games/balloon-pop/. */
-export const BALLOON_ASSET_VERSION = '3'
+// Workbox precache в `dist/sw.js` матчится по URL без query-параметров.
+// Поэтому в рантайм не добавляем `?v=...`, чтобы офлайн-режим не ломался.
 
 export type BalloonMeowPose = 'idle' | 'happy' | 'miss'
 
@@ -9,7 +9,7 @@ export type BalloonMeowEvent = 'idle' | 'praise' | 'task' | 'miss'
 
 function publicUrl(file: string): string {
   const base = import.meta.env.BASE_URL ?? '/'
-  return `${base}assets/games/balloon-pop/${file}?v=${BALLOON_ASSET_VERSION}`
+  return `${base}assets/games/balloon-pop/${file}`
 }
 
 export function balloonSkyUrl(): string {

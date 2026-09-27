@@ -55,7 +55,7 @@ export function renderWelcomeScreen(
   const playArt = document.createElement('img')
   playArt.className = 'welcome__play-art'
   playArt.alt = ''
-  playArt.src = `${import.meta.env.BASE_URL}assets/shell/welcome-play.png?v=2`
+  playArt.src = `${import.meta.env.BASE_URL}assets/shell/welcome-play.png`
   const playShine = document.createElement('span')
   playShine.className = 'welcome__play-shine'
   playShine.setAttribute('aria-hidden', 'true')
@@ -68,7 +68,7 @@ export function renderWelcomeScreen(
   const meow = document.createElement('img')
   meow.className = 'welcome__meow'
   meow.alt = ''
-  meow.src = `${import.meta.env.BASE_URL}assets/shell/welcome-meow.png?v=2`
+  meow.src = `${import.meta.env.BASE_URL}assets/shell/welcome-meow.png`
   const meowShadow = document.createElement('span')
   meowShadow.className = 'welcome__meow-shadow'
   meowShadow.setAttribute('aria-hidden', 'true')

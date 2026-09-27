@@ -3,7 +3,6 @@ import path from 'node:path'
 import { describe, expect, it } from 'vitest'
 import { SOUND_WORLD_ENABLED_IDS } from './enabled-ids'
 import {
-  SOUND_WORLD_ASSET_VERSION,
   cardArtUrl,
   instrumentPlayUrl,
   letterArtFileName,
@@ -15,7 +14,7 @@ const ROOT = path.join('public', 'assets', 'games', 'sound-world')
 describe('sound-world card art', () => {
   it('карточки и экраны инструментов ведут в public PNG', () => {
     expect(cardArtUrl('cat')).toContain('cards/cat.png')
-    expect(cardArtUrl('cat')).toContain(`v=${SOUND_WORLD_ASSET_VERSION}`)
+    expect(cardArtUrl('cat')).not.toContain('?v=')
     expect(instrumentPlayUrl('drum')).toContain('play/drum.png')
     expect(letterArtFileName('ru-А')).toBe('ru-01.png')
     expect(letterArtFileName('ru-Я')).toBe('ru-33.png')

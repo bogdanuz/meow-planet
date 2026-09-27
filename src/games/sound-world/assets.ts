@@ -1,11 +1,11 @@
-/** Cache-bust при замене мастеров в assets-master/games/sound-world/. */
-export const SOUND_WORLD_ASSET_VERSION = '6'
+// Workbox precache в `dist/sw.js` матчится по URL без query-параметров.
+// Поэтому в рантайм не добавляем `?v=...`, чтобы офлайн-режим не ломался.
 
 const RU_ORDER = 'АБВГДЕЁЖЗИЙКЛМНОПРСТУФХЦЧШЩЪЫЬЭЮЯ'
 
 function publicUrl(file: string): string {
   const base = import.meta.env.BASE_URL ?? '/'
-  return `${base}assets/games/sound-world/${file}?v=${SOUND_WORLD_ASSET_VERSION}`
+  return `${base}assets/games/sound-world/${file}`
 }
 
 export function cardArtUrl(id: string): string {

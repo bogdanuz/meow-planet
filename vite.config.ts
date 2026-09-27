@@ -58,7 +58,9 @@ export default defineConfig({
           '**/*.{js,css,html,svg,png,webp,jpg,jpeg,mp3,wav,ogg,woff,woff2,ttf,json,txt,webmanifest}',
         ],
         cleanupOutdatedCaches: true,
-        maximumFileSizeToCacheInBytes: 6 * 1024 * 1024,
+        // Offline-режим для игровых ассетов без исключений по размеру.
+        // Ставим заведомо большой лимит вместо текущего 6 МБ.
+        maximumFileSizeToCacheInBytes: 1024 * 1024 * 1024,
       },
       devOptions: {
         enabled: false,

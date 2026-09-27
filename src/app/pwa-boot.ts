@@ -1,5 +1,3 @@
-import { BOOT_ASSET_PATHS } from './boot-assets'
-
 export type BootProgress = {
   percent: number
   message: string
@@ -50,14 +48,105 @@ async function maybeRegisterServiceWorker(): Promise<boolean> {
   }
 }
 
+type PrecacheManifest = {
+  manifestHash: string
+  /** URL как в `dist/sw.js` precache-maniFest: обычно относительные без base и без query. */
+  urlsRel: string[]
+  /** Абсолютные URL для `fetch()` и `CacheStorage.match()`. */
+  urlsAbs: string[]
+}
+
+function fnv1aHash(input: string): string {
+  let hash = 0x811c9dc5
+  for (let i = 0; i < input.length; i += 1) {
+    hash ^= input.charCodeAt(i)
+    hash = Math.imul(hash, 0x01000193)
+  }
+  return (hash >>> 0).toString(16)
+}
+
+function extractPrecacheUrlsFromServiceWorkerText(swText: string): string[] {
+  const start = swText.indexOf('precacheAndRoute([')
+  if (start < 0) throw new Error('precacheAndRoute block not found')
+
+  // В minified Workbox это выглядит примерно как:
+  // precacheAndRoute([{...},{...}],{})
+  const end = swText.indexOf('],{}', start)
+  if (end < 0) throw new Error('precacheAndRoute end not found')
+
+  const block = swText.slice(start, end)
+  const key = 'url:"'
+  const urls: string[] = []
+
+  let pos = 0
+  while (true) {
+    const idx = block.indexOf(key, pos)
+    if (idx < 0) break
+    const urlStart = idx + key.length
+    const urlEnd = block.indexOf('"', urlStart)
+    if (urlEnd < 0) break
+    urls.push(block.slice(urlStart, urlEnd))
+    pos = urlEnd + 1
+  }
+
+  // В precacheAndRoute встречаются дубли url (один и тот же URL может
+  // встречаться несколько раз из-за особенностей генерации Workbox).
+  // Для readiness-check важно сверяться именно с количеством записей в
+  // текущем `dist/sw.js`, поэтому дедупликацию не делаем.
+  if (urls.length === 0) throw new Error('No precache urls extracted')
+  return urls
+}
+
+const MANIFEST_CACHE_KEY = 'meow-precache-manifest-v1'
+const READY_MARKER_PREFIX = 'meow-precache-ready-'
+
+function safeLocalStorageGet(key: string): string | null {
+  try {
+    if (typeof localStorage === 'undefined') return null
+    return localStorage.getItem(key)
+  } catch {
+    return null
+  }
+}
+
+function safeLocalStorageSet(key: string, value: string): void {
+  try {
+    if (typeof localStorage === 'undefined') return
+    localStorage.setItem(key, value)
+  } catch {
+    // ignore
+  }
+}
+
+async function getExpectedPrecacheManifest(): Promise<PrecacheManifest> {
+  const base = import.meta.env.BASE_URL ?? '/'
+  const baseUrl = new URL(base, window.location.origin)
+  const swUrl = new URL('sw.js', baseUrl).toString()
+
+  // 1) Пытаемся прочитать текущий sw.js: список ожиданий должен соответствовать этой сборке.
+  try {
+    const resp = await fetch(swUrl, { cache: 'force-cache' })
+    if (!resp.ok) throw new Error('sw fetch failed')
+    const swText = await resp.text()
+    const manifestHash = fnv1aHash(swText)
+    const urlsRel = extractPrecacheUrlsFromServiceWorkerText(swText)
+    const urlsAbs = urlsRel.map((u) => new URL(u, baseUrl).toString())
+    safeLocalStorageSet(MANIFEST_CACHE_KEY, JSON.stringify({ manifestHash, urlsRel }))
+    return { manifestHash, urlsRel, urlsAbs }
+  } catch {
+    // 2) Offline fallback: берём ранее закешированный список ожиданий.
+    const raw = safeLocalStorageGet(MANIFEST_CACHE_KEY)
+    if (!raw) throw new Error('No cached precache manifest')
+    const parsed = JSON.parse(raw) as { manifestHash: string; urlsRel: string[] }
+    const urlsAbs = parsed.urlsRel.map((u) => new URL(u, baseUrl).toString())
+    return { manifestHash: parsed.manifestHash, urlsRel: parsed.urlsRel, urlsAbs }
+  }
+}
+
 export async function runBootSequence(
   report: (progress: BootProgress) => void,
 ): Promise<BootResult> {
   report({ percent: 0, message: 'Загрузка…' })
-
-  const base = import.meta.env.BASE_URL ?? '/'
-  const urls = BOOT_ASSET_PATHS.map((path) => `${base}${path}`)
-  const urlsAbs = urls.map((u) => new URL(u, window.location.origin).toString())
 
   const isAutomation =
     typeof navigator !== 'undefined' && typeof navigator.webdriver === 'boolean'
@@ -72,13 +161,44 @@ export async function runBootSequence(
     return { ok: true }
   }
 
-  // Для реального пользователя (iPad) важно дождаться полной готовности офлайна.
-  // Для Playwright мы выходим раньше через fast-path выше.
-  const warmCheckSample = urlsAbs
-  if (await isPrecacacheWarm(warmCheckSample)) {
+  let manifest: PrecacheManifest
+  try {
+    manifest = await getExpectedPrecacheManifest()
+  } catch {
+    return {
+      ok: false,
+      errorMessage:
+        'Не удалось подготовить офлайн-режим. Проверьте интернет и попробуйте ещё раз',
+    }
+  }
+
+  const { manifestHash, urlsAbs } = manifest
+  const readyMarkerKey = `${READY_MARKER_PREFIX}${manifestHash}`
+
+  // Быстрый повторный запуск: если уже подтверждали полный набор для этой сборки,
+  // не повторяем долгую проверку всех URL.
+  const previouslyConfirmed = safeLocalStorageGet(readyMarkerKey) === '1'
+  if (previouslyConfirmed) {
+    // Sentinel нужен только как быстрый “признак”, поэтому берём
+    // уникальные URL, чтобы не попасть на дубли и случайно пропустить
+    // отсутствие части ассетов.
+    const uniqueUrlsAbs = [...new Set(urlsAbs)]
+    const sentinel = uniqueUrlsAbs.slice(0, 10)
+    if (await isPrecacacheWarm(sentinel)) {
+      report({ percent: 100, message: 'Готово!' })
+      const swReadyOk = await maybeRegisterServiceWorker()
+      if (swReadyOk) return { ok: true }
+    }
+  }
+
+  // Полная валидация Cache Storage по фактическому precache-листу.
+  if (await isPrecacacheWarm(urlsAbs)) {
     report({ percent: 100, message: 'Готово!' })
     const swReadyOk = await maybeRegisterServiceWorker()
-    if (swReadyOk) return { ok: true }
+    if (swReadyOk) {
+      safeLocalStorageSet(readyMarkerKey, '1')
+      return { ok: true }
+    }
   }
 
   // “Мегабайты из UI” не показываем как byte-perfect (они требуют отдельного подхода).
@@ -106,9 +226,7 @@ export async function runBootSequence(
   // Контроль: precache должен реально появиться в Cache Storage.
   // Workbox может поставить `serviceWorker.ready` ещё до окончания precache,
   // поэтому ждём bounded-поллинг. Это важно для e2e (таймаут 30с).
-  const afterWarm = isAutomation
-    ? true
-    : await waitForPrecacheWarm(warmCheckSample, 25_000, 250)
+  const afterWarm = await waitForPrecacheWarm(urlsAbs, 60_000, 250)
   if (!afterWarm) {
     return {
       ok: false,
@@ -117,6 +235,7 @@ export async function runBootSequence(
     }
   }
 
+  safeLocalStorageSet(readyMarkerKey, '1')
   report({ percent: 100, message: 'Готово!' })
   return { ok: true }
 }

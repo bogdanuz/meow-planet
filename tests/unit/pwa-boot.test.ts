@@ -5,6 +5,13 @@ import path from 'node:path'
 
 describe('runBootSequence', () => {
   it('стартует с 0 и доходит до 100, когда ресурсы загрузились', async () => {
+    const prevWebDriver = (navigator as any).webdriver
+    try {
+      Object.defineProperty(navigator, 'webdriver', { value: true, configurable: true })
+    } catch {
+      // ignore: в jsdom webdriver может быть уже определён или не переопределяться
+    }
+
     vi.resetModules()
     vi.doMock('../../src/app/boot-assets', () => ({
       BOOT_ASSET_PATHS: [
@@ -66,6 +73,20 @@ describe('runBootSequence', () => {
 
     vi.unstubAllGlobals()
     vi.resetModules()
+
+    try {
+      if (prevWebDriver === undefined) {
+        // eslint-disable-next-line @typescript-eslint/no-dynamic-delete
+        delete (navigator as any).webdriver
+      } else {
+        Object.defineProperty(navigator, 'webdriver', {
+          value: prevWebDriver,
+          configurable: true,
+        })
+      }
+    } catch {
+      // ignore
+    }
   })
 
   it('список boot содержит файлы готовых игр', () => {

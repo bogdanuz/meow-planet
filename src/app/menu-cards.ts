@@ -1,14 +1,14 @@
-/** Cache-bust при замене мастер-JPEG в assets-master/menu/. */
-export const MENU_CARD_ASSET_VERSION = '7'
+// Workbox precache в `dist/sw.js` матчится по URL без query-параметров.
+// Поэтому в рантайм не добавляем `?v=...`, чтобы офлайн-режим не ломался.
 
 export function menuCardPngUrl(gameId: string): string {
   const base = import.meta.env.BASE_URL ?? '/'
-  return `${base}assets/menu/card-${gameId}.png?v=${MENU_CARD_ASSET_VERSION}`
+  return `${base}assets/menu/card-${gameId}.png`
 }
 
 export function menuVisitBedPngUrl(): string {
   const base = import.meta.env.BASE_URL ?? '/'
-  return `${base}assets/menu/menu-visit-bed.png?v=${MENU_CARD_ASSET_VERSION}`
+  return `${base}assets/menu/menu-visit-bed.png`
 }
 
 /** Один проход: наклон влево, радость, наклон вправо и обратно к лёгкому наклону. */
@@ -19,7 +19,7 @@ const DANCES_ON_ENTER = 2
 export function menuMeowDanceFrameUrl(frame: number): string {
   const base = import.meta.env.BASE_URL ?? '/'
   const id = String(frame).padStart(2, '0')
-  return `${base}assets/mascot/menu-dance/frame_${id}.png?v=${MENU_CARD_ASSET_VERSION}`
+  return `${base}assets/mascot/menu-dance/frame_${id}.png`
 }
 
 function wait(ms: number): Promise<void> {
