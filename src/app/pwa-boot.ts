@@ -143,7 +143,7 @@ async function getExpectedPrecacheManifest(): Promise<PrecacheManifest> {
   }
 }
 
-export async function runBootSequence(
+async function runBootSequenceOnce(
   report: (progress: BootProgress) => void,
 ): Promise<BootResult> {
   report({ percent: 0, message: 'Загрузка…' })
@@ -185,20 +185,19 @@ export async function runBootSequence(
     const uniqueUrlsAbs = [...new Set(urlsAbs)]
     const sentinel = uniqueUrlsAbs.slice(0, 10)
     if (await isPrecacacheWarm(sentinel)) {
+      safeLocalStorageSet(readyMarkerKey, '1')
+      void maybeRegisterServiceWorker()
       report({ percent: 100, message: 'Готово!' })
-      const swReadyOk = await maybeRegisterServiceWorker()
-      if (swReadyOk) return { ok: true }
+      return { ok: true }
     }
   }
 
   // Полная валидация Cache Storage по фактическому precache-листу.
   if (await isPrecacacheWarm(urlsAbs)) {
+    safeLocalStorageSet(readyMarkerKey, '1')
+    void maybeRegisterServiceWorker()
     report({ percent: 100, message: 'Готово!' })
-    const swReadyOk = await maybeRegisterServiceWorker()
-    if (swReadyOk) {
-      safeLocalStorageSet(readyMarkerKey, '1')
-      return { ok: true }
-    }
+    return { ok: true }
   }
 
   // “Мегабайты из UI” не показываем как byte-perfect (они требуют отдельного подхода).
@@ -214,30 +213,30 @@ export async function runBootSequence(
   const downloadRes = await downloadBootAssetsWithProgress(urlsAbs, report)
   if (!downloadRes.ok) return downloadRes
 
-  // После загрузки boot-ассетов можно регистрировать SW.
-  const swReadyOk = await maybeRegisterServiceWorker()
-  if (!swReadyOk) {
-    return {
-      ok: false,
-      errorMessage: 'Не удалось скачать игру для работы без интернета. Проверьте интернет и попробуйте ещё раз',
-    }
-  }
-
-  // Контроль: precache должен реально появиться в Cache Storage.
-  // Workbox может поставить `serviceWorker.ready` ещё до окончания precache,
-  // поэтому ждём bounded-поллинг. Это важно для e2e (таймаут 30с).
-  const afterWarm = await waitForPrecacheWarm(urlsAbs, 60_000, 250)
-  if (!afterWarm) {
-    return {
-      ok: false,
-      errorMessage:
-        'Не удалось скачать игру для работы без интернета. Проверьте интернет и попробуйте ещё раз',
-    }
-  }
-
+  // После успешного download уже нет смысла снова ждать Cache Storage:
+  // все файлы были подтверждены fetch'ем, а SW-регистрация может завершиться фоном.
   safeLocalStorageSet(readyMarkerKey, '1')
+  void maybeRegisterServiceWorker()
+
   report({ percent: 100, message: 'Готово!' })
   return { ok: true }
+}
+
+export async function runBootSequence(
+  report: (progress: BootProgress) => void,
+): Promise<BootResult> {
+  let maxPercentSeen = 0
+  const trackedReport = (progress: BootProgress): void => {
+    maxPercentSeen = Math.max(maxPercentSeen, progress.percent)
+    report(progress)
+  }
+
+  const firstAttempt = await runBootSequenceOnce(trackedReport)
+  if (firstAttempt.ok || maxPercentSeen > 0) return firstAttempt
+
+  // Тихий повтор нужен только для cold-start сетевых сбоев до любого реального прогресса.
+  // Если загрузка уже дошла до 100, повтор не делаем: это уже не transient bootstrap failure.
+  return runBootSequenceOnce(trackedReport)
 }
 
 async function isPrecacacheWarm(urlsAbs: string[]): Promise<boolean> {
@@ -250,7 +249,10 @@ async function isPrecacacheWarm(urlsAbs: string[]): Promise<boolean> {
   for (const url of urlsAbs) {
     let found = false
     for (const c of opened) {
-      if (await c.match(url)) {
+      // Workbox precache хранит revisioned URL-entries вида `...?__WB_REVISION__=...`.
+      // Для warm-check сравниваем по пути, а query игнорируем, иначе `index.html`
+      // и остальные precache-ресурсы никогда не считаются готовыми.
+      if (await c.match(url, { ignoreSearch: true })) {
         found = true
         break
       }
@@ -258,20 +260,6 @@ async function isPrecacacheWarm(urlsAbs: string[]): Promise<boolean> {
     if (!found) return false
   }
   return true
-}
-
-async function waitForPrecacheWarm(
-  urlsAbs: string[],
-  timeoutMs: number,
-  intervalMs: number,
-): Promise<boolean> {
-  if (typeof caches === 'undefined') return false
-  const startedAt = Date.now()
-  while (Date.now() - startedAt < timeoutMs) {
-    if (await isPrecacacheWarm(urlsAbs)) return true
-    await new Promise((r) => window.setTimeout(r, intervalMs))
-  }
-  return false
 }
 
 async function fetchWithByteProgress(

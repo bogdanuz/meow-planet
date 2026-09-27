@@ -15,6 +15,7 @@
 .app-shell--welcome {
   grid-template-rows: 1fr;
   padding: 0;
+  background: #b7dd8a;
 }
 
 .app-shell--welcome .chrome,
@@ -29,6 +30,18 @@
   max-height: 100dvh;
   overflow: hidden;
   padding: 0;
+  background: #f4efe6;
+}
+
+.app-shell--balloon-game,
+.app-shell--sort-colors,
+.app-shell--hide-seek,
+.app-shell--seasons,
+.app-shell--meow-home,
+.app-shell--counting,
+.app-shell--shape-build,
+.app-shell--puzzle {
+  background: #e8f4fc;
 }
 
 .app-shell--menu .chrome,
@@ -589,8 +602,7 @@
   position: relative;
   display: grid;
   place-items: center;
-  height: 100dvh;
-  max-height: 100dvh;
+  min-height: calc(100dvh + env(safe-area-inset-bottom));
   margin: 0;
   padding: max(0.75rem, env(safe-area-inset-top)) 1.5rem
     max(1rem, env(safe-area-inset-bottom));
@@ -1780,7 +1792,7 @@ body.is-small-screen-blocked #app {
 
 .boot-loader {
   position: fixed;
-  inset: 0;
+  inset: 0 0 calc(-1 * env(safe-area-inset-bottom)) 0;
   z-index: 9999;
   display: grid;
   place-items: center;

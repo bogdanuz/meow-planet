@@ -34,6 +34,49 @@ body,
   overscroll-behavior: none;
 }
 
+html:has(.boot-loader),
+body:has(.boot-loader) {
+  background: color-mix(in srgb, var(--accent) 35%, var(--bg) 65%);
+}
+
+html:has(.app-shell--welcome),
+body:has(.app-shell--welcome) {
+  background: #b7dd8a;
+}
+
+html:has(.app-shell--menu),
+body:has(.app-shell--menu) {
+  background: #f4efe6;
+}
+
+html:has(.app-shell--sound-world),
+body:has(.app-shell--sound-world),
+html:has(.app-shell--balloon-game),
+body:has(.app-shell--balloon-game),
+html:has(.app-shell--sort-colors),
+body:has(.app-shell--sort-colors),
+html:has(.app-shell--hide-seek),
+body:has(.app-shell--hide-seek),
+html:has(.app-shell--seasons),
+body:has(.app-shell--seasons),
+html:has(.app-shell--meow-home),
+body:has(.app-shell--meow-home),
+html:has(.app-shell--counting),
+body:has(.app-shell--counting),
+html:has(.app-shell--shape-build),
+body:has(.app-shell--shape-build),
+html:has(.app-shell--puzzle),
+body:has(.app-shell--puzzle) {
+  background: #e8f4fc;
+}
+
+html:has(.app-shell--parent),
+body:has(.app-shell--parent),
+html:has(.app-shell--coming-soon),
+body:has(.app-shell--coming-soon) {
+  background: #f7fbff;
+}
+
 button {
   font: inherit;
 }
