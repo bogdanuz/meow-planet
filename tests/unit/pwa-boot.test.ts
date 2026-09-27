@@ -1,347 +1,139 @@
-import { afterEach, describe, expect, it, vi } from 'vitest'
-import { BOOT_ASSET_PATHS } from '../../src/app/boot-assets'
+﻿import { afterEach, describe, expect, it, vi } from 'vitest'
 import { existsSync } from 'node:fs'
 import path from 'node:path'
+import { BOOT_ASSET_PATHS } from '../../src/app/boot-assets'
+
+function mockPwaRegister(): void {
+  vi.doMock('virtual:pwa-register', () => ({
+    registerSW: vi.fn((options?: { onOfflineReady?: () => void }) => {
+      options?.onOfflineReady?.()
+      return () => {}
+    }),
+  }))
+}
+
+function defineNavigatorProperty(name: 'webdriver' | 'serviceWorker', value: unknown): void {
+  Object.defineProperty(navigator, name, {
+    value,
+    configurable: true,
+  })
+}
+
+afterEach(() => {
+  vi.unstubAllGlobals()
+  vi.resetModules()
+  globalThis.localStorage?.clear?.()
+
+  try {
+    // eslint-disable-next-line @typescript-eslint/no-dynamic-delete
+    delete (navigator as any).webdriver
+  } catch {
+    // ignore
+  }
+
+  try {
+    // eslint-disable-next-line @typescript-eslint/no-dynamic-delete
+    delete (navigator as any).serviceWorker
+  } catch {
+    // ignore
+  }
+})
 
 describe('runBootSequence', () => {
-  afterEach(() => {
-    try {
-      localStorage.clear()
-    } catch {
-      // ignore
-    }
-  })
+  it('не блокирует update-path, если уже есть активный controller', async () => {
+    defineNavigatorProperty('webdriver', false)
+    defineNavigatorProperty('serviceWorker', {
+      controller: {},
+      ready: Promise.resolve(),
+    })
+    mockPwaRegister()
+    const fetchMock = vi.fn()
+    vi.stubGlobal('fetch', fetchMock)
 
-  it('стартует с 0 и доходит до 100, когда ресурсы загрузились', async () => {
-    const prevWebDriver = (navigator as any).webdriver
-    try {
-      Object.defineProperty(navigator, 'webdriver', { value: true, configurable: true })
-    } catch {
-      // ignore: в jsdom webdriver может быть уже определён или не переопределяться
-    }
-
-    vi.resetModules()
-    vi.doMock('../../src/app/boot-assets', () => ({
-      BOOT_ASSET_PATHS: [
-        'assets/shell/coming-soon.jpg',
-        'assets/shell/menu-bg.webp',
-      ] as const,
-    }))
-
-    vi.stubGlobal(
-      'fetch',
-      vi.fn().mockImplementation(
-        async (_url: string, opts?: { method?: string }) => {
-          const method = opts?.method?.toUpperCase() ?? 'GET'
-          const contentLength = 1024
-
-          if (method === 'HEAD') {
-            return {
-              ok: true,
-              headers: {
-                get: (name: string) =>
-                  name.toLowerCase() === 'content-length'
-                    ? String(contentLength)
-                    : null,
-              },
-            }
-          }
-
-          let done = false
-          const reader = {
-            read: async () => {
-              if (done) return { done: true, value: undefined }
-              done = true
-              return {
-                done: false,
-                value: new Uint8Array(contentLength),
-              }
-            },
-          }
-
-          return {
-            ok: true,
-            body: {
-              getReader: () => reader,
-            },
-            headers: { get: () => null },
-            blob: async () =>
-              new Blob([new Uint8Array(contentLength)]),
-          }
-        },
-      ),
-    )
-
-    const { runBootSequence } = await import('../../src/app/pwa-boot')
-
-    const steps: number[] = []
-    await runBootSequence(({ percent }) => steps.push(percent))
-    expect(steps[0]).toBe(0)
-    expect(steps.at(-1)).toBe(100)
-
-    vi.unstubAllGlobals()
-    vi.resetModules()
-
-    try {
-      if (prevWebDriver === undefined) {
-        // eslint-disable-next-line @typescript-eslint/no-dynamic-delete
-        delete (navigator as any).webdriver
-      } else {
-        Object.defineProperty(navigator, 'webdriver', {
-          value: prevWebDriver,
-          configurable: true,
-        })
-      }
-    } catch {
-      // ignore
-    }
-  })
-
-  it('не скачивает ассеты заново, если precache уже тёплый', async () => {
-    const prevWebDriver = (navigator as any).webdriver
-    try {
-      Object.defineProperty(navigator, 'webdriver', { value: false, configurable: true })
-    } catch {
-      // ignore
-    }
-
-    vi.resetModules()
     vi.doMock('../../src/app/boot-assets', () => ({
       BOOT_ASSET_PATHS: ['assets/shell/menu-bg.webp'] as const,
     }))
 
-    const swText =
-      'self.__WB_MANIFEST;precacheAndRoute([{url:"assets/shell/menu-bg.webp",revision:"abc"}],{})'
-    let downloaded = false
-    const fetchMock = vi.fn(async (url: string) => {
-      if (url.endsWith('/sw.js')) {
-        return {
-          ok: true,
-          text: async (): Promise<string> => swText,
-          headers: { get: (): string | null => null },
-        }
-      }
-
-      downloaded = true
-      return {
-        ok: true,
-        headers: { get: (): string | null => null },
-      }
-    })
-
-    vi.stubGlobal('fetch', fetchMock)
-    vi.stubGlobal('caches', {
-      keys: vi.fn(async () => ['workbox-precache-v2-http://localhost/']),
-      open: vi.fn(async () => ({
-        match: vi.fn(async (_request: string, options?: { ignoreSearch?: boolean }) =>
-          options?.ignoreSearch ? {} : downloaded ? {} : null,
-        ),
-      })),
-    })
-
-    try {
-      Object.defineProperty(navigator, 'serviceWorker', {
-        value: { ready: new Promise<void>(() => {}) },
-        configurable: true,
-      })
-    } catch {
-      // ignore
-    }
-
     const { runBootSequence } = await import('../../src/app/pwa-boot')
-
     const steps: number[] = []
+
     const result = await runBootSequence(({ percent }) => steps.push(percent))
 
     expect(result).toEqual({ ok: true })
-    expect(fetchMock).toHaveBeenCalledTimes(1)
+    expect(steps[0]).toBe(0)
     expect(steps.at(-1)).toBe(100)
-
-    vi.unstubAllGlobals()
-    vi.resetModules()
-
-    try {
-      if (prevWebDriver === undefined) {
-        // eslint-disable-next-line @typescript-eslint/no-dynamic-delete
-        delete (navigator as any).webdriver
-      } else {
-        Object.defineProperty(navigator, 'webdriver', {
-          value: prevWebDriver,
-          configurable: true,
-        })
-      }
-    } catch {
-      // ignore
-    }
+    expect(fetchMock).not.toHaveBeenCalled()
   })
 
   it('тихо повторяет cold-start ошибку до 0% один раз', async () => {
-    const prevWebDriver = (navigator as any).webdriver
-    try {
-      Object.defineProperty(navigator, 'webdriver', { value: false, configurable: true })
-    } catch {
-      // ignore
-    }
+    defineNavigatorProperty('webdriver', false)
+    defineNavigatorProperty('serviceWorker', {
+      ready: Promise.resolve(),
+    })
+    mockPwaRegister()
 
-    vi.resetModules()
     vi.doMock('../../src/app/boot-assets', () => ({
       BOOT_ASSET_PATHS: ['assets/shell/menu-bg.webp'] as const,
     }))
 
-    const swText =
-      'self.__WB_MANIFEST;precacheAndRoute([{url:"assets/shell/menu-bg.webp",revision:"abc"}],{})'
-    let swFetchAttempts = 0
-    let assetFetches = 0
-    const fetchMock = vi.fn(async (url: string) => {
-      if (url.endsWith('/sw.js')) {
-        swFetchAttempts += 1
-        if (swFetchAttempts === 1) {
-          return {
-            ok: false,
-            headers: { get: (): string | null => null },
-          }
-        }
-
+    let attempts = 0
+    const fetchMock = vi.fn(async () => {
+      attempts += 1
+      if (attempts === 1) {
         return {
-          ok: true,
-          text: async (): Promise<string> => swText,
+          ok: false,
           headers: { get: (): string | null => null },
         }
       }
 
-      assetFetches += 1
       return {
         ok: true,
         headers: { get: (): string | null => null },
       }
     })
-
     vi.stubGlobal('fetch', fetchMock)
-    vi.stubGlobal('caches', {
-      keys: vi.fn(async () => ['workbox-precache-v2-http://localhost/']),
-      open: vi.fn(async () => ({
-        match: vi.fn(async (_request: string, options?: { ignoreSearch?: boolean }) =>
-          options?.ignoreSearch ? {} : null,
-        ),
-      })),
-    })
-
-    try {
-      Object.defineProperty(navigator, 'serviceWorker', {
-        value: { ready: Promise.resolve() },
-        configurable: true,
-      })
-    } catch {
-      // ignore
-    }
 
     const { runBootSequence } = await import('../../src/app/pwa-boot')
-
     const steps: number[] = []
+
     const result = await runBootSequence(({ percent }) => steps.push(percent))
 
     expect(result).toEqual({ ok: true })
-    expect(swFetchAttempts).toBe(2)
-    expect(assetFetches).toBe(0)
+    expect(fetchMock).toHaveBeenCalledTimes(2)
+    expect(steps[0]).toBe(0)
     expect(steps.at(-1)).toBe(100)
-
-    vi.unstubAllGlobals()
-    vi.resetModules()
-
-    try {
-      if (prevWebDriver === undefined) {
-        // eslint-disable-next-line @typescript-eslint/no-dynamic-delete
-        delete (navigator as any).webdriver
-      } else {
-        Object.defineProperty(navigator, 'webdriver', {
-          value: prevWebDriver,
-          configurable: true,
-        })
-      }
-    } catch {
-      // ignore
-    }
   })
 
-  it('после download проверяет только sentinel, а не весь precache-list', async () => {
-    const prevWebDriver = (navigator as any).webdriver
-    try {
-      Object.defineProperty(navigator, 'webdriver', { value: false, configurable: true })
-    } catch {
-      // ignore
-    }
+  it('показывает контролируемую ошибку после двух cold-start провалов', async () => {
+    defineNavigatorProperty('webdriver', false)
+    defineNavigatorProperty('serviceWorker', {
+      ready: Promise.resolve(),
+    })
+    mockPwaRegister()
 
-    vi.resetModules()
-    const assets = Array.from({ length: 50 }, (_, index) => `assets/shell/mock-${index}.webp`)
     vi.doMock('../../src/app/boot-assets', () => ({
-      BOOT_ASSET_PATHS: assets,
+      BOOT_ASSET_PATHS: ['assets/shell/menu-bg.webp'] as const,
     }))
 
-    const swText = `self.__WB_MANIFEST;precacheAndRoute([${assets
-      .map((url) => `{url:"${url}",revision:"abc"}`)
-      .join(',')}],{})`
-    let downloaded = false
-    let matchCount = 0
-    const fetchMock = vi.fn(async (url: string) => {
-      if (url.endsWith('/sw.js')) {
-        return {
-          ok: true,
-          text: async (): Promise<string> => swText,
-          headers: { get: (): string | null => null },
-        }
-      }
-
-      downloaded = true
-      return {
-        ok: true,
-        headers: { get: (): string | null => null },
-      }
-    })
-
+    const fetchMock = vi.fn(async () => ({
+      ok: false,
+      headers: { get: (): string | null => null },
+    }))
     vi.stubGlobal('fetch', fetchMock)
-    vi.stubGlobal('caches', {
-      keys: vi.fn(async () => ['workbox-precache-v2-http://localhost/']),
-      open: vi.fn(async () => ({
-        match: vi.fn(async () => {
-          matchCount += 1
-          return downloaded ? {} : null
-        }),
-      })),
-    })
-
-    try {
-      Object.defineProperty(navigator, 'serviceWorker', {
-        value: { ready: Promise.resolve() },
-        configurable: true,
-      })
-    } catch {
-      // ignore
-    }
 
     const { runBootSequence } = await import('../../src/app/pwa-boot')
+    const steps: number[] = []
 
-    const result = await runBootSequence(() => {})
+    const result = await runBootSequence(({ percent }) => steps.push(percent))
 
-    expect(result).toEqual({ ok: true })
-    expect(fetchMock).toHaveBeenCalledTimes(51)
-    expect(matchCount).toBeLessThanOrEqual(12)
-
-    vi.unstubAllGlobals()
-    vi.resetModules()
-
-    try {
-      if (prevWebDriver === undefined) {
-        // eslint-disable-next-line @typescript-eslint/no-dynamic-delete
-        delete (navigator as any).webdriver
-      } else {
-        Object.defineProperty(navigator, 'webdriver', {
-          value: prevWebDriver,
-          configurable: true,
-        })
-      }
-    } catch {
-      // ignore
-    }
+    expect(result).toEqual({
+      ok: false,
+      errorMessage: 'Не удалось скачать игру для работы без интернета. Проверьте интернет и попробуйте ещё раз',
+      failedAssets: expect.arrayContaining([expect.stringContaining('menu-bg.webp')]),
+    })
+    expect(fetchMock).toHaveBeenCalledTimes(2)
+    expect(steps[0]).toBe(0)
+    expect(steps.every((percent) => percent === 0)).toBe(true)
   })
 
   it('список boot содержит файлы готовых игр', () => {

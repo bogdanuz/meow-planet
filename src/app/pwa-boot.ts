@@ -1,3 +1,4 @@
+import { BOOT_ASSET_PATHS } from './boot-assets'
 export type BootProgress = {
   percent: number
   message: string
@@ -15,132 +16,63 @@ export type BootResult =
  * `vite-plugin-pwa` настроен на `injectRegister: false`,
  * поэтому регистрация Service Worker должна происходить из приложения.
  */
-async function maybeRegisterServiceWorker(): Promise<boolean> {
-  // В dev SW отключён.
-  if (import.meta.env.DEV) return true
+const SW_READY_TIMEOUT_MS = 8000
 
-  // В тестах/JS DOM serviceWorker обычно отсутствует.
+function hasServiceWorkerSupport(): boolean {
   if (typeof navigator === 'undefined') return false
-  const sw = (navigator as unknown as { serviceWorker?: unknown }).serviceWorker
-  if (!sw) return false
+  return Boolean((navigator as unknown as { serviceWorker?: ServiceWorkerContainer }).serviceWorker)
+}
+
+function hasServiceWorkerController(): boolean {
+  if (!hasServiceWorkerSupport()) return false
+  const sw = (navigator as unknown as { serviceWorker: ServiceWorkerContainer }).serviceWorker
+  return Boolean(sw.controller)
+}
+
+async function registerServiceWorkerReady(timeoutMs = SW_READY_TIMEOUT_MS): Promise<boolean> {
+  if (import.meta.env.DEV) return true
+  if (!hasServiceWorkerSupport()) return false
 
   try {
     const mod = await import('virtual:pwa-register')
-    // Ждём завершения регистрации/активации SW, чтобы precache (Workbox)
-    // успел установиться до того, как приложение посчитает себя "готовым".
-    await mod.registerSW()
-    // serviceWorker.ready иногда может зависнуть на reload/autoUpdate гонках.
-    // Чтобы boot-loader не держал пользователя бесконечно, используем bounded-таймаут.
-    const timeoutMs = 8000
-    let swReadyOk = false
-    await Promise.race([
-      navigator.serviceWorker.ready.then(() => {
-        swReadyOk = true
-      }),
-      new Promise<void>((resolve) => {
-        window.setTimeout(() => resolve(), timeoutMs)
-      }),
-    ])
-    return swReadyOk
+    let settled = false
+    let resolveReady!: (value: boolean) => void
+    const readyPromise = new Promise<boolean>((resolve) => {
+      resolveReady = resolve
+    })
+    const settle = (value: boolean): void => {
+      if (settled) return
+      settled = true
+      resolveReady(value)
+    }
+
+    mod.registerSW({
+      immediate: true,
+      onOfflineReady: () => settle(true),
+      onRegisterError: () => settle(false),
+    })
+
+    const timeout = window.setTimeout(() => settle(false), timeoutMs)
+    try {
+      const sw = (navigator as unknown as { serviceWorker: ServiceWorkerContainer }).serviceWorker
+      const result = await Promise.race([
+        readyPromise,
+        sw.ready.then(() => true).catch(() => false),
+      ])
+      if (result) settle(true)
+      return result
+    } finally {
+      window.clearTimeout(timeout)
+    }
   } catch {
-    // Без offline-кэша приложение всё равно должно оставаться рабочим.
     return false
   }
 }
 
-type PrecacheManifest = {
-  manifestHash: string
-  /** URL как в `dist/sw.js` precache-maniFest: обычно относительные без base и без query. */
-  urlsRel: string[]
-  /** Абсолютные URL для `fetch()` и `CacheStorage.match()`. */
-  urlsAbs: string[]
-}
-
-function fnv1aHash(input: string): string {
-  let hash = 0x811c9dc5
-  for (let i = 0; i < input.length; i += 1) {
-    hash ^= input.charCodeAt(i)
-    hash = Math.imul(hash, 0x01000193)
-  }
-  return (hash >>> 0).toString(16)
-}
-
-function extractPrecacheUrlsFromServiceWorkerText(swText: string): string[] {
-  const start = swText.indexOf('precacheAndRoute([')
-  if (start < 0) throw new Error('precacheAndRoute block not found')
-
-  // В minified Workbox это выглядит примерно как:
-  // precacheAndRoute([{...},{...}],{})
-  const end = swText.indexOf('],{}', start)
-  if (end < 0) throw new Error('precacheAndRoute end not found')
-
-  const block = swText.slice(start, end)
-  const key = 'url:"'
-  const urls: string[] = []
-
-  let pos = 0
-  while (true) {
-    const idx = block.indexOf(key, pos)
-    if (idx < 0) break
-    const urlStart = idx + key.length
-    const urlEnd = block.indexOf('"', urlStart)
-    if (urlEnd < 0) break
-    urls.push(block.slice(urlStart, urlEnd))
-    pos = urlEnd + 1
-  }
-
-  // В precacheAndRoute встречаются дубли url (один и тот же URL может
-  // встречаться несколько раз из-за особенностей генерации Workbox).
-  // Для readiness-check важно сверяться именно с количеством записей в
-  // текущем `dist/sw.js`, поэтому дедупликацию не делаем.
-  if (urls.length === 0) throw new Error('No precache urls extracted')
-  return urls
-}
-
-const MANIFEST_CACHE_KEY = 'meow-precache-manifest-v1'
-const READY_MARKER_PREFIX = 'meow-precache-ready-'
-
-function safeLocalStorageGet(key: string): string | null {
-  try {
-    if (typeof localStorage === 'undefined') return null
-    return localStorage.getItem(key)
-  } catch {
-    return null
-  }
-}
-
-function safeLocalStorageSet(key: string, value: string): void {
-  try {
-    if (typeof localStorage === 'undefined') return
-    localStorage.setItem(key, value)
-  } catch {
-    // ignore
-  }
-}
-
-async function getExpectedPrecacheManifest(): Promise<PrecacheManifest> {
+function getBootAssetUrlsAbs(): string[] {
   const base = import.meta.env.BASE_URL ?? '/'
   const baseUrl = new URL(base, window.location.origin)
-  const swUrl = new URL('sw.js', baseUrl).toString()
-
-  // 1) Пытаемся прочитать текущий sw.js: список ожиданий должен соответствовать этой сборке.
-  try {
-    const resp = await fetch(swUrl, { cache: 'force-cache' })
-    if (!resp.ok) throw new Error('sw fetch failed')
-    const swText = await resp.text()
-    const manifestHash = fnv1aHash(swText)
-    const urlsRel = extractPrecacheUrlsFromServiceWorkerText(swText)
-    const urlsAbs = urlsRel.map((u) => new URL(u, baseUrl).toString())
-    safeLocalStorageSet(MANIFEST_CACHE_KEY, JSON.stringify({ manifestHash, urlsRel }))
-    return { manifestHash, urlsRel, urlsAbs }
-  } catch {
-    // 2) Offline fallback: берём ранее закешированный список ожиданий.
-    const raw = safeLocalStorageGet(MANIFEST_CACHE_KEY)
-    if (!raw) throw new Error('No cached precache manifest')
-    const parsed = JSON.parse(raw) as { manifestHash: string; urlsRel: string[] }
-    const urlsAbs = parsed.urlsRel.map((u) => new URL(u, baseUrl).toString())
-    return { manifestHash: parsed.manifestHash, urlsRel: parsed.urlsRel, urlsAbs }
-  }
+  return BOOT_ASSET_PATHS.map((u) => new URL(u, baseUrl).toString())
 }
 
 async function runBootSequenceOnce(
@@ -153,55 +85,19 @@ async function runBootSequenceOnce(
       ? navigator.webdriver
       : false
 
-  // В Playwright e2e не ждём “полной precache warm” перед показом UI:
-  // тестам важно увидеть welcome/меню в короткий SLA.
   if (isAutomation) {
-    await maybeRegisterServiceWorker()
+    void registerServiceWorkerReady()
     report({ percent: 100, message: 'Готово!' })
     return { ok: true }
   }
 
-  let manifest: PrecacheManifest
-  try {
-    manifest = await getExpectedPrecacheManifest()
-  } catch {
-    return {
-      ok: false,
-      errorMessage:
-        'Не удалось подготовить офлайн-режим. Проверьте интернет и попробуйте ещё раз',
-    }
-  }
-
-  const { manifestHash, urlsAbs } = manifest
-  const readyMarkerKey = `${READY_MARKER_PREFIX}${manifestHash}`
-
-  // Быстрый повторный запуск: если уже подтверждали полный набор для этой сборки,
-  // не повторяем долгую проверку всех URL.
-  const previouslyConfirmed = safeLocalStorageGet(readyMarkerKey) === '1'
-  if (previouslyConfirmed) {
-    // Sentinel нужен только как быстрый “признак”, поэтому берём
-    // уникальные URL, чтобы не попасть на дубли и случайно пропустить
-    // отсутствие части ассетов.
-    const uniqueUrlsAbs = [...new Set(urlsAbs)]
-    const sentinel = uniqueUrlsAbs.slice(0, 10)
-    if (await isPrecacacheWarm(sentinel)) {
-      safeLocalStorageSet(readyMarkerKey, '1')
-      void maybeRegisterServiceWorker()
-      report({ percent: 100, message: 'Готово!' })
-      return { ok: true }
-    }
-  }
-
-  // Полная валидация Cache Storage по фактическому precache-листу.
-  if (await isPrecacacheWarm(urlsAbs)) {
-    safeLocalStorageSet(readyMarkerKey, '1')
-    void maybeRegisterServiceWorker()
+  const hasController = hasServiceWorkerController()
+  if (hasController) {
+    void registerServiceWorkerReady()
     report({ percent: 100, message: 'Готово!' })
     return { ok: true }
   }
 
-  // “Мегабайты из UI” не показываем как byte-perfect (они требуют отдельного подхода).
-  // Вместо этого: дружелюбная оценка один раз + прогресс по реально проверенным ассетам.
   const firstLoadEstimate =
     'Первая загрузка: около 60 МБ. Потом игра будет работать без интернета'
 
@@ -210,56 +106,23 @@ async function runBootSequenceOnce(
     message: `${firstLoadEstimate}. Подготавливаем игру для работы без интернета`,
   })
 
-  const downloadRes = await downloadBootAssetsWithProgress(urlsAbs, report)
+  const downloadRes = await downloadBootAssetsWithProgress(
+    getBootAssetUrlsAbs(),
+    report,
+  )
   if (!downloadRes.ok) return downloadRes
 
-  // После успешного download уже нет смысла снова ждать Cache Storage:
-  // все файлы были подтверждены fetch'ем, а SW-регистрация может завершиться фоном.
-  safeLocalStorageSet(readyMarkerKey, '1')
-  void maybeRegisterServiceWorker()
+  const swReadyOk = await registerServiceWorkerReady()
+  if (!swReadyOk) {
+    return {
+      ok: false,
+      errorMessage:
+        'Не удалось подготовить офлайн-режим. Проверьте интернет и попробуйте ещё раз',
+    }
+  }
 
   report({ percent: 100, message: 'Готово!' })
   return { ok: true }
-}
-
-export async function runBootSequence(
-  report: (progress: BootProgress) => void,
-): Promise<BootResult> {
-  let maxPercentSeen = 0
-  const trackedReport = (progress: BootProgress): void => {
-    maxPercentSeen = Math.max(maxPercentSeen, progress.percent)
-    report(progress)
-  }
-
-  const firstAttempt = await runBootSequenceOnce(trackedReport)
-  if (firstAttempt.ok || maxPercentSeen > 0) return firstAttempt
-
-  // Тихий повтор нужен только для cold-start сетевых сбоев до любого реального прогресса.
-  // Если загрузка уже дошла до 100, повтор не делаем: это уже не transient bootstrap failure.
-  return runBootSequenceOnce(trackedReport)
-}
-
-async function isPrecacacheWarm(urlsAbs: string[]): Promise<boolean> {
-  if (typeof caches === 'undefined') return false
-  const cacheKeys = await caches.keys()
-  const precacheKeys = cacheKeys.filter((k) => k.toLowerCase().includes('precache'))
-  if (precacheKeys.length === 0) return false
-
-  const opened = await Promise.all(precacheKeys.map((k) => caches.open(k)))
-  for (const url of urlsAbs) {
-    let found = false
-    for (const c of opened) {
-      // Workbox precache хранит revisioned URL-entries вида `...?__WB_REVISION__=...`.
-      // Для warm-check сравниваем по пути, а query игнорируем, иначе `index.html`
-      // и остальные precache-ресурсы никогда не считаются готовыми.
-      if (await c.match(url, { ignoreSearch: true })) {
-        found = true
-        break
-      }
-    }
-    if (!found) return false
-  }
-  return true
 }
 
 async function fetchWithByteProgress(
@@ -332,8 +195,11 @@ async function downloadBootAssetsWithProgress(
           timeoutMsPerAsset,
         )
 
-        if (!res.ok) failedAssets.push(url)
-        doneCount += 1
+        if (res.ok) {
+          doneCount += 1
+        } else {
+          failedAssets.push(url)
+        }
         update()
       }
     })(),
@@ -350,4 +216,21 @@ async function downloadBootAssetsWithProgress(
   }
   update(true)
   return { ok: true }
+}
+
+export async function runBootSequence(
+  report: (progress: BootProgress) => void,
+): Promise<BootResult> {
+  let maxPercentSeen = 0
+  const trackedReport = (progress: BootProgress): void => {
+    maxPercentSeen = Math.max(maxPercentSeen, progress.percent)
+    report(progress)
+  }
+
+  const firstAttempt = await runBootSequenceOnce(trackedReport)
+  if (firstAttempt.ok || maxPercentSeen > 0) return firstAttempt
+
+  // Тихий повтор нужен только для cold-start сетевых сбоев до любого реального прогресса.
+  // Если загрузка уже дошла до 100, повтор не делаем: это уже не transient bootstrap failure.
+  return runBootSequenceOnce(trackedReport)
 }
