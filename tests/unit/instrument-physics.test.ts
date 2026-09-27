@@ -47,7 +47,7 @@ describe('instrument layout', () => {
     const kick = DRUM_LAYERS.find((d) => d.piece === 'kick')!
     const snare = DRUM_LAYERS.find((d) => d.piece === 'snare')!
     const tom = DRUM_LAYERS.find((d) => d.piece === 'tom')!
-    expect(snare.left).toBe(0)
+    expect(snare.left).toBe(-0.025)
     // После S16-правки snare стал шире (в 2 раза по сцене).
     expect(snare.width).toBeGreaterThan(kick.width)
     expect(kick.width).toBeGreaterThan(tom.width)

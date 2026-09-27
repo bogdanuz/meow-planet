@@ -59,7 +59,9 @@ describe('mountInstrumentView', () => {
       'drum-right',
     )
     expect(stage.querySelectorAll('.sound-world__layer-art').length).toBe(3)
-    expect(Number.parseFloat(stage.querySelector<HTMLButtonElement>('[data-piece="snare"]')?.style.left ?? '1')).toBe(0)
+    expect(
+      Number.parseFloat(stage.querySelector<HTMLButtonElement>('[data-piece="snare"]')?.style.left ?? '1'),
+    ).toBe(-2.5)
   })
 
   it('маракасы — два независимых объекта', () => {

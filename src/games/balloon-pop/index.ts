@@ -74,6 +74,7 @@ export const balloonPopGame: GameModule = {
     let lastDragPopId: string | null = null
     let lastDragPopAt = 0
     let holdGen = 0
+    let speechGen = 0
 
     function cancelHeldRespawn(): void {
       holdGen += 1
@@ -81,10 +82,14 @@ export const balloonPopGame: GameModule = {
 
     function afterPhraseThen(action: () => void): void {
       const gen = holdGen
+      const speechAtSchedule = speechGen
       void runAfterCurrentVoice(
         () => audio.waitUntilVoiceEnded(),
         action,
-        () => holdGen === gen && Boolean(root?.isConnected),
+        () =>
+          holdGen === gen &&
+          Boolean(root?.isConnected) &&
+          speechGen === speechAtSchedule,
       )
     }
 
@@ -123,6 +128,7 @@ export const balloonPopGame: GameModule = {
       speechTask: BalloonTask | null = null,
       options?: { playVoice?: boolean },
     ): void {
+      speechGen += 1
       fillSpeechElement(meowSpeech, message, taskSpeechColor(speechTask ?? task))
       const voiceFile = balloonVoiceFileForLine(message)
       if (options?.playVoice !== false && voiceFile) {

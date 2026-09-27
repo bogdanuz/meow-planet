@@ -1048,6 +1048,7 @@
 
 .menu-layout {
   display: grid;
+  --menu-visit-stack-width: min(22.66rem, calc(46vh * 0.8446));
   grid-template-columns: minmax(0, 1fr) auto;
   gap: 0.55rem 0.85rem;
   align-items: stretch;
@@ -1277,6 +1278,7 @@
   justify-content: flex-end;
   gap: 0;
   padding: 0 0 max(0.05rem, env(safe-area-inset-bottom));
+  width: calc(var(--menu-visit-stack-width) + max(0.65rem, 2vw));
   min-height: 0;
   height: 100%;
   overflow: visible;
@@ -1300,9 +1302,9 @@
 
 .menu-visit-stack {
   position: absolute;
-  right: 2vw;
-  bottom: 0;
-  width: min(22.66rem, calc(46vh * 0.8446));
+  right: max(0.65rem, 2vw);
+  bottom: max(0.35rem, env(safe-area-inset-bottom));
+  width: var(--menu-visit-stack-width);
   margin: 0;
 }
 
@@ -1570,6 +1572,7 @@
     align-items: flex-end;
     gap: 0.5rem;
     padding: 0.35rem 0.5rem;
+    width: 100%;
     height: auto;
   }
 

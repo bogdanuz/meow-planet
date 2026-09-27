@@ -5,7 +5,7 @@
 import { mkdir, writeFile } from 'node:fs/promises'
 import path from 'node:path'
 import sharp from 'sharp'
-import { knockOutEdgeWhite } from './knockout-white.mjs'
+import { knockOutEdgeWhite, punchNearWhiteBand } from './knockout-white.mjs'
 
 const root = path.resolve(import.meta.dirname, '..')
 const srcDir = path.join(root, 'assets-master', 'games', 'sound-world')
@@ -103,9 +103,12 @@ async function writePng(buf, w, h, file) {
     .toFile(file)
 }
 
-async function knockoutFile(input, output, { punchHole = false } = {}) {
+async function knockoutFile(input, output, { punchHole = false, punchBand = null } = {}) {
   const { rgba, w, h } = await loadRaw(input)
   knockOutEdgeWhite(rgba, w, h, 16)
+  if (punchBand) {
+    punchNearWhiteBand(rgba, w, h, punchBand)
+  }
   if (punchHole) {
     for (let y = 0; y < Math.floor(h * 0.2); y += 1) {
       for (let x = Math.floor(w * 0.32); x < Math.floor(w * 0.68); x += 1) {
@@ -128,7 +131,9 @@ async function knockoutFile(input, output, { punchHole = false } = {}) {
 
 await mkdir(playDir, { recursive: true })
 
-await knockoutFile(path.join(srcDir, 'snare-drum.jpg'), path.join(playDir, 'drum-snare.png'))
+await knockoutFile(path.join(srcDir, 'snare-drum.jpg'), path.join(playDir, 'drum-snare.png'), {
+  punchBand: { minYRatio: 0.58, minAlpha: 20, minLum: 228, chroma: 28 },
+})
 await knockoutFile(path.join(srcDir, 'bass-drum.jpg'), path.join(playDir, 'drum-kick.png'))
 await knockoutFile(path.join(srcDir, 'tom-drum.jpg'), path.join(playDir, 'drum-tom.png'))
 await knockoutFile(path.join(srcDir, 'piano-body-no-keys.jpg'), path.join(playDir, 'piano-body.png'))
