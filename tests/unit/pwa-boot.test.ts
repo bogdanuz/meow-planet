@@ -1,9 +1,17 @@
-import { describe, expect, it, vi } from 'vitest'
+import { afterEach, describe, expect, it, vi } from 'vitest'
 import { BOOT_ASSET_PATHS } from '../../src/app/boot-assets'
 import { existsSync } from 'node:fs'
 import path from 'node:path'
 
 describe('runBootSequence', () => {
+  afterEach(() => {
+    try {
+      localStorage.clear()
+    } catch {
+      // ignore
+    }
+  })
+
   it('стартует с 0 и доходит до 100, когда ресурсы загрузились', async () => {
     const prevWebDriver = (navigator as any).webdriver
     try {
