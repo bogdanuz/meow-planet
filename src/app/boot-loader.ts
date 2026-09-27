@@ -15,6 +15,8 @@ function paintBootWord(el: HTMLElement, word: string): void {
 
 export type BootLoaderHandle = {
   setProgress: (progress: BootProgress) => void
+  setError: (message: string) => void
+  setRetryHandler: (handler: () => void) => void
   unmount: () => void
 }
 
@@ -49,9 +51,18 @@ export function mountBootLoader(container: HTMLElement): BootLoaderHandle {
   percent.className = 'boot-loader__percent'
   paintBootWord(percent, '0%')
 
+  const retry = document.createElement('button')
+  retry.type = 'button'
+  retry.className = 'boot-loader__retry'
+  retry.textContent = 'Повторить'
+  retry.hidden = true
+
   track.append(fill)
-  layer.append(bg, message, track, percent)
+  layer.append(bg, message, track, percent, retry)
   container.replaceChildren(layer)
+
+  let onRetry: (() => void) | null = null
+  retry.addEventListener('click', () => onRetry?.())
 
   return {
     setProgress({ percent: pct, message: msg }) {
@@ -59,6 +70,17 @@ export function mountBootLoader(container: HTMLElement): BootLoaderHandle {
       fill.style.width = `${clamped}%`
       paintBootWord(percent, `${clamped}%`)
       message.textContent = msg
+      retry.hidden = true
+    },
+    setError(msg: string) {
+      // Важно: не притворяемся “готовым” — просто показываем ошибку и кнопку повтора.
+      message.textContent = msg
+      retry.hidden = false
+      paintBootWord(percent, '0%')
+      fill.style.width = `0%`
+    },
+    setRetryHandler(handler: () => void) {
+      onRetry = handler
     },
     unmount() {
       layer.classList.add('boot-loader--leave')

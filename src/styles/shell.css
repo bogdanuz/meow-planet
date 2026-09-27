@@ -5,6 +5,7 @@
   display: grid;
   grid-template-rows: auto auto 1fr;
   gap: 0.75rem;
+  background: var(--bg);
   padding: max(0.75rem, env(safe-area-inset-top))
     max(1rem, env(safe-area-inset-right))
     max(1rem, env(safe-area-inset-bottom))
@@ -1871,5 +1872,28 @@ body.is-small-screen-blocked #app {
   font-weight: 700;
   letter-spacing: 0.04em;
   line-height: 1;
+}
+
+.boot-loader__retry {
+  position: relative;
+  z-index: 1;
+  justify-self: center;
+  margin: 0;
+  padding: 0.85rem 1.2rem;
+  border-radius: 1rem;
+  border: 3px solid color-mix(in srgb, var(--accent) 70%, var(--text) 30%);
+  background: rgba(255, 255, 255, 0.92);
+  color: var(--text);
+  font: inherit;
+  font-family: var(--font-display);
+  font-weight: 800;
+  font-size: clamp(1rem, 3.2vw, 1.25rem);
+  cursor: pointer;
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.boot-loader__retry[hidden] {
+  display: none !important;
 }
 

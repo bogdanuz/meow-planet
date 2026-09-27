@@ -16,12 +16,24 @@ const root: HTMLDivElement = appRoot
 
 async function boot(): Promise<void> {
   const loader = mountBootLoader(root)
-  try {
-    await runBootSequence((p) => loader.setProgress(p))
-  } finally {
-    loader.unmount()
+
+  const attempt = async (): Promise<void> => {
+    const res = await runBootSequence((p) => loader.setProgress(p))
+    if (res.ok) {
+      loader.unmount()
+      renderShell(root)
+    } else {
+      loader.setError(res.errorMessage)
+    }
   }
-  renderShell(root)
+
+  loader.setRetryHandler(() => {
+    // Кнопка “Повторить” должна перезапустить boot-логику с нуля.
+    // Повторный запуск welcome/menu всё равно не покажет до успешного результата.
+    void attempt()
+  })
+
+  await attempt()
 }
 
 void boot()
