@@ -13,6 +13,81 @@ const TILE_GAMES = [
 ] as const
 
 test.describe('меню плиток (S13 / M3.5)', () => {
+  test('плитки и поле Мяу разделены и не пересекаются на iPad landscape', async ({
+    page,
+  }) => {
+    for (const viewport of [
+      { width: 1024, height: 768 },
+      { width: 1194, height: 834 },
+      { width: 1366, height: 1024 },
+    ]) {
+      await page.setViewportSize(viewport)
+      await openMenu(page)
+      await page.locator('.screen--menu').evaluate(async (menu) => {
+        await Promise.all(menu.getAnimations().map((animation) => animation.finished))
+      })
+
+      const geometry = await page.evaluate(() => {
+        const games = document.querySelector<HTMLElement>('.menu-layout__games')!
+        const presenter = document.querySelector<HTMLElement>('.menu-presenter')!
+        const grid = document.querySelector<HTMLElement>('.menu-grid')!
+        const stack = document.querySelector<HTMLElement>('.menu-visit-stack')!
+        const cat = document.querySelector<HTMLElement>('.menu-visit-cat__anchor')!
+        const firstTile = document.querySelector<HTMLElement>('.game-tile')!
+        const back = document.querySelector<HTMLElement>('.menu-back')!
+        const gamesRect = games.getBoundingClientRect()
+        const presenterRect = presenter.getBoundingClientRect()
+        const gridRect = grid.getBoundingClientRect()
+        const stackRect = stack.getBoundingClientRect()
+        const catRect = cat.getBoundingClientRect()
+        const tileRect = firstTile.getBoundingClientRect()
+        const backRect = back.getBoundingClientRect()
+        const gamesStyle = getComputedStyle(games)
+        const overlapWidth = Math.max(
+          0,
+          Math.min(tileRect.right, backRect.right) -
+            Math.max(tileRect.left, backRect.left),
+        )
+        const overlapHeight = Math.max(
+          0,
+          Math.min(tileRect.bottom, backRect.bottom) -
+            Math.max(tileRect.top, backRect.top),
+        )
+        return {
+          gamesRight: gamesRect.right,
+          presenterLeft: presenterRect.left,
+          gridLeft: gridRect.left,
+          stackLeft: stackRect.left,
+          stackRight: stackRect.right,
+          presenterRight: presenterRect.right,
+          presenterTop: presenterRect.top,
+          presenterBottom: presenterRect.bottom,
+          catTop: catRect.top,
+          stackBottom: stackRect.bottom,
+          backTileOverlapArea: overlapWidth * overlapHeight,
+          separatorWidth: Number.parseFloat(gamesStyle.borderRightWidth),
+        }
+      })
+
+      expect(geometry.gamesRight).toBeLessThanOrEqual(geometry.presenterLeft)
+      expect(geometry.stackLeft).toBeGreaterThanOrEqual(geometry.presenterLeft)
+      expect(geometry.stackRight).toBeLessThanOrEqual(
+        geometry.presenterRight + 1,
+      )
+      expect(geometry.gridLeft).toBeGreaterThanOrEqual(16)
+      expect(geometry.separatorWidth).toBeGreaterThanOrEqual(2)
+      expect(geometry.catTop).toBeGreaterThanOrEqual(geometry.presenterTop)
+      expect(geometry.stackBottom).toBeLessThanOrEqual(
+        geometry.presenterBottom + 1,
+      )
+      expect(geometry.backTileOverlapArea).toBe(0)
+
+      const lastTile = page.locator('.menu-grid .game-tile').last()
+      await lastTile.scrollIntoViewIfNeeded()
+      await expect(lastTile).toBeVisible()
+    }
+  })
+
   test('приветствие → Играть → 8 плиток + «В гости» у Мяу', async ({ page }) => {
     await page.goto('/#/')
     await expect(page.locator('.screen--welcome')).toBeVisible({ timeout: 5000 })

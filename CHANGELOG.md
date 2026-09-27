@@ -2,6 +2,15 @@
 
 Формат версий — [Semantic Versioning](https://semver.org/) (MAJOR.MINOR.PATCH).
 
+## Не выпущено
+
+- Boot-loader и Workbox используют один build-generated precache manifest; 100%
+  показываются только непосредственно перед переходом на welcome.
+- Удалён `navigator.webdriver` fast-path, добавлен production-preview e2e для
+  cold/warm/retry/error Service Worker сценариев.
+- Меню снова разделено на отдельное поле плиток и отдельное поле Мяу с лежанкой;
+  персонаж больше не перекрывает игровые карточки.
+
 ## 0.16.2 — 2026-09-27 (второй релиз)
 
 - runtime-регистрация Service Worker без ручных диалогов (`registerType: autoUpdate`), с очисткой устаревших кэшей (`cleanupOutdatedCaches`).

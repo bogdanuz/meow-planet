@@ -9,6 +9,7 @@ PWA-хаб «Планета Мяу» (версия `0.16.0`): portrait и small-
 - `assets-master/` добавлен в `.gitignore`.
 - Создан локальный контейнер `local-assets/legacy-root-files/` и перемещены туда очевидно неиспользуемые корневые медиа (чтобы GitHub-репозиторий был чистым).
 - `README.md` и `LICENSE` обновлены под финальный снапшот.
+- Удалён `navigator.webdriver` fast-path: отдельный production-preview e2e проверяет полный cold/warm/retry/error boot и реальный переход к welcome.
 
 ## Отложенные задачи
 
@@ -16,7 +17,6 @@ PWA-хаб «Планета Мяу» (версия `0.16.0`): portrait и small-
 
 ## Средний приоритет (MEDIUM)
 - [ ] **MEDIUM:** Реализовать точный байтовый прогресс offline-загрузки через кастомный Service Worker / `injectManifest`, если это потребуется после проверки текущего UX на iPad.
-- [ ] **MEDIUM:** Убрать production-ветку `navigator.webdriver` из boot-логики и заменить её тестовой конфигурацией/mocking для Playwright. Приоритет: MEDIUM. Контекст: e2e не должны обходить существенную runtime-логику PWA; текущий fast-path допустим как временная мера. Файлы: `src/app/pwa-boot.ts`, `tests/e2e/*`.
 
 ## Ручной чек-лист после второго деплоя на iPad
 1. [ ] Установить PWA на iPad (с домашнего экрана).

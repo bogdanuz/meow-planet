@@ -95,8 +95,9 @@ settings: shared/storage.loadSettings() ⇄ localStorage
 ## PWA и публикация
 
 - Vite + `vite-plugin-pwa`.
-- `base: './'` для GitHub Pages.
-- App shell и необходимые ассеты precache для офлайн-работы.
+- `base: '/meow-planet/'` для GitHub Pages.
+- Workbox manifest — единый источник для app shell/offline precache и boot progress;
+  build проверяет совпадение списков (ADR-0001).
 - Обновление Service Worker — по запросу, без внезапного сброса активной игры.
 - Финальные PNG-иконки 192×192 и 512×512 создаются в S13–S15.
 
