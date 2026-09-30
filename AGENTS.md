@@ -9,9 +9,10 @@
 3. Ограничения MVP: `docs/product/PRODUCT_CONSTRAINTS.md`
 4. Архитектура: `docs/architecture/ARCHITECTURE.md`
 
-**Спринт / версия** — только в `HANDOFF.md` и `docs/05-CURRENT-STATE.md` (сейчас: **S16** — welcome/menu ✅, balloon-pop ✅, игра **sound-world**; код **0.16.0**). Экран игр: `docs/games/S16-GAME-SCREEN-PATTERN.md`.
+**Спринт / версия** — только в `HANDOFF.md` и `docs/05-CURRENT-STATE.md` (сейчас: **S16** — welcome/menu ✅, balloon-pop ✅, игра **sound-world**; код **0.16.3**). В хабе есть post-MVP «Рисовалка» (раскраска — один из её фонов), она не закрывает заглушки S16. «Времена года» — улица внутри «В гости» (`src/games/meow-home/`). Экран игр: `docs/games/S16-GAME-SCREEN-PATTERN.md`.
 
 Ассеты: **`docs/assets/ASSET-PRODUCTION-PLAYBOOK.md`**, промпты **`GENERATION-GUIDE.md`**, реестр **`ASSET-MANIFEST.md`**, стиль **`BRANDBOOK.md`**. Старый мегафайл — в `archive/docs/assets-pre-consolidation/`, не SSOT.  
+Offline/precache: **`docs/quality/PWA-OFFLINE-GUARDRAILS.md`** + ADR-0001.
 `archive/` — историзм, не источник истины.
 
 ## Rules (`.cursor/rules/`)
@@ -24,6 +25,7 @@
 | `game-module-boundaries.mdc` | `src/games` / `shared` |
 | `toddler-interaction.mdc` | Soft-error, touch, без наказаний |
 | `privacy-and-local-data.mdc` | localStorage, XSS, privacy |
+| `pwa-precache-integrity.mdc` | Всегда: любой runtime-файл → полный precache + production boot QA |
 
 ## Skills (`.cursor/skills/`)
 
@@ -62,10 +64,13 @@ npm run typecheck
 npm run test
 npm run build
 npm run test:e2e
+npm run test:e2e:boot
 ```
 
 ## После задачи
 
-Тесты по skill `testing-and-verification`; docs по `docs-sync`; владельцу — простым языком + сообщение для GitHub Desktop.
+Тесты по skill `testing-and-verification`; любой runtime-файл/ассет обязан пройти
+`npm run build` и `npm run test:e2e:boot`; docs по `docs-sync`; владельцу —
+простым языком + сообщение для GitHub Desktop.
 
 Локальный просмотр: агент поднимает `npm run dev` и даёт ссылку (см. `docs/06-ROADMAP.md`).

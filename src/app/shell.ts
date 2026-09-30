@@ -31,7 +31,7 @@ function titleForRoute(route: Route): string {
   switch (route.screen) {
     case 'welcome':
     case 'menu':
-      return 'Планета Мяу'
+      return 'Планета Мяу и друзья'
     case 'game': {
       const game = getGameById(route.gameId)
       return game?.meta.title ?? 'Игра'
@@ -52,7 +52,8 @@ function hintForRoute(route: Route): string {
     case 'game':
       return route.gameId === 'sound-world' ||
         route.gameId === 'sort-colors' ||
-        route.gameId === 'puzzle'
+        route.gameId === 'puzzle' ||
+        route.gameId === 'drawing'
         ? ''
         : 'Играй спокойно. Ошибки не страшны.'
     case 'parent':
@@ -152,7 +153,7 @@ export function renderShell(root: HTMLElement): () => void {
 
   const title = document.createElement('h1')
   title.className = 'chrome__title'
-  title.textContent = 'Планета Мяу'
+  title.textContent = 'Планета Мяу и друзья'
 
   const gameActions = document.createElement('div')
   gameActions.className = 'chrome__game-actions'
@@ -264,15 +265,21 @@ export function renderShell(root: HTMLElement): () => void {
       onReleasedGame && route.gameId === 'shape-build'
     const onHideSeekGame =
       onReleasedGame && route.gameId === 'hide-seek'
-    const onSeasonsGame =
-      onReleasedGame && route.gameId === 'seasons'
     const onMeowHomeGame =
       onReleasedGame && route.gameId === 'meow-home'
     const onCountingGame =
       onReleasedGame && route.gameId === 'counting'
+    const onDrawingGame =
+      onReleasedGame && route.gameId === 'drawing'
     // Welcome, меню, настройки, готовые игры со своей полоской и заглушка — без app chrome.
     chrome.hidden =
-      onWelcome || onMenu || onParent || onComingSoon || onBalloonGame || onSoundWorldGame
+      onWelcome ||
+      onMenu ||
+      onParent ||
+      onComingSoon ||
+      onBalloonGame ||
+      onSoundWorldGame ||
+      onDrawingGame
     mascotRow.hidden =
       onWelcome ||
       onMenu ||
@@ -283,16 +290,17 @@ export function renderShell(root: HTMLElement): () => void {
       onSortColorsGame ||
       onPuzzleGame ||
       onShapeBuildGame ||
-      onHideSeekGame
+      onHideSeekGame ||
+      onDrawingGame
     root.classList.toggle('app-shell--balloon-game', onBalloonGame)
     root.classList.toggle('app-shell--sound-world', onSoundWorldGame)
     root.classList.toggle('app-shell--sort-colors', onSortColorsGame)
     root.classList.toggle('app-shell--puzzle', onPuzzleGame)
     root.classList.toggle('app-shell--shape-build', onShapeBuildGame)
     root.classList.toggle('app-shell--hide-seek', onHideSeekGame)
-    root.classList.toggle('app-shell--seasons', onSeasonsGame)
     root.classList.toggle('app-shell--meow-home', onMeowHomeGame)
     root.classList.toggle('app-shell--counting', onCountingGame)
+    root.classList.toggle('app-shell--drawing', onDrawingGame)
     root.classList.toggle('app-shell--parent', onParent)
     root.classList.toggle('app-shell--coming-soon', onComingSoon)
     gameActions.hidden = !onPuzzleGame
@@ -328,15 +336,17 @@ export function renderShell(root: HTMLElement): () => void {
           },
         })
         break
-      case 'game':
+      case 'game': {
+        const gameId = route.gameId
         activeGame = renderGameScreen(
           main,
-          route.gameId,
+          gameId,
           setSoftHint,
           setTaskVisual,
           {
             goMenu: () => router.goHome(),
             goWelcome: () => router.navigate({ screen: 'welcome' }),
+            goSettings: () => router.navigate({ screen: 'parent', returnTo: gameId }),
             onSoundToggle: (on) => {
               patchSettings({ soundEnabled: on, musicEnabled: on })
               const current = router.getRoute()
@@ -351,11 +361,13 @@ export function renderShell(root: HTMLElement): () => void {
           onHideSeekGame ? setChromeSceneLabel : undefined,
         )
         break
+      }
       case 'parent':
         disposeParent = renderParentScreen(main, router, {
           audio,
           appVersion: APP_VERSION,
           onSettingsSaved: applySettings,
+          returnTo: route.returnTo,
         })
         break
       case 'not-found':

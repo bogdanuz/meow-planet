@@ -1,5 +1,7 @@
 import { afterEach, describe, expect, it } from 'vitest'
+import { HOME_SCREEN_HINT } from '../../src/app/home-screen-hint'
 import { isLandscape, mountOrientationGate } from '../../src/app/orientation-gate'
+import { mountSmallViewportGate } from '../../src/app/small-viewport-gate'
 
 describe('orientation gate', () => {
   afterEach(() => {
@@ -18,6 +20,15 @@ describe('orientation gate', () => {
     expect(gate).not.toBeNull()
     expect(gate.hidden).toBe(false)
     expect(document.body.classList.contains('is-portrait-blocked')).toBe(true)
+    expect(gate.textContent).toContain(HOME_SCREEN_HINT)
+    stop()
+  })
+
+  it('маленький экран подсказывает сохранить ярлык на рабочий стол', () => {
+    const stop = mountSmallViewportGate(document.body)
+    const gate = document.querySelector('.orientation-gate')
+    expect(gate?.textContent).toContain('Планета Мяу ждёт тебя на планшете')
+    expect(gate?.textContent).toContain(HOME_SCREEN_HINT)
     stop()
   })
 

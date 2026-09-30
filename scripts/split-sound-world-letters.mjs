@@ -1,6 +1,6 @@
 /**
- * Нарезка «Русский алфавит.mp3» / «Английский алфавит.mp3» → letter-*.mp3
- * и замена корабля. Запуск: node scripts/split-sound-world-letters.mjs
+ * Нарезка sources/games/sound-world/letters-ru.mp3 и letters-en.mp3 → letter-*.mp3
+ * и замена корабля из sources/games/sound-world/ship.mp3.
  */
 import { copyFile, mkdir, readdir, unlink, writeFile } from 'node:fs/promises'
 import { spawn } from 'node:child_process'
@@ -16,6 +16,7 @@ try {
 }
 
 const root = path.resolve(import.meta.dirname, '..')
+const sourceDir = path.join(root, 'sources', 'games', 'sound-world')
 const sfxDir = path.join(root, 'public', 'assets', 'games', 'sound-world', 'sfx')
 const masterDir = path.join(root, 'assets-master', 'games', 'sound-world')
 
@@ -101,13 +102,6 @@ function fatten(segments, duration, minLen = 0.34) {
     start -= Math.min((start - prevEnd) * 0.35, Math.max(0, need - addAfter))
     return { start: Math.max(0, start), end: Math.min(duration, end) }
   })
-}
-
-async function findRootMp3(pattern) {
-  const files = await readdir(root)
-  const hit = files.find((name) => pattern.test(name) && name.toLowerCase().endsWith('.mp3'))
-  if (!hit) throw new Error(`mp3 not found: ${pattern}`)
-  return path.join(root, hit)
 }
 
 function decodeMonoF32(src, rate) {
@@ -288,9 +282,9 @@ async function writeSfxIndex() {
 await mkdir(sfxDir, { recursive: true })
 await mkdir(masterDir, { recursive: true })
 
-const ruSrc = await findRootMp3(/русский алфавит/i)
-const enSrc = await findRootMp3(/английский алфавит/i)
-const shipSrc = await findRootMp3(/^корабль\.mp3$/i)
+const ruSrc = path.join(sourceDir, 'letters-ru.mp3')
+const enSrc = path.join(sourceDir, 'letters-en.mp3')
+const shipSrc = path.join(sourceDir, 'ship.mp3')
 
 await copyFile(ruSrc, path.join(masterDir, 'letters-ru-voice.mp3'))
 await copyFile(enSrc, path.join(masterDir, 'letters-en-voice.mp3'))

@@ -19,8 +19,8 @@ const TASK_GUARD_RADIUS: Record<BalloonSize, number> = {
 
 /** Свобода: радиусы ближе к реальному rem на iPad при scale ≥ 0.82. */
 const FREE_GUARD_RADIUS: Record<BalloonSize, number> = {
-  sm: 6.5,
-  lg: 13.5,
+  sm: 8.5,
+  lg: 17,
 }
 
 const MEOW_BUBBLE_GUARD = {
@@ -35,14 +35,14 @@ const EXTENDED_SLOT_CANDIDATES: readonly BalloonPlacement[] = [
   { xPct: 24, yPct: 22 },
   { xPct: 46, yPct: 20 },
   { xPct: 68, yPct: 22 },
-  { xPct: 86, yPct: 24 },
+  { xPct: 82, yPct: 24 },
   { xPct: 22, yPct: 42 },
   { xPct: 48, yPct: 40 },
   { xPct: 70, yPct: 42 },
-  { xPct: 88, yPct: 44 },
+  { xPct: 84, yPct: 44 },
   { xPct: 40, yPct: 62 },
   { xPct: 62, yPct: 60 },
-  { xPct: 82, yPct: 64 },
+  { xPct: 78, yPct: 62 },
   { xPct: 54, yPct: 70 },
 ]
 
@@ -57,7 +57,9 @@ export const FREE_LAYOUT_SCALE_MIN = 0.72
 export const FREE_MODE_VISUAL_SCALE = 1
 
 function dist(a: BalloonPlacement, b: BalloonPlacement): number {
-  return Math.hypot(a.xPct - b.xPct, a.yPct - b.yPct)
+  // На альбомном iPad 1% ширины — меньше пикселей, чем 1% высоты.
+  // Горизонталь считаем строже, чтобы соседние шарики не делили одно нажатие.
+  return Math.hypot((a.xPct - b.xPct) * 1.45, a.yPct - b.yPct)
 }
 
 function inMeowGuard(p: BalloonPlacement): boolean {
@@ -87,12 +89,12 @@ function circlesOverlap(
 
 /** Два шара почти в одной точке — визуальная «куча», даже если круги чуть не пересеклись. */
 function visuallyStacked(a: BalloonPlacement, b: BalloonPlacement): boolean {
-  return Math.abs(a.xPct - b.xPct) < 9 && Math.abs(a.yPct - b.yPct) < 15
+  return Math.abs(a.xPct - b.xPct) < 12 && Math.abs(a.yPct - b.yPct) < 22
 }
 
 function clampFree(p: BalloonPlacement): BalloonPlacement {
-  let xPct = Math.min(94, Math.max(16, p.xPct))
-  let yPct = Math.min(74, Math.max(16, p.yPct))
+  let xPct = Math.min(84, Math.max(18, p.xPct))
+  let yPct = Math.min(66, Math.max(18, p.yPct))
   if (inMeowGuard({ xPct, yPct })) {
     xPct = Math.max(MEOW_BUBBLE_GUARD.xPctMax + 8, xPct)
     yPct = Math.min(yPct, MEOW_BUBBLE_GUARD.yPctMin - 8)
@@ -120,12 +122,12 @@ function freeZoneRect(col: number, row: number): {
     [16, 34],
     [38, 54],
     [58, 74],
-    [78, 94],
+    [74, 84],
   ] as const
   const yBands = [
     [16, 34],
     [38, 54],
-    [58, 74],
+    [52, 66],
   ] as const
   return {
     xLo: xBands[col]![0],

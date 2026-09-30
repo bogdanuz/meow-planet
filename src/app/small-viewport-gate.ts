@@ -1,3 +1,4 @@
+import { HOME_SCREEN_HINT } from './home-screen-hint'
 import { getShortSidePx, isSmallViewport } from './viewport-gates'
 
 /**
@@ -35,7 +36,11 @@ export function mountSmallViewportGate(host: HTMLElement): () => void {
   hint.textContent =
     'Эта игра сделана для большого экрана. Открой её на iPad или другом планшете.'
 
-  card.append(icon, title, hint)
+  const home = document.createElement('p')
+  home.className = 'orientation-gate__hint'
+  home.textContent = HOME_SCREEN_HINT
+
+  card.append(icon, title, hint, home)
   gate.append(card)
   host.append(gate)
 

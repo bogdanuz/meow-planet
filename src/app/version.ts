@@ -1,2 +1,2 @@
 /** Дублирует package.json version для UI (без импорта JSON в runtime-тестах). */
-export const APP_VERSION = '0.16.0'
+export const APP_VERSION = '0.16.3'

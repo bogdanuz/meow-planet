@@ -23,6 +23,7 @@ export function createRouter(
 ): RouterController {
   let current = parseHash(location.hash)
   let listener: ((route: Route) => void) | null = null
+  let selfAssignedHash: string | null = null
 
   function emit(): void {
     current = parseHash(location.hash)
@@ -44,8 +45,9 @@ export function createRouter(
       return
     }
 
-    // Присвоение hash добавляет history. В jsdom hashchange может не прийти —
-    // поэтому всегда синхронизируем сами; в браузере лишний emit безвреден.
+    // В браузере присвоение hash ещё и шлёт hashchange. Без фильтра
+    // экран монтируется дважды, и первая фраза игры звучит эхом.
+    selfAssignedHash = nextHash
     location.hash = nextHash
     emit()
   }
@@ -64,9 +66,17 @@ export function createRouter(
     }
 
     emit()
-    window.addEventListener('hashchange', emit)
+    const onHashChange = (): void => {
+      if (selfAssignedHash && (location.hash || '#/') === selfAssignedHash) {
+        selfAssignedHash = null
+        return
+      }
+      selfAssignedHash = null
+      emit()
+    }
+    window.addEventListener('hashchange', onHashChange)
     return () => {
-      window.removeEventListener('hashchange', emit)
+      window.removeEventListener('hashchange', onHashChange)
       listener = null
     }
   }

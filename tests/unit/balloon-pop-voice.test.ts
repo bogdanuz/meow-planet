@@ -31,6 +31,7 @@ const audioMock = vi.hoisted(() => {
     switchMusic: vi.fn(async () => true),
     waitUntilVoiceEnded,
     stopSfx: vi.fn(),
+    stopVoice: vi.fn(),
     allowBrightMotion: vi.fn(() => true),
     updateSettings: vi.fn(),
   }))
@@ -66,6 +67,7 @@ function createContext(): GameMountContext {
       hideEnglishAlphabet: false,
       countingLimit: 3,
       balloonTasksEnabled: true,
+      companion: 'meow' as const,
     },
     onSoftHint: vi.fn(),
     onTaskVisual: vi.fn(),
@@ -88,6 +90,18 @@ describe('balloon-pop voice sequencing', () => {
     vi.useRealTimers()
     vi.restoreAllMocks()
     audioMock.reset()
+  })
+
+  it('первая фраза при входе играется один раз', async () => {
+    const container = document.createElement('div')
+    document.body.append(container)
+    balloonPopGame.mount(container, createContext())
+    await Promise.resolve()
+
+    const idlePlays = audioMock.playUrl.mock.calls.filter(
+      ([channel, url]) => channel === 'voice' && String(url).includes('free-idle'),
+    )
+    expect(idlePlays).toHaveLength(1)
   })
 
   it('не запускает лишнюю voice-фразу при первом входе в free-mode', async () => {

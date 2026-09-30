@@ -1,5 +1,7 @@
+import { COMPANION_DEFAULT, isCompanionId, type CompanionId } from './companion'
+
 /** Версия схемы localStorage. При несовместимом изменении — bump + миграция. */
-export const STORAGE_SCHEMA_VERSION = 1
+export const STORAGE_SCHEMA_VERSION = 2
 
 export const STORAGE_KEY = 'meow-planet.settings'
 
@@ -17,6 +19,8 @@ export type AppSettings = {
   countingLimit: CountingLimit
   /** Разрешить режим заданий (★) в «Лопни шарик». */
   balloonTasksEnabled: boolean
+  /** Кто говорит в играх и стоит в меню: котёнок или сова. */
+  companion: CompanionId
   /** Локальные ID пользовательских пазлов (файлы — отдельно, S03/S09). */
   customPuzzleIds: string[]
 }
@@ -30,6 +34,7 @@ export const DEFAULT_SETTINGS: AppSettings = {
   hideEnglishAlphabet: false,
   countingLimit: 10,
   balloonTasksEnabled: true,
+  companion: COMPANION_DEFAULT,
   customPuzzleIds: [],
 }
 
@@ -97,6 +102,7 @@ export function normalizeSettings(raw: unknown): AppSettings {
       typeof data.balloonTasksEnabled === 'boolean'
         ? data.balloonTasksEnabled
         : DEFAULT_SETTINGS.balloonTasksEnabled,
+    companion: isCompanionId(data.companion) ? data.companion : COMPANION_DEFAULT,
     customPuzzleIds: isStringArray(data.customPuzzleIds)
       ? [...data.customPuzzleIds]
       : [...DEFAULT_SETTINGS.customPuzzleIds],

@@ -17,7 +17,7 @@ export const hubSoundUrl = {
 /** Без общей фоновой петли — своя музыка или тишина. */
 export const GAME_IDS_WITHOUT_SHARED_MUSIC = [
   'meow-home',
-  'seasons',
+  'drawing',
 ] as const satisfies readonly GameId[]
 
 const HUB_MUSIC_VOLUME = 0.28 * 0.95
@@ -73,7 +73,7 @@ export function playHubMusic(audio: AudioManager): void {
   })
 }
 
-/** Зацикленный фон почти всех игр (не «В гостях» и не «Времена года»). */
+/** Зацикленный фон почти всех игр (не «В гостях» и не «Рисовалка»). */
 export function playGameMusic(audio: AudioManager, gameId: GameId): void {
   if (!gameUsesSharedMusic(gameId)) return
   const volume = gameMusicVolume(gameId)

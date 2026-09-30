@@ -12,7 +12,7 @@
 | 4 | Собери пазл | puzzle | 0.15.8 | `S14-puzzle-BRIEF.md` | `puzzle-ART.md` |
 | 5 | Собери фигурку | shape-build | 0.15.9 | `S14-shape-build-BRIEF.md` | `shape-build-ART.md` |
 | 6 | Прятки | hide-seek | 0.15.11 | `S14-hide-seek-BRIEF.md` | `hide-seek-ART.md` |
-| 7 | Времена года | seasons | 0.15.12 | `S14-seasons-BRIEF.md` | (CSS; weather icons в manifest §2.10) |
+| 7 | Времена года → улица в «В гости» (01.10.2026) | seasons → `meow-home/outdoor.ts` | 0.15.12 | `S14-seasons-BRIEF.md` | (CSS; weather icons в manifest §2.10) |
 | 8 | В гостях у Мяу | meow-home | 0.15.13 | `S14-meow-home-BRIEF.md` | `meow-home-ART.md` |
 | 9 | Считаем с Мяу | counting | 0.15.14 | `S14-counting-BRIEF.md` | placeholders 🍎⭐🐟 |
 

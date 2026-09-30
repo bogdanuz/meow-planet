@@ -3,7 +3,7 @@ import { GAME_IDS } from '../../src/content/catalog'
 import { parentBlurbsInMenuOrder } from '../../src/content/parent-game-blurbs'
 
 describe('parent game blurbs', () => {
-  it('все 9 MVP-игр', () => {
+  it('все игры каталога', () => {
     const rows = parentBlurbsInMenuOrder()
     expect(rows).toHaveLength(GAME_IDS.length)
     expect(rows[0]?.title).toBe('Лопни шарик')

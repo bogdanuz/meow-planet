@@ -1,7 +1,7 @@
 {
   "name": "meow-planet",
   "private": true,
-  "version": "0.16.0",
+  "version": "0.16.3",
   "type": "module",
   "description": "Planeta Meow PWA mini-games hub for toddlers 2-3 (iPad)",
   "scripts": {
@@ -17,7 +17,9 @@
     "lint": "tsc -b --pretty false",
     "assets:menu-cards": "node scripts/process-menu-cards.mjs",
     "assets:balloon-pop": "node scripts/build-balloon-pop-assets.mjs",
+    "assets:boot": "node scripts/build-boot-assets.mjs",
     "assets:sound-world": "node scripts/build-sound-world-assets.mjs",
+    "assets:coloring": "node scripts/build-coloring-assets.mjs",
     "assets:sound-world-letters": "node scripts/split-sound-world-letters.mjs"
   },
   "engines": {

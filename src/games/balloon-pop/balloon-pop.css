@@ -177,6 +177,11 @@
   pointer-events: none;
 }
 
+.balloon-pop__pose {
+  position: relative;
+  flex: 0 0 auto;
+}
+
 .balloon-pop__meow {
   display: block;
   flex-shrink: 0;
@@ -187,6 +192,15 @@
   object-position: bottom center;
   pointer-events: none;
   filter: drop-shadow(0 6px 10px rgb(26 74 107 / 22%));
+}
+
+.balloon-pop__meow.is-pose-under {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  margin: 0;
+  pointer-events: none;
 }
 
 .balloon-pop__speech {
@@ -207,6 +221,10 @@
   box-shadow:
     0 0 0 3px #7eb8da,
     0 6px 16px rgb(26 74 107 / 14%);
+}
+
+.balloon-pop__aside[data-companion='olli'] .balloon-pop__speech {
+  margin-bottom: calc(8.2rem - 4vh);
 }
 
 .balloon-pop__speech-color {
@@ -247,6 +265,7 @@
     5.6rem 0.5rem 8.5rem 0.35rem;
   overflow: hidden;
   box-sizing: border-box;
+  container-type: size;
 }
 
 .balloon-pop__balloon {
@@ -361,22 +380,22 @@
 
 .balloon-pop__balloon--sm .balloon-pop__balloon-art {
   width: calc(
-    9.75rem * var(--balloon-layout-scale, 1) * var(--balloon-task-scale, 1) *
+    min(14cqw, 9.75rem) * var(--balloon-layout-scale, 1) * var(--balloon-task-scale, 1) *
       var(--balloon-free-scale, 1)
   );
   height: calc(
-    12.75rem * var(--balloon-layout-scale, 1) * var(--balloon-task-scale, 1) *
+    min(18cqh, 12.75rem) * var(--balloon-layout-scale, 1) * var(--balloon-task-scale, 1) *
       var(--balloon-free-scale, 1)
   );
 }
 
 .balloon-pop__balloon--lg .balloon-pop__balloon-art {
   width: calc(
-    20.25rem * var(--balloon-layout-scale, 1) * var(--balloon-task-scale, 1) *
+    min(20cqw, 16rem) * var(--balloon-layout-scale, 1) * var(--balloon-task-scale, 1) *
       var(--balloon-free-scale, 1)
   );
   height: calc(
-    26.25rem * var(--balloon-layout-scale, 1) * var(--balloon-task-scale, 1) *
+    min(28cqh, 21rem) * var(--balloon-layout-scale, 1) * var(--balloon-task-scale, 1) *
       var(--balloon-free-scale, 1)
   );
 }

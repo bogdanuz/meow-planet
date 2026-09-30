@@ -4,7 +4,7 @@ test('приветствие: крупный бренд и кнопка Игра
   await page.goto('/')
   await expect(page.locator('.boot-loader')).toHaveCount(0, { timeout: 8000 })
   await expect(page.locator('.screen--welcome')).toBeVisible()
-  await expect(page.locator('.welcome__title')).toHaveAttribute('alt', 'Планета Мяу')
+  await expect(page.locator('.welcome__title')).toHaveAttribute('alt', 'Планета Мяу и друзья')
   await expect(page.getByRole('button', { name: 'Играть' })).toBeVisible()
   await expect(page.locator('.welcome__dock')).toBeVisible()
   await expect(page.locator('.welcome__hint')).toHaveCount(0)

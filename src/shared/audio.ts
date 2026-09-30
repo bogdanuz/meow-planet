@@ -50,6 +50,8 @@ export type AudioManager = {
   waitUntilVoiceEnded: () => Promise<void>
   /** Обрывает текущий sfx (карточки sound-world и др.). */
   stopSfx: () => void
+  /** Обрывает текущую голосовую фразу. */
+  stopVoice: () => void
   /** В тихом режиме яркие анимации-реакции приглушены (В2.1 = Б). */
   allowBrightMotion: () => boolean
   updateSettings: (settings: AudioSettingsSnapshot) => void
@@ -90,7 +92,9 @@ function ensureBackgroundPauseListeners(): void {
   window.addEventListener(
     'blur',
     () => {
-      stopAllBackgroundSounds()
+      // Пока страница на экране, blur на iPad приходит и от обычного тапа.
+      // Голос в этот момент не обрываем — иначе следующая фраза стартует раньше времени.
+      if (document.hidden) stopAllBackgroundSounds()
     },
     { capture: true },
   )
@@ -130,11 +134,13 @@ export function createAudioManager(
   let musicFade = 0
   let sfxElement: HTMLAudioElement | null = null
   let voiceElement: HTMLAudioElement | null = null
+  let voiceToken = 0
   let voiceEnded: Promise<void> = Promise.resolve()
   let settleVoiceEnded: (() => void) | null = null
   let sfxSource: AudioBufferSourceNode | null = null
   let sfxGain: GainNode | null = null
   const sfxLayers: { source: AudioBufferSourceNode; gain: GainNode }[] = []
+  const sfxBuffers = new Map<string, AudioBuffer>()
   const MAX_SFX_LAYERS = 14
 
   function detachLayer(entry: { source: AudioBufferSourceNode; gain: GainNode }): void {
@@ -170,12 +176,22 @@ export function createAudioManager(
     })
   }
 
+  function silenceVoiceElement(el: HTMLAudioElement): void {
+    el.onended = null
+    el.pause()
+    el.removeAttribute('src')
+    try {
+      el.load()
+    } catch {
+      // ignore
+    }
+  }
+
   function stopVoice(): void {
     if (voiceElement) {
-      voiceElement.pause()
-      voiceElement.removeAttribute('src')
-      voiceElement.load()
+      const current = voiceElement
       voiceElement = null
+      silenceVoiceElement(current)
     }
     finishVoiceWait()
   }
@@ -361,8 +377,82 @@ export function createAudioManager(
     }
   }
 
+  async function playSfxWithoutStealingVoice(url: string, volume: number): Promise<boolean> {
+    const audioCtx = await ensureContext()
+    if (!audioCtx) return false
+    try {
+      let buffer = sfxBuffers.get(url)
+      if (!buffer) {
+        const res = await fetch(url)
+        if (!res.ok) return false
+        const data = await res.arrayBuffer()
+        buffer = await audioCtx.decodeAudioData(data.slice(0))
+        sfxBuffers.set(url, buffer)
+      }
+      const source = audioCtx.createBufferSource()
+      const gain = audioCtx.createGain()
+      source.buffer = buffer
+      source.connect(gain)
+      gain.connect(audioCtx.destination)
+      gain.gain.setValueAtTime(volume, audioCtx.currentTime)
+      const layer = { source, gain }
+      while (sfxLayers.length >= MAX_SFX_LAYERS) {
+        detachLayer(sfxLayers[0]!)
+      }
+      sfxLayers.push(layer)
+      source.onended = () => detachLayer(layer)
+      source.start(0)
+      return true
+    } catch {
+      return false
+    }
+  }
+
+  function clipAtEnd(el: HTMLAudioElement): boolean {
+    const dur = el.duration
+    if (!Number.isFinite(dur) || dur <= 0.2) return false
+    return el.currentTime >= dur - 0.12
+  }
+
   function waitUntilVoiceEnded(): Promise<void> {
-    return voiceEnded
+    const el = voiceElement
+    if (!el || voiceToken === 0) return voiceEnded
+    if (el.ended && clipAtEnd(el)) return voiceEnded
+
+    return new Promise<void>((resolve) => {
+      let settled = false
+      let timer: ReturnType<typeof setTimeout> | undefined
+      const done = () => {
+        if (settled) return
+        settled = true
+        if (timer !== undefined) clearTimeout(timer)
+        el.removeEventListener('ended', onEnded)
+        resolve()
+      }
+      const onEnded = () => {
+        if (clipAtEnd(el)) done()
+      }
+      const arm = (durationSec: number) => {
+        const remainMs = Math.max(0, (durationSec - el.currentTime) * 1000)
+        timer = setTimeout(done, remainMs)
+        const handle = timer as unknown as { unref?: () => void }
+        handle.unref?.()
+      }
+      if (Number.isFinite(el.duration) && el.duration > 0) {
+        arm(el.duration)
+      } else {
+        el.addEventListener(
+          'loadedmetadata',
+          () => {
+            if (!settled && Number.isFinite(el.duration) && el.duration > 0) {
+              arm(el.duration)
+            }
+          },
+          { once: true },
+        )
+      }
+      el.addEventListener('ended', onEnded)
+    })
   }
 
   async function playUrl(
@@ -370,12 +460,14 @@ export function createAudioManager(
     url: string,
     options: { volume?: number; startSec?: number } = {},
   ): Promise<boolean> {
+    const token = channel === 'voice' ? ++voiceToken : 0
     if (channel === 'voice') beginVoiceWait()
     if (!channelAllowed(channel, settings)) {
       if (channel === 'voice') finishVoiceWait()
       return false
     }
     if (!unlocked) await unlock()
+    if (channel === 'voice' && token !== voiceToken) return false
 
     if (channel === 'music') {
       const nextSrc = new URL(url, window.location.href).href
@@ -395,11 +487,14 @@ export function createAudioManager(
 
     if (channel === 'voice') {
       if (voiceElement) {
-        voiceElement.pause()
-        voiceElement.removeAttribute('src')
-        voiceElement.load()
+        const previous = voiceElement
         voiceElement = null
+        silenceVoiceElement(previous)
       }
+    } else if (voiceElement && !voiceElement.ended) {
+      stopSfx()
+      const keptVoice = await playSfxWithoutStealingVoice(url, options.volume ?? 0.7)
+      if (keptVoice) return true
     } else {
       stopSfx()
     }
@@ -428,17 +523,24 @@ export function createAudioManager(
         audio.currentTime = Math.min(startSec, Math.max(0, audio.duration - 0.05))
       }
       await audio.play()
+      if (channel === 'voice' && token !== voiceToken) {
+        silenceVoiceElement(audio)
+        if (voiceElement === audio) voiceElement = null
+        return false
+      }
       audio.onended = () => {
         if (channel === 'voice') {
-          if (voiceElement === audio) voiceElement = null
+          if (token !== voiceToken || voiceElement !== audio) return
+          voiceElement = null
           finishVoiceWait()
-        } else if (sfxElement === audio) {
-          sfxElement = null
+          return
         }
+        if (sfxElement === audio) sfxElement = null
       }
       return true
     } catch {
       if (channel === 'voice') {
+        if (token !== voiceToken) return false
         if (voiceElement === audio) voiceElement = null
         finishVoiceWait()
       } else if (sfxElement === audio) {
@@ -638,6 +740,7 @@ export function createAudioManager(
     fadeOutMusic,
     switchMusic,
     stopSfx,
+    stopVoice,
     allowBrightMotion: () => !settings.quietMode,
     updateSettings: (next) => {
       settings = { ...next }

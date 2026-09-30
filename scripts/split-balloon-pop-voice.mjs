@@ -135,12 +135,13 @@ function mergeToCount(islands, want) {
 }
 
 async function findSource() {
-  const files = await readdir(root, { withFileTypes: true })
+  const sourceDir = path.join(root, 'sources', 'games', 'balloon-pop')
+  const files = await readdir(sourceDir, { withFileTypes: true })
   const hit = files.find(
     (f) => f.isFile() && /набор всех фраз/i.test(f.name) && f.name.endsWith('.mp3'),
   )
-  if (!hit) throw new Error('source reel mp3 not found in repo root')
-  return path.join(root, hit.name)
+  if (!hit) throw new Error('source reel mp3 not found in sources/games/balloon-pop')
+  return path.join(sourceDir, hit.name)
 }
 
 const src = await findSource()

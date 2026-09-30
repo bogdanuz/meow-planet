@@ -7,7 +7,7 @@ const require = createRequire(import.meta.url)
 const ffmpegPath = require('ffmpeg-static')
 const root = path.resolve(import.meta.dirname, '..')
 const sfxDir = path.join(root, 'public', 'assets', 'games', 'sound-world', 'sfx')
-const src = path.join(root, 'sg_203880.mp3')
+const src = path.join(root, 'sources', 'games', 'sound-world', 'drum-right.mp3')
 const out = path.join(sfxDir, 'drum-right.mp3')
 
 await new Promise((resolve, reject) => {

@@ -4,7 +4,7 @@ import {
   displayOutfit,
   sunWeatherAfterRain,
   weatherPickerOptions,
-} from '../../src/games/seasons/logic'
+} from '../../src/games/meow-home/seasons-logic'
 
 describe('seasons P15-09', () => {
   it('радуга не в пикере — только через солнце после дождя', () => {

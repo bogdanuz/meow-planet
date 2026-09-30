@@ -168,9 +168,61 @@
 .settings-audio-btn.touch-btn {
   min-height: 4.5rem;
   border-radius: 1.15rem;
+  border: 3px solid rgb(168 184 196 / 80%);
   font-weight: 700;
-  background: rgb(255 255 255 / 88%);
-  box-shadow: 0 0 0 3px rgb(126 184 218 / 45%);
+  background: #f3f6f8;
+  color: #6a7782;
+  box-shadow: none;
+}
+
+.settings-audio-btn.touch-btn[aria-pressed='true'] {
+  background: #e5f6dc;
+  border-color: #2f8a4a;
+  color: #1c5a30;
+  box-shadow:
+    0 4px 0 #b7ddb0,
+    0 8px 16px rgb(40 110 50 / 16%);
+}
+
+.settings-audio-btn.touch-btn[aria-pressed='false'] {
+  background: #f4f6f8;
+  border-color: rgb(176 186 196 / 90%);
+  color: #7b8792;
+}
+
+.settings-companion {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.55rem;
+  margin: 0;
+  padding: 0.75rem 0.8rem 0.9rem;
+  border: 2px solid rgb(126 184 218 / 35%);
+  border-radius: 1.15rem;
+}
+
+.settings-companion legend {
+  width: 100%;
+  padding: 0 0.2rem;
+  font-weight: 700;
+}
+
+.settings-companion__card.touch-btn {
+  flex: 1 1 8rem;
+  border-radius: 999px;
+  border: 3px solid rgb(176 186 196 / 90%);
+  background: #fff;
+  color: #667480;
+  font-weight: 700;
+  box-shadow: none;
+}
+
+.settings-companion__card.touch-btn[aria-pressed='true'] {
+  background: #fff0e0;
+  border-color: #c26a2e;
+  color: #6a3414;
+  box-shadow:
+    0 4px 0 #e2b48a,
+    0 8px 16px rgb(140 70 30 / 16%);
 }
 
 .settings-actions {

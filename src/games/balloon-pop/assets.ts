@@ -1,4 +1,5 @@
 import type { BalloonFieldColor } from './logic'
+import { presenterPoseUrl } from '../../shared/companion'
 
 // Workbox precache в `dist/sw.js` матчится по URL без query-параметров.
 // Поэтому в рантайм не добавляем `?v=...`, чтобы офлайн-режим не ломался.
@@ -21,7 +22,7 @@ export function balloonPngUrl(color: BalloonFieldColor): string {
 }
 
 export function meowPresenterUrl(pose: BalloonMeowPose): string {
-  return publicUrl(`meow-presenter-${pose}.png`)
+  return presenterPoseUrl('meow', pose)
 }
 
 export function balloonMeowPoseForEvent(event: BalloonMeowEvent): BalloonMeowPose {

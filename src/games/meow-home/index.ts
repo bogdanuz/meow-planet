@@ -30,6 +30,7 @@ import {
   pickNightQuietHint,
 } from './praise'
 import { playAmbientTap, playCareAction, playMeowTap } from './meow-home-sfx'
+import { mountOutdoor } from './outdoor'
 import './meow-home.css'
 
 const POSE_MAP: Record<ReturnType<typeof mascotPoseFor>, MascotPose> = {
@@ -42,9 +43,9 @@ const POSE_MAP: Record<ReturnType<typeof mascotPoseFor>, MascotPose> = {
 export const meowHomeGame: GameModule = {
   meta: {
     id: 'meow-home',
-    title: 'В гостях у Мяу',
+    title: 'В гости',
     zoneId: 'meow-orbit',
-    modules: ['2.13', '2.16'],
+    modules: ['2.13', '2.16', '2.10'],
   },
 
   mount(container, context) {
@@ -97,9 +98,42 @@ export const meowHomeGame: GameModule = {
     const props = document.createElement('div')
     props.className = 'meow-home__props'
 
-    stage.append(sky, clockSlot, mascotWrap, props, actions)
+    const door = document.createElement('button')
+    door.type = 'button'
+    door.className = 'touch-btn meow-home__door'
+    door.setAttribute('aria-label', 'На улицу')
+    door.textContent = '🚪'
+    door.addEventListener('click', () => goOutside())
+
+    stage.append(sky, clockSlot, mascotWrap, props, actions, door)
     root.append(timeRow, status, stage)
     container.replaceChildren(root)
+
+    let disposeOutdoor: (() => void) | null = null
+
+    function goOutside(): void {
+      if (disposeOutdoor || !root) return
+      playAmbientTap(audio)
+      timeRow.hidden = true
+      status.hidden = true
+      stage.hidden = true
+      root.dataset.place = 'outdoor'
+      disposeOutdoor = mountOutdoor(root, {
+        audio,
+        onSoftHint: context.onSoftHint,
+        onHome: () => goHome(),
+      })
+    }
+
+    function goHome(): void {
+      disposeOutdoor?.()
+      disposeOutdoor = null
+      timeRow.hidden = false
+      status.hidden = false
+      stage.hidden = false
+      if (root) root.dataset.place = 'home'
+      render()
+    }
 
     function tickClock(): void {
       clockEl.dateTime = new Date().toISOString()
@@ -254,9 +288,12 @@ export const meowHomeGame: GameModule = {
     render()
 
     cleanup = () => {
+      disposeOutdoor?.()
+      disposeOutdoor = null
       timers.clear()
       if (clockTimer) clearInterval(clockTimer)
       clockTimer = null
+      audio.stopSfx()
       if (root?.parentElement) root.parentElement.removeChild(root)
       root = null
       cleanup = null

@@ -9,7 +9,7 @@ import {
 import { DEFAULT_SETTINGS } from '../../src/shared/storage'
 
 describe('game registry', () => {
-  it('содержит ровно 9 игр MVP', () => {
+  it('содержит все игры каталога', () => {
     expect(GAME_REGISTRY).toHaveLength(9)
     expect(listAllGameIds()).toHaveLength(9)
   })
@@ -36,7 +36,7 @@ describe('game registry', () => {
   it('listGamesByZone отдаёт игры только своей зоны', () => {
     const workshop = listGamesByZone('star-workshop')
     expect(workshop.map((g) => g.meta.id).sort()).toEqual(
-      ['counting', 'puzzle', 'shape-build', 'sort-colors'].sort(),
+      ['counting', 'drawing', 'puzzle', 'shape-build', 'sort-colors'].sort(),
     )
     expect(listGamesByZone('sound-grove')).toHaveLength(1)
   })

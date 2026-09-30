@@ -37,4 +37,17 @@ describe('parseHash', () => {
     )
     expect(routeToHash({ screen: 'parent' })).toBe('#/parent')
   })
+
+  it('настройки из игры помнят, куда вернуться', () => {
+    expect(parseHash('#/parent/drawing')).toEqual({ screen: 'parent', returnTo: 'drawing' })
+    expect(routeToHash({ screen: 'parent', returnTo: 'drawing' })).toBe('#/parent/drawing')
+    expect(parseHash('#/parent/nope')).toEqual({ screen: 'parent' })
+  })
+
+  it('старые закладки объединённых игр ведут в новые', () => {
+    expect(parseHash('#/game/coloring')).toEqual({ screen: 'game', gameId: 'drawing' })
+    expect(parseHash('#/parent/coloring')).toEqual({ screen: 'parent', returnTo: 'drawing' })
+    expect(parseHash('#/parent/seasons')).toEqual({ screen: 'parent', returnTo: 'meow-home' })
+    expect(parseHash('#/game/seasons')).toEqual({ screen: 'game', gameId: 'meow-home' })
+  })
 })

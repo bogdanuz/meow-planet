@@ -4,11 +4,14 @@ import { createUiIconImg } from '../../shared/ui-icon'
 import type { RouterController } from '../router-controller'
 import type { AudioManager } from '../../shared/audio'
 import type { AppSettings } from '../../shared/storage'
+import type { GameId } from '../../content/catalog'
 
 export type ParentScreenOptions = {
   audio: AudioManager
   appVersion: string
   onSettingsSaved: (settings: AppSettings) => void
+  /** Настройки открыты из игры — «Назад» возвращает в неё. */
+  returnTo?: GameId
 }
 
 type ParentTab = 'settings' | 'about'
@@ -37,10 +40,12 @@ export function renderParentScreen(
   const back = document.createElement('button')
   back.type = 'button'
   back.className = 'touch-btn parent-bar__back'
-  back.setAttribute('aria-label', 'Назад в меню')
+  const returnTo = options.returnTo
+  back.setAttribute('aria-label', returnTo ? 'Назад в игру' : 'Назад в меню')
   back.append(createUiIconImg('back', { decorative: true }))
   back.addEventListener('click', () => {
-    router.goHome()
+    if (returnTo) router.navigate({ screen: 'game', gameId: returnTo })
+    else router.goHome()
   })
   bar.append(back)
 

@@ -3,6 +3,8 @@ import { getGameById } from '../../games/registry'
 import type { GameModule, GameMountContext } from '../../shared/game-module'
 import type { GameTaskVisual } from '../../shared/game-task-visual'
 import { loadSettings } from '../../shared/storage'
+import { createGamePresenter } from '../../shared/game-presenter'
+import { gameUsesPresenter } from '../../shared/companion'
 import { isGameReleased } from '../../content/released-games'
 import { renderComingSoonScreen } from './coming-soon'
 
@@ -41,6 +43,10 @@ export function renderGameScreen(
   container.replaceChildren(host)
 
   const settings = loadSettings()
+  const presenter =
+    gameUsesPresenter(gameId) && gameId !== 'balloon-pop'
+      ? createGamePresenter(settings.companion)
+      : null
   game.mount(host, {
     settings: {
       childName: settings.childName,
@@ -50,13 +56,20 @@ export function renderGameScreen(
       hideEnglishAlphabet: settings.hideEnglishAlphabet,
       countingLimit: settings.countingLimit,
       balloonTasksEnabled: settings.balloonTasksEnabled,
+      companion: settings.companion,
     },
-    onSoftHint,
+    onSoftHint: (message: string) => {
+      onSoftHint(message)
+      if (gameUsesPresenter(gameId) && gameId !== 'balloon-pop') {
+        presenter?.setLine(message, message ? 'happy' : 'idle')
+      }
+    },
     onTaskVisual,
     hubNavigation,
     chromeGameActions,
     onChromeSceneLabel,
   })
+  if (presenter) host.append(presenter.element)
 
   return {
     unmount: () => {

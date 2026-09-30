@@ -15,11 +15,11 @@ export type ZoneId = (typeof ZONE_IDS)[number]
 export const GAME_IDS = [
   'balloon-pop',
   'sound-world',
+  'drawing',
   'sort-colors',
   'puzzle',
   'shape-build',
   'hide-seek',
-  'seasons',
   'meow-home',
   'counting',
 ] as const
@@ -52,10 +52,10 @@ export const ZONES: readonly ZoneMeta[] = [
  */
 export const MVP_ZONE_GAMES: Readonly<Record<ZoneId, readonly GameId[]>> = {
   'meow-orbit': ['meow-home'],
-  'rainbow-meadow': ['balloon-pop', 'seasons'],
+  'rainbow-meadow': ['balloon-pop'],
   'sound-grove': ['sound-world'],
   'planet-corners': ['hide-seek'],
-  'star-workshop': ['sort-colors', 'puzzle', 'shape-build', 'counting'],
+  'star-workshop': ['sort-colors', 'puzzle', 'shape-build', 'counting', 'drawing'],
 }
 
 export const GAMES: readonly GameMeta[] = [
@@ -67,9 +67,15 @@ export const GAMES: readonly GameMeta[] = [
   },
   {
     id: 'sound-world',
-    title: 'Изучаем звуки с Мяу',
+    title: 'Изучаем звуки',
     zoneId: 'sound-grove',
     modules: ['2.2', '2.8', '2.14'],
+  },
+  {
+    id: 'drawing',
+    title: 'Рисовалка',
+    zoneId: 'star-workshop',
+    modules: ['2.20', '2.7'],
   },
   {
     id: 'sort-colors',
@@ -96,20 +102,14 @@ export const GAMES: readonly GameMeta[] = [
     modules: ['2.6'],
   },
   {
-    id: 'seasons',
-    title: 'Времена года',
-    zoneId: 'rainbow-meadow',
-    modules: ['2.10'],
-  },
-  {
     id: 'meow-home',
-    title: 'В гостях у Мяу',
+    title: 'В гости',
     zoneId: 'meow-orbit',
-    modules: ['2.13', '2.16'],
+    modules: ['2.13', '2.16', '2.10'],
   },
   {
     id: 'counting',
-    title: 'Считаем с Мяу',
+    title: 'Учимся считать',
     zoneId: 'star-workshop',
     modules: ['2.18'],
   },

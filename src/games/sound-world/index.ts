@@ -23,7 +23,7 @@ import './sound-world.css'
 export const soundWorldGame: GameModule = {
   meta: {
     id: 'sound-world',
-    title: 'Изучаем звуки с Мяу',
+    title: 'Изучаем звуки',
     zoneId: 'sound-grove',
     modules: ['2.2', '2.8', '2.14'],
   },

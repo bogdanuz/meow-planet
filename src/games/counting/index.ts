@@ -33,7 +33,7 @@ import './counting.css'
 export const countingGame: GameModule = {
   meta: {
     id: 'counting',
-    title: 'Считаем с Мяу',
+    title: 'Учимся считать',
     zoneId: 'star-workshop',
     modules: ['2.18'],
   },

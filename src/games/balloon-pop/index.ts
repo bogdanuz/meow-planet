@@ -7,9 +7,10 @@ import {
   balloonMeowPoseForEvent,
   balloonPngUrl,
   balloonSkyUrl,
-  meowPresenterUrl,
   type BalloonMeowEvent,
 } from './assets'
+import { presenterPoseUrl } from '../../shared/companion'
+import { createPoseSlot } from '../../shared/pose-slot'
 import {
   balloonMatchesTask,
   countTargets,
@@ -119,8 +120,23 @@ export const balloonPopGame: GameModule = {
     meowImg.alt = ''
     meowImg.setAttribute('aria-hidden', 'true')
     meowImg.decoding = 'async'
-    meowImg.src = meowPresenterUrl('idle')
+    meowImg.src = presenterPoseUrl(context.settings.companion, 'idle')
+    const poseHost = document.createElement('div')
+    poseHost.className = 'balloon-pop__pose'
+    poseHost.append(meowImg)
+    const poseSlot = createPoseSlot(meowImg)
+    for (const pose of ['idle', 'happy', 'miss'] as const) {
+      const preload = new Image()
+      preload.src = presenterPoseUrl(context.settings.companion, pose)
+    }
     let poseReset: ReturnType<typeof setTimeout> | undefined
+
+    const paintPose = (pose: 'idle' | 'happy' | 'miss'): void => {
+      const idle = pose === 'idle'
+      meowImg.classList.toggle('meow-idle', idle)
+      poseSlot.under.classList.toggle('meow-idle', idle)
+      void poseSlot.show(presenterPoseUrl(context.settings.companion, pose))
+    }
 
     function setMeowLine(
       message: string,
@@ -135,8 +151,7 @@ export const balloonPopGame: GameModule = {
         void audio.playUrl('voice', balloonVoiceUrl(voiceFile), { volume: 0.86 })
       }
       const pose = balloonMeowPoseForEvent(event)
-      meowImg.src = meowPresenterUrl(pose)
-      meowImg.classList.toggle('meow-idle', pose === 'idle')
+      paintPose(pose)
       if (poseReset !== undefined) {
         clearTimeout(poseReset)
         timers.delete(poseReset)
@@ -147,8 +162,7 @@ export const balloonPopGame: GameModule = {
           timers.delete(reset)
           poseReset = undefined
           if (!meowImg.isConnected) return
-          meowImg.src = meowPresenterUrl('idle')
-          meowImg.classList.add('meow-idle')
+          paintPose('idle')
         }, TASK_SUCCESS_CELEBRATION_MS)
         poseReset = reset
         timers.add(reset)
@@ -300,8 +314,9 @@ export const balloonPopGame: GameModule = {
 
     const aside = document.createElement('div')
     aside.className = 'balloon-pop__aside'
+    aside.dataset.companion = context.settings.companion
 
-    aside.append(meowImg, meowSpeech)
+    aside.append(poseHost, meowSpeech)
 
     const field = document.createElement('div')
     field.className = 'balloon-pop__field'
@@ -385,14 +400,31 @@ export const balloonPopGame: GameModule = {
       popBalloon(spec, btn)
     }
 
+    let dragOriginX = 0
+    let dragOriginY = 0
+    let dragArmed = false
+
     field.addEventListener('pointerdown', (event) => {
       if (event.pointerType === 'mouse' && event.button !== 0) return
+      dragOriginX = event.clientX
+      dragOriginY = event.clientY
+      dragArmed = false
       popUnderPointer(event.clientX, event.clientY)
     })
 
     field.addEventListener('pointermove', (event) => {
       if ((event.buttons & 1) === 0) return
+      const moved = Math.hypot(event.clientX - dragOriginX, event.clientY - dragOriginY)
+      if (!dragArmed && moved < 48) return
+      dragArmed = true
       popUnderPointer(event.clientX, event.clientY)
+    })
+
+    field.addEventListener('pointerup', () => {
+      dragArmed = false
+    })
+    field.addEventListener('pointercancel', () => {
+      dragArmed = false
     })
 
     function playPopFeedback(): void {
@@ -447,6 +479,7 @@ export const balloonPopGame: GameModule = {
       playPopFeedback()
 
       btn.classList.add('is-popping')
+      btn.style.pointerEvents = 'none'
       const delay = context.settings.quietMode ? 280 : POP_MS
       const timer = setTimeout(() => {
         timers.delete(timer)
@@ -484,6 +517,7 @@ export const balloonPopGame: GameModule = {
 
     cleanup = () => {
       cancelHeldRespawn()
+      audio.stopVoice()
       for (const timer of timers) clearTimeout(timer)
       timers.clear()
       context.onTaskVisual?.(null)

@@ -181,6 +181,14 @@ export function mountInstrumentView(stage: HTMLElement, opts: MountOpts): void {
     const scene = document.createElement('div')
     scene.className = 'sound-world__instrument-scene sound-world__drum-kit'
     scene.style.setProperty('--scene-ar', DRUM_SCENE_AR)
+    const ground = document.createElement('div')
+    ground.className = 'sound-world__drum-ground'
+    ground.setAttribute('aria-hidden', 'true')
+    const floor = document.createElement('div')
+    floor.className = 'sound-world__drum-floor'
+    floor.setAttribute('aria-hidden', 'true')
+    floor.style.backgroundImage = `url("${instrumentPlayUrl('drum-floor')}")`
+    scene.append(ground, floor)
     for (const layer of DRUM_LAYERS) {
       const btn = layerButton(
         layer,

@@ -13,6 +13,7 @@ function mountContext() {
       hideEnglishAlphabet: false,
       countingLimit: 10 as const,
       balloonTasksEnabled: true,
+      companion: 'meow' as const,
     },
     hubNavigation: { goMenu: vi.fn(), goWelcome: vi.fn(), onSoundToggle: vi.fn() },
   }
@@ -70,6 +71,22 @@ describe('balloon-pop mount chrome', () => {
     const css = readFileSync(path.join('src', 'games', 'balloon-pop', 'balloon-pop.css'), 'utf8')
     expect(css).toContain('calc(5.1rem - 4vh)')
     expect(css).toMatch(/margin-left:\s*1%/)
+  })
+
+  it('речь совы выше, рядом с клювом', () => {
+    const host = document.createElement('div')
+    const ctx = mountContext()
+    const olli = {
+      ...ctx,
+      settings: { ...ctx.settings, companion: 'olli' as const },
+    }
+    balloonPopGame.mount(host, olli)
+    expect(host.querySelector('.balloon-pop__aside')?.getAttribute('data-companion')).toBe(
+      'olli',
+    )
+    const css = readFileSync(path.join('src', 'games', 'balloon-pop', 'balloon-pop.css'), 'utf8')
+    expect(css).toContain(".balloon-pop__aside[data-companion='olli'] .balloon-pop__speech")
+    expect(css).toContain('calc(8.2rem - 4vh)')
   })
 
   it('подсказка — неоновое свечение цвета шарика из центра, не рамка', () => {

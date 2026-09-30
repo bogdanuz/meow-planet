@@ -35,6 +35,7 @@ describe('sound-world card art', () => {
       'drum-snare',
       'drum-kick',
       'drum-tom',
+      'drum-floor',
       'maraca-left',
       'maraca-right',
       'piano-body',
@@ -53,6 +54,20 @@ describe('sound-world card art', () => {
       expect(existsSync(path.join(ROOT, 'letters', `en-${letter}.png`)), letter).toBe(
         true,
       )
+    }
+  })
+
+  it('слои пианино лежат на одном холсте и не обрезаны по отдельности', async () => {
+    const sharp = (await import('sharp')).default
+    const layers = [
+      'piano-body.png',
+      'piano-lid.png',
+      ...Array.from({ length: 7 }, (_, index) => `key-${index + 1}.png`),
+    ]
+    for (const name of layers) {
+      const meta = await sharp(path.join(ROOT, 'play', name)).metadata()
+      expect(meta.width, name).toBe(2400)
+      expect(meta.height, name).toBe(1792)
     }
   })
 

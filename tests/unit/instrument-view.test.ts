@@ -15,6 +15,7 @@ function mockAudio(): AudioManager {
     switchMusic: vi.fn(),
     waitUntilVoiceEnded: vi.fn().mockResolvedValue(undefined),
     stopSfx: vi.fn(),
+    stopVoice: vi.fn(),
     allowBrightMotion: () => true,
     updateSettings: vi.fn(),
   }
@@ -61,7 +62,7 @@ describe('mountInstrumentView', () => {
     expect(stage.querySelectorAll('.sound-world__layer-art').length).toBe(3)
     expect(
       Number.parseFloat(stage.querySelector<HTMLButtonElement>('[data-piece="snare"]')?.style.left ?? '1'),
-    ).toBe(-2.5)
+    ).toBe(9)
   })
 
   it('маракасы — два независимых объекта', () => {

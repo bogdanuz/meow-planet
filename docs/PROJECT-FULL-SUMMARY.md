@@ -228,10 +228,15 @@ meow-planet/
 
 ### 3.7 PWA / Service Worker
 
-- **Конфиг:** `vite.config.ts` — `registerType: 'prompt'`, **`injectRegister: false`**, manifest icons только **`favicon.svg`** (K-002).
-- **Workbox glob:** js, css, html, svg, png, webp, mp3, wav, ogg, woff2.
-- **Boot:** `src/main.ts` → `boot-loader.ts` (splash + %) → `pwa-boot.ts` (prod: dynamic import `virtual:pwa-register`); dev SW off (`pwa-boot.ts`).
-- **Тесты:** stub `tests/stubs/pwa-register.ts` via vitest alias.
+- **Конфиг:** `vite.config.ts` — `registerType: 'autoUpdate'`,
+  **`injectRegister: false`**, PNG icons 192/512 + apple-touch-icon/favicon.
+- **Workbox glob:** `**/*` — любой файл production-сборки независимо от расширения.
+- **Boot:** `src/main.ts` → `boot-loader.ts` → `pwa-boot.ts`; progress получает
+  build-generated `precache-manifest.json` из того же Workbox manifest.
+- **Build-gate:** `scripts/verify-precache-manifest.mjs` проверяет равенство
+  Workbox/progress и полное покрытие app-файлов `dist`.
+- **Тесты:** unit + отдельный `npm run test:e2e:boot` через production preview;
+  suite обязателен в CI.
 
 ### 3.8 Родительский центр
 
@@ -249,8 +254,11 @@ meow-planet/
 
 1. `index.html` → `src/main.ts`
 2. `mountBootLoader` — splash с % (`boot-loader.ts`, P15-05)
-3. `runBootSequence` — prod: регистрация SW + ожидание controller (timeout 14s); dev: сразу 100% (`pwa-boot.ts`)
-4. `renderShell` — router + chrome + экраны (`shell.ts`)
+3. `runBootSequence` параллельно регистрирует SW и проверяет каждый URL единого
+   `precache-manifest.json`; response body дочитывается полностью.
+4. Bounded timeout применяется только к финализации SW после загрузки; 100% не
+   публикуются раньше полного списка и readiness.
+5. `{ ok: true }` → `loader.unmount()` → `renderShell` (router + chrome + экраны).
 
 ### 3.11 Welcome и меню (код)
 

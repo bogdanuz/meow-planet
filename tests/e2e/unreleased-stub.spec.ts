@@ -6,7 +6,6 @@ const UNRELEASED = [
   'puzzle',
   'shape-build',
   'hide-seek',
-  'seasons',
   'meow-home',
   'counting',
 ] as const

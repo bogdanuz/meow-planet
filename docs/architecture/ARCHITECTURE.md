@@ -9,7 +9,7 @@
 src/
   app/       оболочка, маршруты, меню плиток, родительский центр
   content/   тексты, фразы, каталог игр (без логики игр)
-  games/     девять изолированных игровых модулей + registry.ts
+  games/     игровые модули (8 MVP + «Рисовалка» с раскрасками; «Времена года» — улица внутри meow-home) + registry.ts
   mascot/    отображение и реакции Мяу
   shared/    контракт игры, storage, placeholders (+ audio/pointer в S03)
   styles/    общие стили, placeholders.css, game-stub.css
@@ -97,8 +97,10 @@ settings: shared/storage.loadSettings() ⇄ localStorage
 - Vite + `vite-plugin-pwa`.
 - `base: '/meow-planet/'` для GitHub Pages.
 - Workbox manifest — единый источник для app shell/offline precache и boot progress;
-  build проверяет совпадение списков (ADR-0001).
-- Обновление Service Worker — по запросу, без внезапного сброса активной игры.
+  `globPatterns: ['**/*']` включает любой файл production-сборки, а build проверяет
+  совпадение списков и полное покрытие `dist` (ADR-0001).
+- Регистрация Service Worker — `autoUpdate`; cold/warm/retry/error пути защищены
+  production boot e2e, update-path дополнительно проверяется вручную на iPad.
 - Финальные PNG-иконки 192×192 и 512×512 создаются в S13–S15.
 
 ## Проверка архитектуры

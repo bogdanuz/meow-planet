@@ -1,3 +1,5 @@
+import { HOME_SCREEN_HINT } from './home-screen-hint'
+
 /**
  * Хаб только в альбомной ориентации.
  * В книжной — оверлей «поверни устройство» (iPad/Safari не даёт жёсткий lock).
@@ -48,7 +50,11 @@ export function mountOrientationGate(host: HTMLElement): () => void {
   hint.className = 'orientation-gate__hint'
   hint.textContent = 'Планета Мяу открывается только горизонтально — так удобнее играть.'
 
-  card.append(icon, title, hint)
+  const home = document.createElement('p')
+  home.className = 'orientation-gate__hint'
+  home.textContent = HOME_SCREEN_HINT
+
+  card.append(icon, title, hint, home)
   gate.append(card)
   host.append(gate)
 

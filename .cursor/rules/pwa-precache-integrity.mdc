@@ -1,0 +1,27 @@
+---
+description: Обязательная целостность offline precache и production boot для любых изменений проекта
+alwaysApply: true
+---
+
+# PWA precache — обязательный инвариант
+
+Решение владельца от 29.09.2026: правило применяется **всегда ко всему проекту**.
+
+1. Любой runtime-файл новой или существующей игры хранить в `public/` либо импортировать
+   из `src/`; не загружать обязательные ассеты с внешних URL.
+2. Workbox manifest — единственный источник списка offline-файлов. Не создавать ручные
+   `BOOT_ASSET_PATHS`, не парсить `sw.js` в runtime и не делать второй список ресурсов.
+3. В `vite.config.ts` сохранять `globPatterns: ['**/*']`. Не заменять его перечнем
+   расширений: новый тип файла может выпасть из offline-кэша.
+4. `precache-manifest.json`, Workbox manifest и все app-файлы `dist` обязаны совпадать.
+   `npm run build` проверяет это и бюджеты 64 МиБ/файл, 512 МиБ/сборка через
+   `scripts/verify-precache-manifest.mjs`.
+5. Нельзя добавлять `navigator.webdriver` или иной shortcut, обходящий production boot.
+   100% показываются только после полного manifest и Service Worker readiness.
+6. После добавления, замены, переименования или удаления **любого** runtime-файла:
+   `npm run typecheck` → `npm run test` → `npm run build` → `npm run test:e2e:boot`;
+   UI/игры дополнительно `npm run test:e2e -- --project=chromium`.
+7. Не считать offline готовым только по dev-серверу. Проверять production build/preview.
+
+SSOT: `docs/quality/PWA-OFFLINE-GUARDRAILS.md` и
+`docs/adr/0001-single-precache-manifest.md`.

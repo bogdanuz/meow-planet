@@ -11,4 +11,6 @@ alwaysApply: true
    **Актуальный номер спринта** — только в `HANDOFF.md` и `docs/05-CURRENT-STATE.md`. Не перескакивать спринты.
 4. Ограничения продукта (запреты/обязательное) — `docs/product/PRODUCT_CONSTRAINTS.md`.
 5. Ассеты: `docs/assets/ASSET-PRODUCTION-PLAYBOOK.md` (что делать), `docs/assets/GENERATION-GUIDE.md` (промпты), `docs/assets/ASSET-MANIFEST.md` (реестр), `docs/assets/BRANDBOOK.md` (стиль). Папка `archive/` — только история, не SSOT.
-6. Не закрывать статусы `ОТКРЫТО` молча. Викторины — AskQuestion (см. `interactive-quizzes.mdc`).
+6. PWA/offline: `docs/quality/PWA-OFFLINE-GUARDRAILS.md` + ADR-0001; обязательное
+   always-on правило — `pwa-precache-integrity.mdc`.
+7. Не закрывать статусы `ОТКРЫТО` молча. Викторины — AskQuestion (см. `interactive-quizzes.mdc`).

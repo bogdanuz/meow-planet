@@ -346,6 +346,8 @@ Old balloon card layout, huge sky+hills filling the icon, different button shape
 [SUBJECT] Large friendly magnifying glass (cream handle, sky-blue lens) over a small soft green bush; inside lens, hint of hidden round shape or tiny ears. Background: pale sky wash + small hill under bush only (minimal, not full meadow scene).
 
 [TEXT_IN_IMAGE] "Прятки" / "с Мяу"
+
+Новый промпт без персонажа — в разделе «Пакет друзей», файл `card-hide-seek.jpg`. Этот блок не использовать.
 ```
 
 ### 7. Времена года — `card-seasons.jpg` (v2 — без пустого центра)
@@ -378,6 +380,8 @@ Four small icons in corners with huge blank middle, calendar, numbers, extra tex
 [SUBJECT] Three chunky blocks in a row with digits "1", "2", "3" (coral, yellow, sky-blue). Background inside button: soft cream pastel wash (no hill).
 
 [TEXT_IN_IMAGE] "Считаем" / "с Мяу"
+
+Новый промпт без персонажа — в разделе «Пакет друзей», файл `card-counting.jpg`. Этот блок не использовать.
 ```
 
 ### «В гости к Мяу» — лежанка + когтеточка (без кота) — `menu-visit-bed.jpg`
@@ -583,3 +587,237 @@ Image A = `ref-style-board.jpg`. Карточки **1:1** на белом `#FFFF
 После каждого JPEG: положите в чат «готово balloon-pop-sky» (или balloons / meow) — Cursor обработает и покажет экран `#/game/balloon-pop`.
 
 Nano Banana не делает звук. Музыка — Suno, голос — ElevenLabs, как в архивной редакции этого гайда от 22.09.2026 (разделы звука не менялись по смыслу). Звук не блокирует якоря и welcome.
+
+## Пакет друзей — 30.09.2026
+
+Рисовать этой пачкой. Референсы совы уже лежат в `assets-master/reference/` и в игру не копируются. Готовые JPEG класть точно в указанные пути и написать в чат «готово».
+
+Общая фраза стиля, дословно в каждом промпте:
+
+`warm children's book illustration style, soft gouache/watercolor textures, clean readable silhouettes, thick soft outlines, gentle rounded shapes, pastel but warm color palette, no harsh shadows, calm and friendly mood, made for a toddler app`
+
+Канон совы не сокращать и не «исправлять»: кривой силуэт, крупные пятна, глаза разной высоты, плоский клюв.
+
+### 1. Заголовок — `assets-master/shell/welcome-title-friends.jpg`
+
+Без референса картинки. Белый фон. 16:9, 2K. Cursor заменит `public/assets/shell/welcome-title.png`.
+
+```
+No reference image. Do not invent a meadow, flowers, clouds, stars, or any pattern. Only the wordmark and the kitten.
+
+[SUBJECT] One title wordmark for a toddler picture-book app: the Cyrillic title "Планета Мяу" as the main headline, and "и друзья" as a smaller subtitle below it. One small white Devon Rex kitten named Meow (short curly wavy cream-white fur, large rounded friendly ears, big round dark eyes, tiny pink nose, soft chubby picture-book body, no visible claws, no visible teeth) lies on top of the headline letters.
+
+[LETTERS — 3D VOLUME] Each headline letter is a plump, chunky, rounded painted letter with real thickness, like soft inflated clay or fat gouache-painted wooden blocks. The top surface of each letter is a visible flat-ish ledge the kitten can rest on. Thick soft dark-plum outline, a lighter highlight on the upper-left edge, a deeper warm shade on the lower-right edge, and a soft side wall showing the letter's depth. Letter colors repeat: coral, sunflower yellow, sky blue, meadow green, soft violet. Matte gouache finish, not glossy plastic.
+
+[LAYOUT] The headline "Планета Мяу" follows a gentle upward arc (a soft smile-shaped curve rising slightly toward the center), centered horizontally. Letters keep an even size and even spacing along the arc, every letter fully visible and readable. The subtitle "и друзья" sits centered directly below the headline, set in the same plump rounded style but about 55–60% of the headline letter height, following a matching gentle arc, with a calmer, more uniform color treatment (same palette, slightly less saturated). The subtitle is clearly secondary.
+
+[KITTEN] Meow is small and in harmony with the lettering: her body length spans only about 3–4 letters of the headline, and her height is roughly one letter-height or less, so she reads as a cute accent, not a competing subject. She lies calmly on the top ledge of the middle letters near the top of the arc, body stretched along the wordmark, front paws hanging softly over the upper-front edge of the letters, tail draping gently over the letter tops. Her body actually rests on the letters' top surfaces with a small soft contact shadow, so she looks supported. She looks calm, friendly, and relaxed, not jumping. She does not cover any letter's identifying shape — every letter stays fully readable.
+
+[COMPOSITION] 16:9. The wordmark group (headline + subtitle + kitten) is centered with generous even white margin on all sides. Balanced left and right. The kitten sits near the center of the arc so the composition feels symmetrical.
+
+[STYLE] Warm children's book illustration style, soft gouache/watercolor textures, clean readable silhouettes, thick soft dark-plum outlines, gentle rounded shapes, pastel but warm color palette, no harsh shadows, calm and friendly mood, made for a toddler app.
+
+[LOCATION] The entire background is one solid flat pure white #FFFFFF, identical in every corner, edge to edge. No tinted rectangle, no card, no gradient, no vignette, no floor shadow.
+
+[TEXT_IN_IMAGE] Render exactly "Планета Мяу" (headline) and "и друзья" (subtitle), and no other writing. No logo. No watermark.
+
+[AVOID] No flat 2D letters, no kitten larger than about one letter height, no kitten floating above the letters, no kitten covering letters, no straight rigid baseline, no equal-size subtitle, no meadow, flowers, clouds, or patterns, no off-white or tinted rectangles, no harsh shadows, no extra text.
+Aspect ratio: 16:9. Resolution: 2K.
+```
+
+### 2. Сова у кнопки «Играть» — `assets-master/shell/welcome-olli.jpg`
+
+Image A = `ref-style-board.jpg`. Image B = `ref-owl-poses.jpg`. Image C = `ref-owl-sheet.jpg`. Фон голубой. 1:1, 2K.
+
+```
+Use Image A only for gouache texture, line weight, and the warm palette. Use Image B and Image C only for the exact design of the owl, and take from them ONE single owl only: never copy their layout, never copy any second, third, or fourth pose, never copy extra heads or faces. Do not straighten the owl.
+
+Subject: ONE single small vintage stuffed plush owlet with ONE head, ONE body, and ONE pair of eyes. Short crooked pear-shaped body, wide cream belly, rust bouclé fur #B5551F to #C26A2E covered in LARGE chunky black and deep-brown blotches, fingertip-sized or bigger, not small dots. Two cream face patches meet on a clear zigzag seam. The screen-left eye sits clearly higher than the screen-right eye, by a third to half of an eye's diameter, permanently. Both eyes fully visible, open, glossy amber with black pupils and tiny highlights. Flat golden-tan appliqué beak, not a 3D cone. Two flat golden-tan three-toed feet. Narrow spotted wings. Two small pointed ear tufts with dark tips.
+Action: the owl stands upright and points with one wing to the right (toward a play button that is not in this picture). The pointing wing is extended at shoulder height as a flat, clearly visible spotted shape. The other wing rests against the body. Friendly and calm.
+Location: solid flat light-blue background #D6EEF8, edge to edge, the same color in every corner. No scenery, no ground line, no gradient, no vignette. Only a tiny soft contact shadow directly under the feet.
+Composition: exactly one owl, full body, centered, feet near the lower third, generous empty space around the silhouette on all sides, the whole silhouette including the extended wing fully inside the frame. Nothing else in the frame. Square 1:1.
+Style: warm children's book illustration style, soft gouache texture over a clear bouclé plush surface, THICK crisp dark-plum outline around the whole silhouette and around each face patch, wing, foot, and seam, sharp clean edges, gentle rounded shapes, gentle matte volume, pastel but warm color palette, no harsh shadows, calm and friendly mood, made for a toddler app.
+Lighting: soft even studio light.
+Text: the image contains no letters, no logo, no watermark, no button, no arrow.
+Avoid: a second owl, extra heads, extra faces, floating or ghosted duplicate owls, a pose sheet or grid, faded or transparent copies, a hazy strip at the top, blurry or dissolving edges, an erased or smudged eye, leveled or symmetrical eyes, small speckled dots, a 3D beak, a hanging loop, a straightened body, any background elements.
+Aspect ratio: 1:1. Resolution: 2K.
+```
+
+### 3. Говорящая голова совы — `assets-master/mascot/olli-presenter-sheet.jpg`
+
+Image A = `ref-style-board.jpg`. Image B = `ref-owl-sheet.jpg`. Image C = `ref-owl-poses.jpg`. 16:9, 2K. Три равные колонки. Cursor режет на `olli-idle.png`, `olli-happy.png`, `olli-miss.png`.
+
+```
+Use Image A only for gouache texture, line weight, and palette. Use Image B and Image C for the exact owl face. Do not level the eyes.
+
+Subject: the same owlet, head and upper chest only, three times in one row. Same scale, same face construction, same large blotches.
+Action: column 1 idle, calm open eyes, beak closed. Column 2 happy and speaking, gentle smile, eyes bright, beak slightly open. Column 3 gentle miss, soft puzzled look, no tears, no anger. In every open-eye column the screen-left eye stays clearly higher than the screen-right eye.
+Location: each column has the same solid flat light-blue background #D6EEF8. No speech bubble.
+Composition: 16:9, three equal columns, same head size, ears fully visible, even gaps, no frames.
+Style: warm children's book illustration style, soft gouache/watercolor textures, clean readable silhouettes, thick soft outlines, gentle rounded shapes, pastel but warm color palette, no harsh shadows, calm and friendly mood, made for a toddler app.
+Lighting: soft even studio light, the same in every column.
+Text: the image contains no letters, no logo, and no watermark.
+Aspect ratio: 16:9. Resolution: 2K.
+```
+
+### 4. Танец совы — `assets-master/mascot/menu-olli-dance-sheet.jpg`
+
+Image A = `ref-style-board.jpg`. Image B = `ref-owl-poses.jpg`. Image C = `ref-owl-sheet.jpg`. 1:1, 2K. Четыре клетки без рамок. Лапы на одной линии. Cursor режет на `frame_01.png` … `frame_04.png`.
+
+```
+Use Image A only for gouache texture, line weight, and palette. Use Image B and Image C for the exact owl. Do not straighten it.
+
+Subject: the same owlet four times. Rust spotted body, cream belly, mismatched open eyes, flat beak, flat feet.
+Action: all four stand on the same feet line and do not jump. Cell 1 calm, one wing lifted a little. Cell 2 body leans left, the other wing lifted higher. Cell 3 both wings lifted a little, eyes gently closed, happy. Cell 4 body leans right, mirror of cell 2.
+Location: solid flat light-blue background #D6EEF8 in every cell, no tree, no floor, no shadow.
+Composition: 2x2, square 1:1, equal cells, no lines between cells, same owl scale, feet on the same lower line, same space above the ear tufts.
+Style: warm children's book illustration style, soft gouache/watercolor textures, clean readable silhouettes, thick soft outlines, gentle rounded shapes, pastel but warm color palette, no harsh shadows, calm and friendly mood, made for a toddler app.
+Lighting: soft even studio light.
+Text: the image contains no letters, no logo, and no watermark.
+Aspect ratio: 1:1. Resolution: 2K.
+```
+
+### 5. Дерево для меню — `assets-master/menu/menu-visit-tree.jpg`
+
+Image A = `ref-style-board.jpg`, только палитра и линия. Совы нет. 3:4, 2K. Белый фон.
+
+```
+Use Image A only for palette and soft gouache line weight.
+
+Subject: a cozy picture-book tree-platform for a toddler menu, with no bird and no animal, in the same design language as the wicker bed with a wooden sign. Top: a wide thick wooden platform slab, seen slightly from above so its flat top surface, front edge, and thickness are visible, with wood grain and rounded corners, a clear empty stage for an owl to stand on later. Below it on the right side: a sturdy rounded tree trunk goes down vertically from the platform, with bark texture, soft roots flaring at the base, and one thick rope wrapped several times around the trunk just under the platform. Halfway down the trunk, between the base and the platform, sits a ROUND hollow doorway with a thick bark rim, warm cream glowing interior with a little depth, like a small home. On the left, under the platform, a wooden arrow sign hangs from two knotted ropes tied to the platform's underside, pointing right toward the trunk. The sign reads exactly "В гости" in plump multicolor Cyrillic letters (red, lavender, yellow, blue, green, coral) with a thick soft dark-plum outline.
+Action: still.
+Location: solid flat pure white #FFFFFF background, edge to edge, no ground, no shadow.
+Composition: square 1:1, one object, centered, full object visible with white margins, platform in the upper third, trunk anchored to the lower right, sign at left-middle, hollow at the trunk's middle, nothing on the platform.
+Style: warm children's book illustration, soft gouache/watercolor textures, thick soft dark-plum outlines, rounded 3D volume with gentle light-to-warm-shade modeling on the platform, sign, rope, and trunk, clean readable silhouette, pastel but warm palette, no harsh shadows, calm friendly mood, toddler app.
+Lighting: soft even daylight from upper left with gentle volume shading.
+Text: render exactly "В гости" and no other writing. No logo, no watermark.
+Avoid: a bird, an owl, an animal, extra text, a flat 2D look, a square or oval hollow, a branch instead of a platform, the sign on the right, a ground or grass, a shadow on the background.
+Aspect ratio: 1:1. Resolution: 2K.
+```
+
+### 6. Иконка приложения — `assets-master/shell/pwa-icon-friends.jpg`
+
+Image A = `ref-style-board.jpg`. Image B = `ref-meow-sheet.jpg`. Image C = `ref-owl-sheet.jpg`. 1:1, 2K. Фон не вырезать: это целая иконка.
+
+```
+Use Image A for gouache and palette. Use Image B for the kitten and Image C for the owl. Do not straighten the owl.
+
+Subject: one app icon. A small white Devon Rex kitten and the spotted owlet sit together, both friendly and fully visible. The kitten has curly cream-white fur and round ears. The owl keeps the crooked face, large blotches, and mismatched eyes.
+Action: both look toward the child, calm, no props in their paws or wings.
+Location: a soft cream-to-sky painted background that reaches all four edges. No phone frame.
+Composition: square 1:1. The two faces are large. Under them, two centered Cyrillic lines: "Мяу" and "и друзья". Letters are plump, multicolor, with a thick soft dark-plum outline, readable when the icon is small.
+Style: warm children's book illustration style, soft gouache/watercolor textures, clean readable silhouettes, thick soft outlines, gentle rounded shapes, pastel but warm color palette, no harsh shadows, calm and friendly mood, made for a toddler app.
+Lighting: soft even daylight.
+Text: render exactly "Мяу" and "и друзья" and no other writing. No logo. No watermark.
+Aspect ratio: 1:1. Resolution: 2K.
+```
+
+Полное имя приложения «Планета Мяу и друзья» пишется в манифесте, не на этой картинке: в квадрате 180 пикселей длинная строка не читается.
+
+### 7. Плитка «Учимся считать» — `assets-master/menu/card-counting.png`
+
+Вставить общий префикс иконок меню из раздела выше. Image B — утверждённая плитка серии, например `card-sound-world.jpg`. 1:1, 2K.
+
+```
+[Paste общий префикс иконок меню]
+
+[SUBJECT] Three chunky wooden blocks in a row, marked "1", "2" and "3", colors coral, sunflower yellow and sky blue. No kitten, no owl, no face. Background inside the button: soft cream pastel wash.
+
+[TEXT_IN_IMAGE] "Учимся" / "считать"
+```
+
+### 8. Плитка «Прятки» — `assets-master/menu/card-hide-seek.jpg`
+
+Тот же общий префикс. 1:1, 2K.
+
+```
+[Paste общий префикс иконок меню]
+
+[SUBJECT] A large friendly magnifying glass with a cream handle and a sky-blue lens, held over a small soft green bush. Inside the lens, only a hint of a hidden round shape. No kitten, no owl, no face. Background inside the button: pale sky wash and a small hill under the bush.
+
+[TEXT_IN_IMAGE] "Прятки"
+```
+
+Слово одно, крупно, по центру нижнего поля. Вторую строку не придумывать.
+
+## Экран загрузки — 30.09.2026
+
+**ЗАФИКСИРОВАНО:** отдельная лесная поляна; заголовок
+«УСТАНОВКА И ПОДГОТОВКА ИГР»; сова идёт вправо с пылесосом одним стабильным
+runtime-кадром; длинная куча листьев плавно растворяется альфа-маской по
+реальному offline-progress.
+
+Мастера: `assets-master/shell/boot/`. Runtime:
+`public/assets/shell/boot/`. Обработка: `npm run assets:boot`.
+Мастер-лист остаётся из шести кадров, но runtime намеренно берёт только первый:
+небольшие различия сгенерированных контуров давали мерцание при смене кадров.
+
+### BOOT-bg — `boot-forest-clearing.jpg`
+
+Image A = `ref-style-board.jpg`. 4:3.
+
+```text
+Create a full-bleed 4:3 landscape background for a toddler app loading screen.
+Subject: a warm forest clearing in early autumn, made for a small owl character
+to walk across later. Composition: eye-level, a broad calm horizontal clearing
+across the lower 38% with enough clean ground for a long strip of leaves and a
+character; rounded rust-orange and warm brown tree trunks framing the far left
+and right edges; soft green, olive, ochre and muted coral foliage around the
+edges; pale warm cream sky visible through the canopy; center and lower walking
+lane uncluttered. No owl, character, vacuum cleaner, leaf pile, title, or UI.
+The entire ground and sandy walking lane from left to right is freshly swept:
+absolutely no fallen leaves, loose leaves, petals, sticks, stones, or flowers
+on the lane. Flowers and shrubs stay only at the extreme side borders.
+Match Image A only for gouache texture, thick soft outlines and warm pastel
+palette, not its meadow layout. Warm children's book illustration style, soft
+gouache/watercolor textures, clean readable silhouettes, thick soft outlines,
+gentle rounded shapes, pastel but warm color palette, no harsh shadows, calm and
+friendly mood, made for a toddler app. Full bleed, no border, text, or watermark.
+```
+
+### BOOT-title — `boot-title.jpg`
+
+Image A = готовый `welcome-title.png`, только семейство букв. 16:9, белый фон.
+
+```text
+Generate only one Russian title wordmark on a perfectly flat pure white
+#FFFFFF background. Exact text in two centered lines, uppercase Cyrillic:
+"УСТАНОВКА И" / "ПОДГОТОВКА ИГР". Match Image A's plump rounded hand-painted
+letters: soft volume, thick dark-plum outline, upper-left cream highlight,
+deeper warm lower-right shading, matte gouache; repeating coral, yellow,
+sky-blue, green and violet. Every letter fully visible and readable. No
+characters, scenery, leaves, extra writing, logo, or watermark.
+```
+
+### BOOT-owl — `boot-owl-vacuum-sheet.jpg`
+
+Images A/B/C = `ref-style-board.jpg`, `ref-owl-sheet.jpg`,
+`ref-owl-poses.jpg`. 16:9.
+
+```text
+Create one animation sprite sheet with exactly six equal cells in a 3x2 grid,
+without divider lines. Each cell shows the exact same referenced stuffed owlet,
+right-facing in a three-quarter side walk, operating the same small friendly toy
+vacuum. Preserve the crooked pear body, rust bouclé fur with large dark
+blotches, cream face and belly, mismatched eye height, flat beak, narrow wings
+and flat feet. The vacuum is warm cream and muted coral, in front of the owl.
+Six sequential gentle walking poses: alternating feet, tiny body movement, no
+jump; one baseline and identical scale. Solid flat #D6EEF8 background in every
+cell for knockout. No scenery, ground shadow, leaves, text, logo, or watermark.
+Use the canonical warm children's book gouache style.
+```
+
+### BOOT-leaves — `boot-leaf-strip.jpg`
+
+Image A = `ref-style-board.jpg`. 16:9, белый фон.
+
+```text
+Create one long continuous low pile of fallen autumn leaves as an isolated game
+asset on a perfectly flat pure white #FFFFFF background. Dense horizontal strip
+spanning about 90% width; pile height about 20%; clean white space around it.
+Oversized readable overlapping leaves in rust orange, golden yellow, muted
+coral, olive green and cream-brown. A few leaves lift slightly toward the
+left-to-right vacuum path. No character or vacuum. Matte gouache/watercolor,
+thick soft dark-plum outlines, rounded toddler-friendly shapes. No ground,
+trees, text, frame, logo, or watermark.
+```

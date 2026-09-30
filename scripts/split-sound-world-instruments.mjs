@@ -1,5 +1,5 @@
 /**
- * Нарезка mp3 инструментов из корня репо → public/.../sfx/
+ * Нарезка исходников из sources/games/sound-world → public/.../sfx/
  * node scripts/split-sound-world-instruments.mjs
  */
 import { readFile, writeFile, mkdir, readdir } from 'node:fs/promises'
@@ -16,6 +16,7 @@ try {
 }
 
 const root = path.resolve(import.meta.dirname, '..')
+const sourceDir = path.join(root, 'sources', 'games', 'sound-world')
 const sfxDir = path.join(root, 'public', 'assets', 'games', 'sound-world', 'sfx')
 
 function runFfmpeg(args) {
@@ -79,26 +80,26 @@ const PIANO = [
 
 await mkdir(sfxDir, { recursive: true })
 
-const drumKick = path.join(root, 'кик.mp3')
-const drumSnare = path.join(root, 'снейр.mp3')
-const drumTom = path.join(root, 'бас.mp3')
+const drumKick = path.join(sourceDir, 'drum-kick.mp3')
+const drumSnare = path.join(sourceDir, 'drum-snare.mp3')
+const drumTom = path.join(sourceDir, 'drum-tom.mp3')
 
 await copyTrim(drumKick, 'drum-kick.mp3', 0, 0.35)
 await copyTrim(drumSnare, 'drum-snare.mp3', 0, 1.05)
 await copyTrim(drumTom, 'drum-tom.mp3', 0.12, 2.4)
-const drumRight = path.join(root, 'sg_203880.mp3')
+const drumRight = path.join(sourceDir, 'drum-right.mp3')
 await copyTrim(drumRight, 'drum-right.mp3', 0, 1.32)
 
-for (const [ru, id, start, dur] of PIANO) {
-  await copyTrim(path.join(root, `${ru}.mp3`), `${id}.mp3`, start, dur)
+for (const [, id, start, dur] of PIANO) {
+  await copyTrim(path.join(sourceDir, `${id}.mp3`), `${id}.mp3`, start, dur)
 }
 
-const guitarFiles = await readdir(root)
+const guitarFiles = await readdir(sourceDir)
 const guitarMaster = guitarFiles.find(
   (f) => f.includes('6') && f.includes('гитар') && f.endsWith('.mp3'),
 )
 if (!guitarMaster) throw new Error('guitar master mp3 not found')
-const guitarPath = path.join(root, guitarMaster)
+const guitarPath = path.join(sourceDir, guitarMaster)
 
 const guitarCuts = {}
 for (let i = 0; i < GUITAR_ISLANDS.length; i += 1) {

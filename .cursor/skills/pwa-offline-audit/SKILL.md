@@ -14,13 +14,25 @@ Client-only PWA (`vite.config.ts` → `vite-plugin-pwa`). **No** push, Backgroun
 
 ## Checklist (production build)
 
-1. `npm run build` then `npm run preview` (or CI artifact) — not only `dev`.
-2. **Manifest:** `start_url`, `scope`, icons (192/512 PNG when ready — K-002), `lang`, landscape-friendly.
-3. **Base path:** `base: './'` matches GitHub Pages subpath if used.
-4. **SW update:** `registerType: 'prompt'` — no unconditional `skipWaiting` mid-game; old tab behavior on deploy.
-5. **Cache:** hashed assets invalidate; old caches cleaned; offline loads shell + assets.
-6. **Not enough:** `navigator.onLine` alone — verify real offline after SW active.
-7. **Local reset:** parent/settings delete data still works after SW update.
+1. `npm run build` — verifier обязан подтвердить:
+   `Workbox entries = progress entries = app files dist`.
+2. `npm run test:e2e:boot` — production preview, cold/warm/retry/error пути.
+   Проверка только через `dev` недостаточна.
+3. **Новые файлы:** `workbox.globPatterns` остаётся `['**/*']`; runtime-ассеты
+   находятся в `public/` или импортируются из `src/`, не на внешнем CDN.
+4. **Manifest:** `start_url`, `scope`, icons 192/512, `lang`, landscape.
+5. **Base path:** `base: '/meow-planet/'` соответствует GitHub Pages.
+6. **SW update:** текущая стратегия `registerType: 'autoUpdate'`; не менять её и
+   lifecycle без ADR и отдельного update-path теста.
+7. **Cache:** hashed assets инвалидируются, старые caches очищаются,
+   `precache-manifest.json` создаётся из Workbox manifest; бюджеты 64 МиБ/файл и
+   512 МиБ/сборка не превышены.
+8. **Запрещено:** ручной список ассетов, runtime-парсинг `sw.js`,
+   `navigator.webdriver` fast-path, 100% до SW readiness.
+9. **Local reset:** удаление parent/settings данных работает после SW update.
+10. **iPad:** отдельно проверить clean install, update существующего SW и airplane mode.
+
+SSOT: `docs/quality/PWA-OFFLINE-GUARDRAILS.md` и ADR-0001.
 
 ## References (ideas only, clean-room)
 

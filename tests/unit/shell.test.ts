@@ -14,7 +14,9 @@ describe('shell navigation', () => {
     const stop = renderShell(root)
 
     expect(root.querySelector('.screen--welcome')).not.toBeNull()
-    expect(root.querySelector('.welcome__title')?.getAttribute('alt')).toBe('Планета Мяу')
+    expect(root.querySelector('.welcome__title')?.getAttribute('alt')).toBe(
+      'Планета Мяу и друзья',
+    )
     expect(root.querySelector('.welcome__title')?.getAttribute('src')).toContain(
       'welcome-title.png',
     )
@@ -26,7 +28,7 @@ describe('shell navigation', () => {
     expect(root.querySelector('.welcome__play-shine')).not.toBeNull()
     const welcomeMeow = root.querySelector('.welcome__meow')
     expect(welcomeMeow?.tagName).toBe('IMG')
-    expect(welcomeMeow?.getAttribute('src')).toContain('welcome-meow.png')
+    expect(welcomeMeow?.getAttribute('src')).toContain('welcome-olli-open.png')
     const meowMover = root.querySelector('.welcome__meow-mover')
     expect(meowMover?.contains(welcomeMeow ?? null)).toBe(true)
     expect(meowMover?.contains(root.querySelector('.welcome__meow-shadow'))).toBe(false)
@@ -61,7 +63,7 @@ describe('shell navigation', () => {
     vi.advanceTimersByTime(500)
 
     expect(window.location.hash).toBe('#/')
-    expect(root.querySelector('.menu-bg')?.getAttribute('src')).toContain('menu-bg.webp')
+    expect(root.querySelector('.menu-bg')?.getAttribute('src')).toContain('welcome-bg.webp')
     expect(root.querySelector('.menu-grid')).not.toBeNull()
     expect(root.querySelectorAll('.menu-grid .game-tile')).toHaveLength(8)
     expect(root.querySelector('.menu-visit-bed')).not.toBeNull()
@@ -79,13 +81,23 @@ describe('shell navigation', () => {
     const menuSettings = root.querySelector<HTMLButtonElement>('.menu-settings')!
     menuSettings.dispatchEvent(new PointerEvent('pointerdown', { bubbles: true }))
     expect(menuSettings.classList.contains('is-pressed')).toBe(true)
+    expect(root.querySelector('.screen--menu')?.getAttribute('data-companion')).toBe('olli')
     expect(root.querySelector('.menu-visit-cat .menu-visit-bed__meow')?.getAttribute('src')).toContain(
-      'frame_01.png',
+      'menu-dance-olli/frame_01.png',
+    )
+    expect(root.querySelector('.menu-visit-bed__blink')?.getAttribute('src')).toContain(
+      'menu-dance-olli/frame_blink.png',
     )
     expect(root.querySelector('.menu-visit-bed .menu-visit-bed__meow')).toBeNull()
     expect(root.textContent).toContain('Лопни шарик')
     expect(root.querySelector('.game-tile--balloon-pop .tile-art')?.getAttribute('src')).toContain(
       'card-balloon-pop.png',
+    )
+    expect(root.querySelector('.game-tile--counting')?.getAttribute('aria-label')).toBe(
+      'Учимся считать',
+    )
+    expect(root.querySelector('.game-tile--counting .tile-art')?.getAttribute('src')).toContain(
+      'card-counting.png',
     )
     const balloonTile = root.querySelector<HTMLButtonElement>('.game-tile--balloon-pop')!
     balloonTile.dispatchEvent(new PointerEvent('pointerdown', { bubbles: true }))
@@ -93,7 +105,7 @@ describe('shell navigation', () => {
     balloonTile.dispatchEvent(new PointerEvent('pointerup', { bubbles: true }))
     expect(balloonTile.classList.contains('is-pressed')).toBe(false)
     expect(root.querySelector('.menu-visit-bed')?.getAttribute('aria-label')).toBe(
-      'В гостях у Мяу',
+      'В гости',
     )
     expect(
       root.querySelector('[aria-label="Настройки"].menu-settings'),
@@ -209,6 +221,20 @@ describe('shell navigation', () => {
     expect(root.querySelector('.sound-world [aria-label="Домой"]')).toBeNull()
 
     stop()
+  })
+
+  it('рисовалка: app chrome скрыт, своя полоска без «Домой»', () => {
+    for (const gameId of ['drawing'] as const) {
+      window.location.hash = `#/game/${gameId}`
+      const root = document.createElement('div')
+      const stop = renderShell(root)
+      expect((root.querySelector('.chrome') as HTMLElement | null)?.hidden).toBe(true)
+      expect((root.querySelector('.chrome__mascot') as HTMLElement | null)?.hidden).toBe(true)
+      expect(root.querySelector(`[data-game-id="${gameId}"]`)).not.toBeNull()
+      expect(root.querySelector('[aria-label="Назад в меню"]')).not.toBeNull()
+      expect(root.querySelector(`[data-game-id="${gameId}"] [aria-label="Домой"]`)).toBeNull()
+      stop()
+    }
   })
 
   it('неизвестный hash → экран не найдено', () => {

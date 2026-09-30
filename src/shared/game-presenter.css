@@ -1,0 +1,68 @@
+.screen--game {
+  position: relative;
+}
+
+.screen--game:has(> .game-presenter) {
+  padding-bottom: 6.2rem;
+}
+
+.game-presenter {
+  position: absolute;
+  z-index: 4;
+  left: 0.6rem;
+  bottom: 0.4rem;
+  display: flex;
+  align-items: flex-end;
+  gap: 0.4rem;
+  width: min(42%, 18rem);
+  pointer-events: none;
+}
+
+.game-presenter__pose {
+  position: relative;
+  flex: 0 0 auto;
+}
+
+.game-presenter__art {
+  width: 5.5rem;
+  height: auto;
+  flex: 0 0 auto;
+  display: block;
+}
+
+.game-presenter__art.is-pose-under {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  margin: 0;
+  object-fit: contain;
+  object-position: bottom center;
+  pointer-events: none;
+}
+
+.game-presenter[data-companion='olli'] .game-presenter__art {
+  width: 5.8rem;
+  height: 6.7rem;
+  object-fit: contain;
+  object-position: bottom center;
+}
+
+.game-presenter__speech {
+  margin: 0 0 0.4rem;
+  padding: 0.45rem 0.7rem;
+  border-radius: 1rem;
+  background: #fff;
+  border: 2px solid #7eb8da;
+  color: #1a2a33;
+  font-size: 1rem;
+  line-height: 1.25;
+}
+
+.game-presenter[data-companion='olli'] .game-presenter__speech {
+  margin-bottom: 2.05rem;
+}
+
+.screen--game[data-game-id='balloon-pop'] > .game-presenter {
+  display: none;
+}

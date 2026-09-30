@@ -2,7 +2,7 @@
  * Новые барабаны + пианино (корпус + 7 клавиш) + дырка колокольчика.
  * node scripts/build-instrument-parts.mjs
  */
-import { mkdir, writeFile } from 'node:fs/promises'
+import { mkdir } from 'node:fs/promises'
 import path from 'node:path'
 import sharp from 'sharp'
 import { knockOutEdgeWhite, punchNearWhiteBand } from './knockout-white.mjs'
@@ -136,111 +136,25 @@ await knockoutFile(path.join(srcDir, 'snare-drum.jpg'), path.join(playDir, 'drum
 })
 await knockoutFile(path.join(srcDir, 'bass-drum.jpg'), path.join(playDir, 'drum-kick.png'))
 await knockoutFile(path.join(srcDir, 'tom-drum.jpg'), path.join(playDir, 'drum-tom.png'))
-await knockoutFile(path.join(srcDir, 'piano-body-no-keys.jpg'), path.join(playDir, 'piano-body.png'))
 await knockoutFile(path.join(srcDir, 'bell-play.jpg'), path.join(playDir, 'bell.png'), {
   punchHole: true,
 })
 
-const sheet = await loadRaw(path.join(srcDir, 'piano-keys-sheet.jpg'))
-knockOutEdgeWhite(sheet.rgba, sheet.w, sheet.h, 14)
-featherAlpha(sheet.rgba, sheet.w, sheet.h)
-const keyBlobs = findBlobs(sheet.rgba, sheet.w, sheet.h, 2500).sort((a, b) => a.minX - b.minX)
-if (keyBlobs.length !== 7) {
-  console.log(
-    'key blobs',
-    keyBlobs.length,
-    keyBlobs.map((b) => b.area),
-  )
-}
-const keys = keyBlobs.slice(0, 7)
-for (let i = 0; i < keys.length; i += 1) {
-  const crop = cropBlob(sheet.rgba, sheet.w, sheet.h, keys[i], 3)
-  await writePng(crop.out, crop.cw, crop.ch, path.join(playDir, `key-${i + 1}.png`))
-}
+const piano2 = path.join(srcDir, 'piano2')
+const pianoLayers = [
+  ['piano-body-no-keys v2.png', 'piano-body.png'],
+  ['piano-body-top.png', 'piano-lid.png'],
+  ...Array.from({ length: 7 }, (_, index) => [`key ${index + 1}.png`, `key-${index + 1}.png`]),
+]
 
-const play = await loadRaw(path.join(srcDir, 'piano-play.jpg'))
-const bodyJpg = await loadRaw(path.join(srcDir, 'piano-body-no-keys.jpg'))
-const w = play.w
-const h = play.h
-const mask = new Uint8Array(w * h)
-for (let y = 0; y < h; y += 1) {
-  for (let x = 0; x < w; x += 1) {
-    const i = (y * w + x) * 4
-    const pr = play.rgba[i]
-    const pg = play.rgba[i + 1]
-    const pb = play.rgba[i + 2]
-    const br = bodyJpg.rgba[i]
-    const bg = bodyJpg.rgba[i + 1]
-    const bb = bodyJpg.rgba[i + 2]
-    const playWhite = distWhite(pr, pg, pb) < 46 && pr > 210
-    const bodyBrown = br > 110 && br - bb > 25 && bg < 180
-    if (playWhite && bodyBrown) mask[y * w + x] = 1
+for (const [fromName, toName] of pianoLayers) {
+  const input = path.join(piano2, fromName)
+  const output = path.join(playDir, toName)
+  const before = await sharp(input).metadata()
+  await sharp(input).png({ compressionLevel: 9, effort: 10 }).toFile(output)
+  const after = await sharp(output).metadata()
+  if (after.width !== before.width || after.height !== before.height) {
+    throw new Error(`${toName} был масштабирован`)
   }
+  console.log(toName, after.width, after.height)
 }
-const cols = []
-for (let x = 0; x < w; x += 1) {
-  let c = 0
-  for (let y = 0; y < h; y += 1) if (mask[y * w + x]) c += 1
-  cols.push(c)
-}
-const occupied = []
-for (let x = 0; x < w; x += 1) if (cols[x] > 18) occupied.push(x)
-const ranges = []
-let start = occupied[0]
-let prev = occupied[0]
-for (const x of occupied.slice(1)) {
-  if (x > prev + 8) {
-    ranges.push([start, prev])
-    start = x
-  }
-  prev = x
-}
-if (start != null) ranges.push([start, prev])
-console.log(
-  'key column ranges',
-  ranges.length,
-  ranges.map((r) => [r[0], r[1], r[1] - r[0]]),
-)
-
-function ySpan(x0, x1) {
-  let minY = h
-  let maxY = 0
-  for (let x = x0; x <= x1; x += 1) {
-    for (let y = 0; y < h; y += 1) {
-      if (!mask[y * w + x]) continue
-      if (y < minY) minY = y
-      if (y > maxY) maxY = y
-    }
-  }
-  return { minY, maxY }
-}
-
-const bodyPng = await sharp(path.join(playDir, 'piano-body.png')).metadata()
-const bodyTrim = await loadRaw(path.join(playDir, 'piano-body.png'))
-// map original jpg coords → trimmed body by locating content bbox of knockout body jpg
-knockOutEdgeWhite(bodyJpg.rgba, bodyJpg.w, bodyJpg.h, 16)
-const bodyBlob = findBlobs(bodyJpg.rgba, bodyJpg.w, bodyJpg.h, 800).sort((a, b) => b.area - a.area)[0]
-const ox = bodyBlob.minX - 4
-const oy = bodyBlob.minY - 4
-
-const slots = (ranges.length === 7 ? ranges : ranges.slice(0, 7)).map((r) => {
-  const { minY, maxY } = ySpan(r[0], r[1])
-  const x = (r[0] - ox) / bodyPng.width
-  const y = (minY - oy) / bodyPng.height
-  const ww = (r[1] - r[0] + 1) / bodyPng.width
-  const hh = (maxY - minY + 1) / bodyPng.height
-  return {
-    x: Math.max(0, x),
-    y: Math.max(0, y),
-    w: Math.max(0.04, ww),
-    h: Math.max(0.08, hh),
-  }
-})
-
-console.log('slots', JSON.stringify(slots, null, 2))
-console.log('body png', bodyPng.width, bodyPng.height, 'trim origin', ox, oy)
-
-await writeFile(
-  path.join(playDir, 'piano-slots.json'),
-  JSON.stringify({ body: { width: bodyPng.width, height: bodyPng.height }, slots }, null, 2),
-)

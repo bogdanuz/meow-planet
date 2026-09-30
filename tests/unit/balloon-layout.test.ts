@@ -14,7 +14,7 @@ function guardRadius(
   layoutScale: number,
   profile: 'free' | 'task',
 ): number {
-  const base = profile === 'free' ? (size === 'lg' ? 13.5 : 6.5) : size === 'lg' ? 21 : 10.5
+  const base = profile === 'free' ? (size === 'lg' ? 17 : 8.5) : size === 'lg' ? 21 : 10.5
   const gap = profile === 'free' ? 2.2 : 3.5
   const freeMul = profile === 'free' ? FREE_MODE_VISUAL_SCALE : 1
   return base * layoutScale * freeMul + gap
@@ -39,7 +39,7 @@ function assertNoOverlap(
   }))
   for (let i = 0; i < entries.length; i += 1) {
     for (let j = i + 1; j < entries.length; j += 1) {
-      const dx = entries[i]!.pos.xPct - entries[j]!.pos.xPct
+      const dx = (entries[i]!.pos.xPct - entries[j]!.pos.xPct) * 1.45
       const dy = entries[i]!.pos.yPct - entries[j]!.pos.yPct
       const d = Math.hypot(dx, dy)
       expect(d).toBeGreaterThanOrEqual(entries[i]!.r + entries[j]!.r - 1.1)

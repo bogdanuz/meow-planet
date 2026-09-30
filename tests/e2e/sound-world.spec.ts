@@ -6,7 +6,14 @@ test.describe('Изучаем звuки — вкладки без подкате
     await openGame(page, 'sound-world')
     await page.getByRole('tab', { name: 'Животные' }).click()
     await expect(page.locator('.sound-world__card')).toHaveCount(6)
-    await expect(page.locator('[data-card-id="cat"] img.sound-world__art')).toBeVisible()
+    const catArt = page.locator('[data-card-id="cat"] img.sound-world__art')
+    // У картинки нет размеров, пока она не загрузилась: ждём загрузку, а не таймаут видимости.
+    await expect
+      .poll(() => catArt.evaluate((img: HTMLImageElement) => (img.complete ? img.naturalWidth : 0)), {
+        timeout: 15000,
+      })
+      .toBeGreaterThan(0)
+    await expect(catArt).toBeVisible()
     await expect(page.locator('.sound-world__bar-start .sound-world__pager')).toHaveCount(1)
     await expect(page.locator('[data-card-id="cat"] .sound-world__label')).toHaveText('Кошка')
     await page.getByRole('button', { name: 'Страница 2' }).click()

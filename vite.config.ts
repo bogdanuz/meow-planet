@@ -89,8 +89,8 @@ export default defineConfig({
       registerType: 'autoUpdate',
       injectRegister: false,
       manifest: {
-        name: 'Планета Мяу',
-        short_name: 'Планета Мяу',
+        name: 'Планета Мяу и друзья',
+        short_name: 'Мяу и друзья',
         description: 'Игровой хаб для детей 2–3 лет',
         theme_color: '#7eb8da',
         background_color: '#f7fbff',
@@ -123,11 +123,9 @@ export default defineConfig({
         ],
       },
       workbox: {
-        globPatterns: [
-          // Прекашируем всё, что реально используется в игре (включая ассеты из public/assets).
-          // Для offline-first нам важно покрыть не только JS/CSS/HTML, но и медиа/шрифты/JSON.
-          '**/*.{js,css,html,svg,png,webp,jpg,jpeg,mp3,wav,ogg,woff,woff2,ttf,json,txt,webmanifest}',
-        ],
+        // Любой файл production-сборки автоматически попадает в offline precache.
+        // Не возвращать список расширений: новый формат ассета иначе выпадет молча.
+        globPatterns: ['**/*'],
         // manifest.webmanifest vite-plugin-pwa добавляет отдельно. Исключение
         // предотвращает дубликат той же записи в precacheAndRoute.
         globIgnores: [
@@ -139,9 +137,9 @@ export default defineConfig({
         // вручную составленный список ассетов.
         manifestTransforms: [emitRuntimePrecacheManifest],
         cleanupOutdatedCaches: true,
-        // Offline-режим для игровых ассетов без исключений по размеру.
-        // Ставим заведомо большой лимит вместо текущего 6 МБ.
-        maximumFileSizeToCacheInBytes: 1024 * 1024 * 1024,
+        // Файл >64 МиБ почти наверняка является ошибочно положенным мастером.
+        // Общий бюджет дополнительно проверяет verify-precache-manifest.mjs.
+        maximumFileSizeToCacheInBytes: 64 * 1024 * 1024,
       },
       devOptions: {
         enabled: false,

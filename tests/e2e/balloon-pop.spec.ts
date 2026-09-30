@@ -15,7 +15,7 @@ test.describe('Лопни шарик (S04)', () => {
     await expect(page.locator('.balloon-pop__title')).toHaveCount(0)
     await expect(page.locator('.balloon-pop h2')).toHaveCount(0)
     await expect(page.locator('.balloon-pop__balloon-art')).toHaveCount(8)
-    await expect(page.locator('.balloon-pop__meow')).toBeVisible()
+    await expect(page.locator('.balloon-pop__meow:not(.is-pose-under)')).toBeVisible()
     await expect(
       page.getByRole('button', { name: 'Назад в меню' }).locator('img.ui-icon'),
     ).toBeVisible()
@@ -101,13 +101,20 @@ test.describe('Лопни шарик (S04)', () => {
       await expect(
         page.locator(`.balloon-pop__balloon[data-balloon-id="${id}"]`),
       ).toHaveCount(1)
-      await balloon.click({ force: true })
-      await balloon.click({ force: true })
+      const wrongBalloons = page.locator(
+        `.balloon-pop__balloon:not([data-color="${want}"])`,
+      )
+      await expect(wrongBalloons).toHaveCount(4)
+      await wrongBalloons.nth(0).click({ force: true })
+      await wrongBalloons.nth(1).click({ force: true })
+      await wrongBalloons.nth(2).click({ force: true })
       const highlighted = page.locator(
         '.balloon-pop__balloon.is-soft-highlight',
       ).first()
-      await expect(highlighted).toHaveAttribute('data-color', want)
-      await expect(highlighted.locator('.balloon-pop__glow').first()).toBeVisible()
+      await expect(highlighted).toHaveAttribute('data-color', want, { timeout: 10000 })
+      await expect(highlighted.locator('.balloon-pop__glow').first()).toBeVisible({
+        timeout: 10000,
+      })
       return
     }
 

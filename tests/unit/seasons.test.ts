@@ -4,7 +4,7 @@ import {
   displayOutfit,
   isWeatherAllowed,
   WEATHER_BY_SEASON,
-} from '../../src/games/seasons/logic'
+} from '../../src/games/meow-home/seasons-logic'
 
 describe('seasons matrix', () => {
   it('снег только зимой', () => {

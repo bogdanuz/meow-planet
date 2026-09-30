@@ -1,5 +1,4 @@
-import type { GameModule } from '../../shared/game-module'
-import { createAudioManager } from '../../shared/audio'
+import type { AudioManager } from '../../shared/audio'
 import { createMascotPlaceholder, setMascotPose } from '../../mascot'
 import {
   clampWeather,
@@ -15,33 +14,31 @@ import {
   weatherPickerOptions,
   type Season,
   type Weather,
-} from './logic'
-import { pickSeasonWeatherPraise } from './praise'
+} from './seasons-logic'
+import { pickSeasonWeatherPraise } from './seasons-praise'
 import { playSeasonWeatherChange } from './seasons-sfx'
-import './seasons.css'
+import './outdoor.css'
 
-export const seasonsGame: GameModule = {
-  meta: {
-    id: 'seasons',
-    title: 'Времена года',
-    zoneId: 'rainbow-meadow',
-    modules: ['2.10'],
-  },
+export type OutdoorOptions = {
+  audio: AudioManager
+  onSoftHint?: (message: string) => void
+  /** Кнопка-дверь «Домой» — назад в дом Мяу. */
+  onHome: () => void
+}
 
-  mount(container, context) {
-    unmountInternal()
-    const audio = createAudioManager(context.settings)
-    void audio.unlock()
-
+/** Улица за дверью дома Мяу: времена года и погода (бывшая игра «Времена года»). */
+export function mountOutdoor(container: HTMLElement, options: OutdoorOptions): () => void {
+    const audio = options.audio
+    const context = { onSoftHint: options.onSoftHint }
     let season: Season = 'summer'
     let weather: Weather = 'sun'
     let coatOn = false
     let hadRain = false
     let snowmanCarrot = false
 
-    root = document.createElement('section')
-    root.className = 'seasons-game'
-    root.dataset.gameId = 'seasons'
+    const root = document.createElement('section')
+    root.className = 'seasons-game meow-home__outdoor'
+    root.dataset.scene = 'outdoor'
 
     const weatherPanel = document.createElement('aside')
     weatherPanel.className = 'seasons-game__weather-panel'
@@ -52,7 +49,13 @@ export const seasonsGame: GameModule = {
     weatherCol.className = 'seasons-game__weather-col'
     weatherCol.setAttribute('role', 'group')
     weatherCol.setAttribute('aria-label', 'Погода')
-    weatherPanel.append(weatherHeading, weatherCol)
+    const homeBtn = document.createElement('button')
+    homeBtn.type = 'button'
+    homeBtn.className = 'touch-btn meow-home__door meow-home__door--home'
+    homeBtn.setAttribute('aria-label', 'Домой')
+    homeBtn.textContent = '🏠'
+    homeBtn.addEventListener('click', () => options.onHome())
+    weatherPanel.append(homeBtn, weatherHeading, weatherCol)
 
     const main = document.createElement('div')
     main.className = 'seasons-game__main'
@@ -122,7 +125,7 @@ export const seasonsGame: GameModule = {
     stage.append(fx, leaves, playground, snowman, meowBtn)
     main.append(seasonPanel, stage)
     root.append(weatherPanel, main)
-    container.replaceChildren(root)
+    container.append(root)
 
     function setStatus(message: string): void {
       context.onSoftHint?.(message)
@@ -130,9 +133,9 @@ export const seasonsGame: GameModule = {
 
     function applyStageVisuals(): void {
       weather = clampWeather(season, weather)
-      root!.dataset.season = season
-      root!.dataset.weather = weather
-      root!.dataset.coat = coatOn ? 'on' : 'off'
+      root.dataset.season = season
+      root.dataset.weather = weather
+      root.dataset.coat = coatOn ? 'on' : 'off'
       stage.dataset.season = season
       stage.dataset.weather = weather
 
@@ -251,23 +254,7 @@ export const seasonsGame: GameModule = {
     renderWeatherPanel()
     setStatus('Тапни сезон или погоду. Мяу на площадке во дворе.')
 
-    cleanup = () => {
-      if (root?.parentElement) root.parentElement.removeChild(root)
-      root = null
-      cleanup = null
+    return () => {
+      root.remove()
     }
-  },
-
-  unmount() {
-    unmountInternal()
-  },
-}
-
-let root: HTMLElement | null = null
-let cleanup: (() => void) | null = null
-
-function unmountInternal(): void {
-  cleanup?.()
-  cleanup = null
-  root = null
 }

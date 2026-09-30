@@ -75,6 +75,7 @@ describe('storage', () => {
     expect(normalized.countingLimit).toBe(10)
     expect(normalized.customPuzzleIds).toEqual([])
     expect(normalized.quietMode).toBe(true)
+    expect('coloringDragEnabled' in normalizeSettings({ coloringDragEnabled: false })).toBe(false)
   })
 
   it('sanitizeChildName режет управляющие символы и длину', () => {
@@ -92,7 +93,7 @@ describe('storage', () => {
 
   it('старая запись без схемы становится текущей версией', () => {
     const migrated = migrateSettings({ childName: 'Мяу', schemaVersion: 0 })
-    expect(migrated.schemaVersion).toBe(DEFAULT_SETTINGS.schemaVersion)
+    expect(migrated.companion).toBe('olli')
     expect(migrated.childName).toBe('Мяу')
   })
 

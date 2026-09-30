@@ -43,16 +43,23 @@ describe('instrument layout', () => {
     expect(PIANO_KEY_SLOTS[0]?.w).toBeGreaterThan(0.05)
   })
 
-  it('барабаны перекрываются как установка', () => {
+  it('барабаны стоят слева направо: снейр, бочка, том', () => {
     const kick = DRUM_LAYERS.find((d) => d.piece === 'kick')!
     const snare = DRUM_LAYERS.find((d) => d.piece === 'snare')!
     const tom = DRUM_LAYERS.find((d) => d.piece === 'tom')!
-    expect(snare.left).toBe(-0.025)
-    // После S16-правки snare стал шире (в 2 раза по сцене).
-    expect(snare.width).toBeGreaterThan(kick.width)
+    const bottom = (layer: { top: number; height: number }) => layer.top + layer.height
+
+    expect(snare.left).toBeLessThan(kick.left)
+    expect(kick.left).toBeLessThan(tom.left)
+    expect(kick.width).toBeGreaterThan(snare.width)
     expect(kick.width).toBeGreaterThan(tom.width)
+    expect(Math.abs(bottom(snare) - bottom(kick))).toBeLessThan(0.02)
+    expect(Math.abs(bottom(tom) - bottom(kick))).toBeLessThan(0.02)
+    expect(bottom(kick)).toBeGreaterThan(0.84)
+    expect(bottom(kick)).toBeLessThan(0.9)
     expect(snare.left + snare.width).toBeGreaterThan(kick.left)
     expect(tom.left).toBeLessThan(kick.left + kick.width)
     expect(kick.z).toBeLessThan(snare.z)
+    expect(kick.z).toBeLessThan(tom.z)
   })
 })

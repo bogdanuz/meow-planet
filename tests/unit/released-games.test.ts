@@ -7,11 +7,12 @@ import {
 } from '../../src/content/released-games'
 
 describe('released games', () => {
-  it('первый релиз — шарики и звуки', () => {
-    expect(RELEASED_GAME_IDS).toEqual(['balloon-pop', 'sound-world'])
+  it('в релизе шарики, звуки и рисовалка (с раскрасками внутри)', () => {
+    expect(RELEASED_GAME_IDS).toEqual(['balloon-pop', 'sound-world', 'drawing'])
     expect(isGameReleased('balloon-pop')).toBe(true)
+    expect(isGameReleased('drawing')).toBe(true)
     expect(isGameReleased('counting')).toBe(false)
-    expect(GAME_IDS.filter(isGameReleased)).toHaveLength(2)
+    expect(GAME_IDS.filter(isGameReleased)).toHaveLength(3)
     expect(CHILD_NAME_USED_IN_RELEASED_GAMES).toBe(true)
   })
 })

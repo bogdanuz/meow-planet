@@ -21,7 +21,7 @@ export function renderWelcomeScreen(
 ): void {
   const section = document.createElement('section')
   section.className = 'screen screen--welcome'
-  section.setAttribute('aria-label', 'Приветствие Планета Мяу')
+  section.setAttribute('aria-label', 'Приветствие Планета Мяу и друзья')
 
   const atmosphere = document.createElement('div')
   atmosphere.className = 'welcome__atmosphere'
@@ -37,7 +37,7 @@ export function renderWelcomeScreen(
 
   const title = document.createElement('img')
   title.className = 'welcome__title welcome__title--breathe'
-  title.alt = 'Планета Мяу'
+  title.alt = 'Планета Мяу и друзья'
   title.src = `${import.meta.env.BASE_URL}assets/shell/welcome-title.png`
 
   const titleWrap = document.createElement('h1')
@@ -66,13 +66,18 @@ export function renderWelcomeScreen(
   const meowMover = document.createElement('div')
   meowMover.className = 'welcome__meow-mover'
   const meow = document.createElement('img')
-  meow.className = 'welcome__meow'
+  meow.className = 'welcome__meow welcome__olli-open'
   meow.alt = ''
-  meow.src = `${import.meta.env.BASE_URL}assets/shell/welcome-meow.png`
+  meow.src = `${import.meta.env.BASE_URL}assets/shell/welcome-olli-open.png`
+  const blink = document.createElement('img')
+  blink.className = 'welcome__meow welcome__olli-closed'
+  blink.alt = ''
+  blink.setAttribute('aria-hidden', 'true')
+  blink.src = `${import.meta.env.BASE_URL}assets/shell/welcome-olli-closed.png`
   const meowShadow = document.createElement('span')
   meowShadow.className = 'welcome__meow-shadow'
   meowShadow.setAttribute('aria-hidden', 'true')
-  meowMover.append(meow)
+  meowMover.append(meow, blink)
   cta.append(playBtn)
   meowSlot.append(meowShadow, meowMover, cta)
 

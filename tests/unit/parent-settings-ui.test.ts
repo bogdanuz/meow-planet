@@ -17,6 +17,7 @@ function mockAudio(): AudioManager {
     switchMusic: async () => true,
     waitUntilVoiceEnded: async () => undefined,
     stopSfx: () => undefined,
+    stopVoice: () => undefined,
     allowBrightMotion: () => true,
     updateSettings: () => undefined,
   }
@@ -40,6 +41,7 @@ describe('настройки', () => {
     expect(host.querySelector('#music-enabled')).not.toBeNull()
     expect(host.querySelector('#sound-enabled')).not.toBeNull()
     expect(host.querySelector('#child-name')).not.toBeNull()
+    expect(host.querySelector('#coloring-drag')).toBeNull()
     expect(host.querySelector('#quiet-mode')).toBeNull()
     expect(host.querySelector('input[name="counting-limit"]')).toBeNull()
   })

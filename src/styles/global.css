@@ -41,7 +41,7 @@ body:has(.boot-loader) {
 
 html:has(.app-shell--welcome),
 body:has(.app-shell--welcome) {
-  background: #b7dd8a;
+  background: #e6d3ae;
 }
 
 html:has(.app-shell--menu),
@@ -57,8 +57,6 @@ html:has(.app-shell--sort-colors),
 body:has(.app-shell--sort-colors),
 html:has(.app-shell--hide-seek),
 body:has(.app-shell--hide-seek),
-html:has(.app-shell--seasons),
-body:has(.app-shell--seasons),
 html:has(.app-shell--meow-home),
 body:has(.app-shell--meow-home),
 html:has(.app-shell--counting),
@@ -66,7 +64,9 @@ body:has(.app-shell--counting),
 html:has(.app-shell--shape-build),
 body:has(.app-shell--shape-build),
 html:has(.app-shell--puzzle),
-body:has(.app-shell--puzzle) {
+body:has(.app-shell--puzzle),
+html:has(.app-shell--drawing),
+body:has(.app-shell--drawing) {
   background: #e8f4fc;
 }
 

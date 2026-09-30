@@ -1,5 +1,5 @@
 import type { AudioManager } from '../../shared/audio'
-import type { Weather } from './logic'
+import type { Weather } from './seasons-logic'
 
 export function playSeasonWeatherChange(audio: AudioManager, weather: Weather): void {
   const tone: Record<Weather, { freq: number; dur: number }> = {

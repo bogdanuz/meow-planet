@@ -11,8 +11,8 @@ export type LayerBox = {
 }
 
 /**
- * Композиция как установка: бочка сзади по центру, малый слева снизу,
- * том справа — слои могут заходить друг на друга.
+ * Слева направо: снейр, бочка, том.
+ * Нижние кромки на верхней плоскости подиума, чуть отступив от переднего края.
  */
 export const DRUM_LAYERS: LayerBox[] = [
   {
@@ -20,10 +20,10 @@ export const DRUM_LAYERS: LayerBox[] = [
     file: 'drum-kick',
     sfxId: 'drum-tom',
     label: 'Бочка',
-    left: 0.095,
-    top: 0,
-    width: 0.66,
-    height: 0.952,
+    left: 0.26,
+    top: 0.195,
+    width: 0.48,
+    height: 0.68,
     z: 1,
   },
   {
@@ -31,10 +31,10 @@ export const DRUM_LAYERS: LayerBox[] = [
     file: 'drum-tom',
     sfxId: 'drum-right',
     label: 'Том',
-    left: 0.625,
-    top: 0.342,
-    width: 0.345,
-    height: 0.658,
+    left: 0.58,
+    top: 0.395,
+    width: 0.32,
+    height: 0.48,
     z: 2,
   },
   {
@@ -42,12 +42,10 @@ export const DRUM_LAYERS: LayerBox[] = [
     file: 'drum-snare',
     sfxId: 'drum-snare',
     label: 'Малый барабан',
-    left: -0.025,
-    // Увеличиваем самый левый барабан в 2 раза, сохраняя нижнюю кромку в %
-    // от контейнера (bottom = 100%).
-    top: 0.266,
-    width: 0.664,
-    height: 0.734,
+    left: 0.09,
+    top: 0.375,
+    width: 0.34,
+    height: 0.5,
     z: 3,
   },
 ]

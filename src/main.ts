@@ -4,8 +4,11 @@ import './styles/game-stub.css'
 import './styles/game-common.css'
 import './styles/shell.css'
 import './styles/parent.css'
-import { mountBootLoader } from './app/boot-loader'
-import { runBootSequence } from './app/pwa-boot'
+import { mountBootLoader, type BootLoaderHandle } from './app/boot-loader'
+import {
+  hasActiveServiceWorkerController,
+  runBootSequence,
+} from './app/pwa-boot'
 import { renderShell } from './app/shell'
 
 const appRoot = document.querySelector<HTMLDivElement>('#app')
@@ -15,23 +18,28 @@ if (!appRoot) {
 const root: HTMLDivElement = appRoot
 
 async function boot(): Promise<void> {
-  const loader = mountBootLoader(root)
+  let loader: BootLoaderHandle | null = null
+  let attempt: () => Promise<void>
 
-  const attempt = async (): Promise<void> => {
-    const res = await runBootSequence((p) => loader.setProgress(p))
+  const ensureLoader = (): BootLoaderHandle => {
+    if (loader) return loader
+    loader = mountBootLoader(root)
+    loader.setRetryHandler(() => void attempt())
+    return loader
+  }
+
+  attempt = async (): Promise<void> => {
+    const res = await runBootSequence((progress) => loader?.setProgress(progress))
     if (res.ok) {
-      loader.unmount()
+      loader?.unmount()
       renderShell(root)
     } else {
-      loader.setError(res.errorMessage)
+      ensureLoader().setError(res.errorMessage)
     }
   }
 
-  loader.setRetryHandler(() => {
-    // Кнопка “Повторить” должна перезапустить boot-логику с нуля.
-    // Повторный запуск welcome/menu всё равно не покажет до успешного результата.
-    void attempt()
-  })
+  // При активном controller всё уже локально: не показываем фальшивую уборку на секунду.
+  if (!hasActiveServiceWorkerController()) ensureLoader()
 
   await attempt()
 }

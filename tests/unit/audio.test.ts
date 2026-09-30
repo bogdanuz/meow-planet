@@ -153,6 +153,7 @@ describe('audio manager', () => {
       finish() {
         this.ended = true
         this.paused = true
+        this.currentTime = this.duration
         this.onended?.()
         this.listeners.get('ended')?.forEach((fn) => fn())
       }
@@ -184,6 +185,182 @@ describe('audio manager', () => {
     box.finish?.()
     await waiting
     expect(done).toBe(true)
+    vi.unstubAllGlobals()
+  })
+
+  it('ended предыдущей фразы не заканчивает новую', async () => {
+    class FakeVoice {
+      paused = true
+      ended = false
+      volume = 1
+      src = ''
+      currentTime = 0.4
+      readyState = 4
+      duration = 2
+      onended: (() => void) | null = null
+      private listeners = new Map<string, Set<() => void>>()
+      addEventListener(type: string, fn: () => void) {
+        const set = this.listeners.get(type) ?? new Set()
+        set.add(fn)
+        this.listeners.set(type, set)
+      }
+      removeEventListener(type: string, fn: () => void) {
+        this.listeners.get(type)?.delete(fn)
+      }
+      play = vi.fn(async () => {
+        this.paused = false
+      })
+      pause = vi.fn(() => {
+        this.paused = true
+        // iPad шлёт ended, когда предыдущий голос обрывают новой фразой.
+        this.onended?.()
+      })
+      load = vi.fn()
+      removeAttribute = vi.fn()
+      finish() {
+        this.ended = true
+        this.paused = true
+        this.currentTime = this.duration
+        this.onended?.()
+        this.listeners.get('ended')?.forEach((fn) => fn())
+      }
+    }
+    const voices: FakeVoice[] = []
+    vi.stubGlobal(
+      'Audio',
+      vi.fn(function Audio() {
+        const voice = new FakeVoice()
+        voices.push(voice)
+        return voice
+      }),
+    )
+    const audio = createAudioManager({
+      soundEnabled: true,
+      musicEnabled: false,
+      quietMode: false,
+    })
+    await audio.unlock()
+    await audio.playUrl('voice', 'praise.mp3')
+    await audio.playUrl('voice', 'next-task.mp3')
+    const waiting = audio.waitUntilVoiceEnded()
+    let done = false
+    void waiting.then(() => {
+      done = true
+    })
+    await Promise.resolve()
+    expect(done).toBe(false)
+    voices[1]?.finish()
+    await waiting
+    expect(done).toBe(true)
+    vi.unstubAllGlobals()
+  })
+
+  it('ранний ended не открывает следующую фразу, пока клип не доиграл', async () => {
+    vi.useFakeTimers()
+    class FakeVoice {
+      paused = true
+      ended = false
+      volume = 1
+      src = ''
+      currentTime = 0.2
+      readyState = 4
+      duration = 2
+      onended: (() => void) | null = null
+      private listeners = new Map<string, Set<() => void>>()
+      addEventListener(type: string, fn: () => void) {
+        const set = this.listeners.get(type) ?? new Set()
+        set.add(fn)
+        this.listeners.set(type, set)
+      }
+      removeEventListener(type: string, fn: () => void) {
+        this.listeners.get(type)?.delete(fn)
+      }
+      play = vi.fn(async () => {
+        this.paused = false
+      })
+      pause = vi.fn()
+      load = vi.fn()
+      removeAttribute = vi.fn()
+      fireEnded() {
+        this.ended = true
+        this.onended?.()
+        this.listeners.get('ended')?.forEach((fn) => fn())
+      }
+    }
+    const voices: FakeVoice[] = []
+    vi.stubGlobal(
+      'Audio',
+      vi.fn(function Audio() {
+        const voice = new FakeVoice()
+        voices.push(voice)
+        return voice
+      }),
+    )
+    const audio = createAudioManager({
+      soundEnabled: true,
+      musicEnabled: false,
+      quietMode: false,
+    })
+    await audio.unlock()
+    await audio.playUrl('voice', 'praise.mp3')
+    const waiting = audio.waitUntilVoiceEnded()
+    let done = false
+    void waiting.then(() => {
+      done = true
+    })
+    voices[0]?.fireEnded()
+    await Promise.resolve()
+    expect(done).toBe(false)
+    await vi.advanceTimersByTimeAsync(1900)
+    await waiting
+    expect(done).toBe(true)
+    vi.useRealTimers()
+    vi.unstubAllGlobals()
+  })
+
+  it('blur видимой страницы не обрывает текущую фразу', async () => {
+    class FakeVoice {
+      paused = true
+      ended = false
+      volume = 1
+      src = ''
+      currentTime = 0.2
+      readyState = 4
+      duration = 2
+      onended: (() => void) | null = null
+      addEventListener = vi.fn()
+      removeEventListener = vi.fn()
+      play = vi.fn(async () => {
+        this.paused = false
+      })
+      pause = vi.fn(() => {
+        this.paused = true
+      })
+      load = vi.fn()
+      removeAttribute = vi.fn()
+    }
+    vi.stubGlobal(
+      'Audio',
+      vi.fn(function Audio() {
+        return new FakeVoice()
+      }),
+    )
+    const audio = createAudioManager({
+      soundEnabled: true,
+      musicEnabled: false,
+      quietMode: false,
+    })
+    await audio.unlock()
+    await audio.playUrl('voice', 'praise.mp3')
+    window.dispatchEvent(new Event('blur'))
+    const waiting = audio.waitUntilVoiceEnded()
+    let done = false
+    void waiting.then(() => {
+      done = true
+    })
+    await Promise.resolve()
+    expect(done).toBe(false)
+    expect(document.hidden).toBe(false)
     vi.unstubAllGlobals()
   })
 

@@ -1,12 +1,14 @@
 /**
  * assets-master/menu/ → public/assets/menu/
  * - card-*.jpg → PNG 1024, knockout белого, trim
+ * - card-counting.png → PNG 1024 + 3D-подложка как у соседних плиток
  * - menu-visit-bed.jpg → PNG широкий, knockout (лежанка «В гости»)
  */
 import { access, readdir } from 'node:fs/promises'
 import path from 'node:path'
 import sharp from 'sharp'
 import { knockOutEdgeWhite } from './knockout-white.mjs'
+import { compositeMenuCardBacking } from './menu-card-backing.mjs'
 
 const root = path.resolve(import.meta.dirname, '..')
 const srcDir = path.join(root, 'assets-master', 'menu')
@@ -44,12 +46,17 @@ async function toKnockoutPng(inputPath, outputPath, resize) {
 }
 
 const all = await readdir(srcDir)
+const pngCards = all.filter((f) => /^card-.+\.png$/i.test(f))
+const pngBases = new Set(pngCards.map((f) => f.replace(/\.png$/i, '')))
 const cardFiles = all.filter(
-  (f) => /^card-.+\.jpe?g$/i.test(f) && !/^card-meow-home\./i.test(f),
+  (f) =>
+    /^card-.+\.jpe?g$/i.test(f) &&
+    !/^card-meow-home\./i.test(f) &&
+    !pngBases.has(f.replace(/\.jpe?g$/i, '')),
 )
 
-if (cardFiles.length === 0) {
-  console.error('No card-*.jpg (except meow-home) in assets-master/menu')
+if (cardFiles.length === 0 && pngCards.length === 0) {
+  console.error('No card-*.jpg/png (except meow-home) in assets-master/menu')
   process.exit(1)
 }
 
@@ -63,6 +70,34 @@ for (const file of cardFiles.sort()) {
       background: { r: 255, g: 255, b: 255, alpha: 1 },
     },
   })
+}
+
+for (const file of pngCards.sort()) {
+  const inputPath = path.join(srcDir, file)
+  const outputPath = path.join(outDir, file)
+  if (/^card-counting\.png$/i.test(file)) {
+    await compositeMenuCardBacking(
+      sharp,
+      inputPath,
+      path.join(outDir, 'card-sort-colors.png'),
+      outputPath,
+    )
+  } else {
+    await sharp(inputPath)
+      .rotate()
+      .trim({
+        threshold: 8,
+        background: { r: 0, g: 0, b: 0, alpha: 0 },
+      })
+      .resize(1024, 1024, {
+        fit: 'contain',
+        background: { r: 0, g: 0, b: 0, alpha: 0 },
+      })
+      .png({ compressionLevel: 9, effort: 10 })
+      .toFile(outputPath)
+  }
+  const meta = await sharp(outputPath).metadata()
+  console.log(`${path.basename(outputPath)} ${meta.width}x${meta.height}`)
 }
 
 const visitCandidates = [
@@ -104,4 +139,4 @@ if (visitSrc) {
   console.warn('Skip menu-visit-bed: no source file')
 }
 
-console.log(`Done: ${cardFiles.length} grid icons`)
+console.log(`Done: ${cardFiles.length + pngCards.length} grid icons`)

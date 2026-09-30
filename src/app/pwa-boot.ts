@@ -1,6 +1,8 @@
 export type BootProgress = {
   percent: number
   message: string
+  doneCount?: number
+  totalCount?: number
 }
 
 export type BootResult =
@@ -17,6 +19,8 @@ export type BootResult =
  */
 const SW_FINALIZE_TIMEOUT_MS = 60_000
 const MANIFEST_TIMEOUT_MS = 8000
+const CACHE_POLL_INTERVAL_MS = 120
+const CACHE_FINALIZATION_MAX_POLLS = 50
 const PRECACHE_MANIFEST_FILE = 'precache-manifest.json'
 
 type RuntimePrecacheManifest = {
@@ -24,12 +28,11 @@ type RuntimePrecacheManifest = {
   urls: string[]
 }
 
-type DownloadResult =
-  | { ok: true; totalCount: number }
-  | { ok: false; errorMessage: string; failedAssets: string[] }
-
 export type BootDependencies = {
+  isDevelopment?: boolean
   waitForServiceWorkerReady?: () => Promise<boolean>
+  readWorkboxCachedUrls?: () => Promise<Set<string>>
+  waitForNextCachePoll?: () => Promise<void>
 }
 
 function hasServiceWorkerSupport(): boolean {
@@ -37,7 +40,7 @@ function hasServiceWorkerSupport(): boolean {
   return Boolean((navigator as unknown as { serviceWorker?: ServiceWorkerContainer }).serviceWorker)
 }
 
-function hasServiceWorkerController(): boolean {
+export function hasActiveServiceWorkerController(): boolean {
   if (!hasServiceWorkerSupport()) return false
   const sw = (navigator as unknown as { serviceWorker: ServiceWorkerContainer }).serviceWorker
   return Boolean(sw.controller)
@@ -132,13 +135,103 @@ async function loadPrecacheUrls(): Promise<string[]> {
   }
 }
 
+function normalizePrecacheUrl(value: string): string {
+  const url = new URL(value, window.location.href)
+  url.searchParams.delete('__WB_REVISION__')
+  url.hash = ''
+  return url.toString()
+}
+
+async function readWorkboxCachedUrls(): Promise<Set<string>> {
+  const cachedUrls = new Set<string>()
+  const cacheNames = await caches.keys()
+  const workboxCacheNames = cacheNames.filter((name) =>
+    name.includes('workbox-precache'),
+  )
+
+  for (const cacheName of workboxCacheNames) {
+    const cache = await caches.open(cacheName)
+    const requests = await cache.keys()
+    for (const request of requests) {
+      cachedUrls.add(normalizePrecacheUrl(request.url))
+    }
+  }
+  return cachedUrls
+}
+
+function waitForNextCachePoll(): Promise<void> {
+  return new Promise((resolve) => {
+    window.setTimeout(resolve, CACHE_POLL_INTERVAL_MS)
+  })
+}
+
+async function trackWorkboxPrecacheProgress(
+  urlsAbs: string[],
+  readiness: Promise<boolean>,
+  report: (progress: BootProgress) => void,
+  dependencies: Required<BootDependencies>,
+): Promise<boolean> {
+  const expectedUrls = urlsAbs.map(normalizePrecacheUrl)
+  const totalCount = expectedUrls.length
+  let readinessState: boolean | undefined
+  let previousCount = -1
+  let finalizationPolls = 0
+
+  void readiness.then(
+    (ready) => {
+      readinessState = ready
+    },
+    () => {
+      readinessState = false
+    },
+  )
+
+  while (true) {
+    let cachedUrls: Set<string>
+    try {
+      cachedUrls = await dependencies.readWorkboxCachedUrls()
+    } catch {
+      return false
+    }
+    const doneCount = expectedUrls.reduce(
+      (count, url) => count + (cachedUrls.has(url) ? 1 : 0),
+      0,
+    )
+
+    if (doneCount !== previousCount) {
+      previousCount = doneCount
+      report({
+        percent: Math.min(99, Math.round((doneCount / totalCount) * 100)),
+        message: 'Подготавливаем игру',
+        doneCount,
+        totalCount,
+      })
+    }
+
+    if (readinessState === true && doneCount === totalCount) {
+      report({
+        percent: 100,
+        message: 'Все файлы готовы',
+        doneCount: totalCount,
+        totalCount,
+      })
+      return true
+    }
+
+    if (readinessState === false) return false
+    if (readinessState === true) {
+      finalizationPolls += 1
+      if (finalizationPolls >= CACHE_FINALIZATION_MAX_POLLS) return false
+    }
+    await dependencies.waitForNextCachePoll()
+  }
+}
+
 async function runBootSequenceOnce(
   report: (progress: BootProgress) => void,
   dependencies: Required<BootDependencies>,
 ): Promise<BootResult> {
-  report({ percent: 0, message: 'Загрузка…' })
-
-  const hasController = hasServiceWorkerController()
+  const hasController = hasActiveServiceWorkerController()
   if (hasController) {
     const swReady = await waitForServiceWorkerFinalization(
       dependencies.waitForServiceWorkerReady(),
@@ -147,24 +240,18 @@ async function runBootSequenceOnce(
       return {
         ok: false,
         errorMessage:
-          'Не удалось подготовить офлайн-режим. Проверьте интернет и попробуйте ещё раз',
+          'Пылесос сломался. Нажмите «Повторить», чтобы продолжить подготовку игр',
       }
     }
     report({ percent: 100, message: 'Готово!' })
     return { ok: true }
   }
 
-  const firstLoadEstimate =
-    'Первая загрузка: около 60 МБ. Потом игра будет работать без интернета'
-
-  report({
-    percent: 0,
-    message: `${firstLoadEstimate}. Подготавливаем игру для работы без интернета`,
-  })
-
-  // Регистрация и проверка полного Workbox-списка идут параллельно. Финальные
-  // 100% публикуются только когда завершились обе части одного precache.
-  const swReadyPromise = dependencies.waitForServiceWorkerReady()
+  // Manifest задаёт ожидаемый набор, а промежуточный счёт берётся только из
+  // фактических записей Workbox Cache Storage. Второй download-pass не нужен.
+  const swReadyPromise = waitForServiceWorkerFinalization(
+    dependencies.waitForServiceWorkerReady(),
+  )
   let urlsAbs: string[]
   try {
     urlsAbs = await loadPrecacheUrls()
@@ -172,122 +259,46 @@ async function runBootSequenceOnce(
     return {
       ok: false,
       errorMessage:
-        'Не удалось подготовить офлайн-режим. Проверьте интернет и попробуйте ещё раз',
+        'Пылесос сломался. Нажмите «Повторить», чтобы продолжить подготовку игр',
     }
   }
 
-  const downloadRes = await downloadBootAssetsWithProgress(urlsAbs, report)
-  if (!downloadRes.ok) return downloadRes
+  // vite-plugin-pwa выключен на dev-server, поэтому Cache Storage там не
+  // создаётся. Это только локальный UI-путь; production всегда идёт ниже через
+  // наблюдение реального workbox-precache и отдельный preview e2e.
+  if (dependencies.isDevelopment) {
+    const swReadyOk = await swReadyPromise
+    if (!swReadyOk) {
+      return {
+        ok: false,
+        errorMessage:
+          'Пылесос сломался. Нажмите «Повторить», чтобы продолжить подготовку игр',
+      }
+    }
+    report({
+      percent: 100,
+      message: 'Все файлы готовы',
+      doneCount: urlsAbs.length,
+      totalCount: urlsAbs.length,
+    })
+    return { ok: true }
+  }
 
-  const swReadyOk = await waitForServiceWorkerFinalization(swReadyPromise)
+  const swReadyOk = await trackWorkboxPrecacheProgress(
+    urlsAbs,
+    swReadyPromise,
+    report,
+    dependencies,
+  )
   if (!swReadyOk) {
     return {
       ok: false,
       errorMessage:
-        'Не удалось подготовить офлайн-режим. Проверьте интернет и попробуйте ещё раз',
+        'Пылесос сломался. Нажмите «Повторить», чтобы продолжить подготовку игр',
     }
   }
 
-  report({
-    percent: 100,
-    message: `Подготавливаем игру для работы без интернета. Проверено файлов: ${downloadRes.totalCount} из ${downloadRes.totalCount}`,
-  })
   return { ok: true }
-}
-
-async function fetchWithByteProgress(
-  url: string,
-  onContentLengthBytes: ((contentLengthBytes: number) => void) | undefined,
-  timeoutMs: number,
-): Promise<
-  | { ok: true; contentLengthBytes: number | null }
-  | { ok: false; contentLengthBytes: number | null }
-> {
-  const controller = new AbortController()
-  const t = window.setTimeout(() => controller.abort(), timeoutMs)
-  try {
-    const resp = await fetch(url, { cache: 'force-cache', signal: controller.signal })
-    if (!resp.ok) return { ok: false, contentLengthBytes: null }
-    const contentLengthHeader = resp.headers.get('content-length')
-    const parsedContentLength =
-      contentLengthHeader != null ? Number(contentLengthHeader) : null
-    const contentLengthBytes =
-      parsedContentLength != null &&
-      Number.isFinite(parsedContentLength) &&
-      parsedContentLength > 0
-        ? parsedContentLength
-        : null
-    if (contentLengthBytes != null) onContentLengthBytes?.(contentLengthBytes)
-    // fetch() резолвится после заголовков. Пока body не дочитан, Safari может
-    // держать соединение занятым и Workbox install останется ждать сеть.
-    await resp.arrayBuffer()
-    return { ok: true, contentLengthBytes }
-  } catch {
-    return { ok: false, contentLengthBytes: null }
-  } finally {
-    window.clearTimeout(t)
-  }
-}
-
-async function downloadBootAssetsWithProgress(
-  urlsAbs: string[],
-  report: (progress: BootProgress) => void,
-): Promise<DownloadResult> {
-  const totalCount = urlsAbs.length || 1
-  let doneCount = 0
-  const failedAssets: string[] = []
-
-  let lastReportAt = 0
-  const update = (force = false) => {
-    const now = Date.now()
-    if (!force && now - lastReportAt < 90) return
-    lastReportAt = now
-
-    const pct = Math.max(0, Math.min(100, Math.round((doneCount / totalCount) * 100)))
-    const verifiedText = `Проверено файлов: ${doneCount} из ${totalCount}`
-    report({
-      percent: pct,
-      message: `Подготавливаем игру для работы без интернета. ${verifiedText}`,
-    })
-  }
-
-  update(true)
-
-  const timeoutMsPerAsset = 16_000
-  const concurrency = 4
-  let idx = 0
-  const workers = Array.from({ length: concurrency }, () =>
-    (async () => {
-      while (idx < urlsAbs.length) {
-        const url = urlsAbs[idx++]
-        const res = await fetchWithByteProgress(
-          url,
-          undefined,
-          timeoutMsPerAsset,
-        )
-
-        if (res.ok) {
-          doneCount += 1
-        } else {
-          failedAssets.push(url)
-        }
-        // Не показываем финальные 100% раньше lifecycle-сигнала Workbox.
-        if (doneCount < totalCount) update()
-      }
-    })(),
-  )
-
-  await Promise.allSettled(workers)
-  if (failedAssets.length > 0) {
-    if (doneCount > 0) update(true)
-    return {
-      ok: false,
-      errorMessage:
-        'Не удалось скачать игру для работы без интернета. Проверьте интернет и попробуйте ещё раз',
-      failedAssets,
-    }
-  }
-  return { ok: true, totalCount }
 }
 
 export async function runBootSequence(
@@ -295,8 +306,13 @@ export async function runBootSequence(
   dependencies: BootDependencies = {},
 ): Promise<BootResult> {
   const resolvedDependencies: Required<BootDependencies> = {
+    isDevelopment: dependencies.isDevelopment ?? import.meta.env.DEV,
     waitForServiceWorkerReady:
       dependencies.waitForServiceWorkerReady ?? registerServiceWorkerReady,
+    readWorkboxCachedUrls:
+      dependencies.readWorkboxCachedUrls ?? readWorkboxCachedUrls,
+    waitForNextCachePoll:
+      dependencies.waitForNextCachePoll ?? waitForNextCachePoll,
   }
   let maxPercentSeen = 0
   const trackedReport = (progress: BootProgress): void => {

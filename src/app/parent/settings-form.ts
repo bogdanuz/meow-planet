@@ -6,6 +6,7 @@ import {
   saveSettings,
   type AppSettings,
 } from '../../shared/storage'
+import { type CompanionId } from '../../shared/companion'
 import type { AudioManager } from '../../shared/audio'
 import { CHILD_NAME_USED_IN_RELEASED_GAMES } from '../../content/released-games'
 
@@ -107,6 +108,36 @@ export function renderSettingsForm(
 
   form.append(musicSwitch.row, soundSwitch.row)
 
+  const companionField = document.createElement('fieldset')
+  companionField.className = 'settings-companion'
+  const companionLegend = document.createElement('legend')
+  companionLegend.textContent = 'Кто помогает в играх'
+  companionField.append(companionLegend)
+  const paintCompanion = (): void => {
+    companionField.querySelectorAll<HTMLButtonElement>('button').forEach((button) => {
+      const on = button.dataset.companion === settings.companion
+      button.setAttribute('aria-pressed', on ? 'true' : 'false')
+    })
+  }
+  for (const choice of [
+    ['meow', 'Котёнок Мяу'],
+    ['olli', 'Сова'],
+  ] as const) {
+    const card = document.createElement('button')
+    card.type = 'button'
+    card.className = 'touch-btn settings-companion__card'
+    card.dataset.companion = choice[0]
+    card.textContent = choice[1]
+    card.addEventListener('click', () => {
+      settings = { ...settings, companion: choice[0] satisfies CompanionId }
+      paintCompanion()
+      persist()
+    })
+    companionField.append(card)
+  }
+  paintCompanion()
+  form.append(companionField)
+
   let nameInput: HTMLInputElement | null = null
   let refreshGreeting: (() => void) | null = null
 
@@ -188,6 +219,7 @@ export function renderSettingsForm(
     }
     soundSwitch.paint()
     musicSwitch.paint()
+    paintCompanion()
     const hideEn = form.querySelector<HTMLInputElement>('#hide-en')
     if (hideEn) hideEn.checked = DEFAULT_SETTINGS.hideEnglishAlphabet
     const balloonTasks = form.querySelector<HTMLInputElement>('#balloon-tasks')

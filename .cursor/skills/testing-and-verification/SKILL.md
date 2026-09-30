@@ -44,6 +44,8 @@ Run for real and report output:
 2. `npm run test`
 3. `npm run build`
 4. UI/interaction changes: `npm run test:e2e -- --project=chromium`
+5. Любой runtime-файл, ассет, игра, Vite/PWA/build:
+   `npm run test:e2e:boot` (production preview, не dev shortcut)
 
 Forbidden without owner ask: `test.only`, unexplained `test.skip`, arbitrary `waitForTimeout`, weakening assertions to green CI.
 

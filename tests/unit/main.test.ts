@@ -27,6 +27,7 @@ describe('app bootstrap', () => {
       })),
     }))
     vi.doMock('../../src/app/pwa-boot', () => ({
+      hasActiveServiceWorkerController: vi.fn(() => false),
       runBootSequence: vi.fn(async (report: (progress: { percent: number; message: string }) => void) => {
         report({ percent: 100, message: 'Готово!' })
         return { ok: true } as const
@@ -42,6 +43,31 @@ describe('app bootstrap', () => {
     expect(setProgress).toHaveBeenCalledWith({ percent: 100, message: 'Готово!' })
     expect(unmount).toHaveBeenCalledTimes(1)
     expect(renderShell).toHaveBeenCalledTimes(1)
+    expect(renderShell).toHaveBeenCalledWith(root)
+  })
+
+  it('при warm start не монтирует сцену уборки', async () => {
+    const root = document.createElement('div')
+    root.id = 'app'
+    document.body.append(root)
+
+    const mountBootLoader = vi.fn()
+    const renderShell = vi.fn(() => vi.fn())
+    vi.doMock('../../src/app/boot-loader', () => ({
+      mountBootLoader,
+    }))
+    vi.doMock('../../src/app/pwa-boot', () => ({
+      hasActiveServiceWorkerController: vi.fn(() => true),
+      runBootSequence: vi.fn(async () => ({ ok: true }) as const),
+    }))
+    vi.doMock('../../src/app/shell', () => ({
+      renderShell,
+    }))
+
+    await import('../../src/main')
+    await Promise.resolve()
+
+    expect(mountBootLoader).not.toHaveBeenCalled()
     expect(renderShell).toHaveBeenCalledWith(root)
   })
 })

@@ -15,17 +15,26 @@ production boot.
 - Workbox `manifestTransforms` во время production build создаёт
   `dist/precache-manifest.json` из того же manifest, который попадает в
   `precacheAndRoute`.
-- Boot progress загружает этот JSON; старого ручного списка нет.
-- Build завершается ошибкой, если два списка отличаются или содержат дубли.
+- Workbox использует `globPatterns: ['**/*']`: новый тип runtime-файла не требует
+  ручного добавления расширения.
+- Boot progress загружает этот JSON как ожидаемый набор; выполненное `N` считает
+  по реальным записям `workbox-precache` в Cache Storage. Старого ручного списка
+  и параллельного page-fetch тех же файлов нет.
+- Build завершается ошибкой, если списки отличаются, содержат дубли или любой
+  app-файл `dist` (кроме SW runtime scripts) отсутствует в precache.
+- Build отклоняет случайный runtime-файл больше 64 МиБ и общий app-набор больше
+  512 МиБ; изменение бюджета требует осознанного пересмотра этого решения.
 - Финальные 100% публикуются только после полной проверки списка и штатного
   Service Worker readiness.
 - Отдельный Playwright suite запускает `vite preview` и проверяет cold, warm,
-  retry и controlled-error пути без `navigator.webdriver` ветки.
+  retry, controlled-error и reduced-motion пути без `navigator.webdriver` ветки.
 
 ## Consequences
 
 - Изменение любых ассетов автоматически отражается и в Workbox, и в счётчике.
 - Production build создаёт дополнительный `precache-manifest.json`.
+- Любой файл в `public/` попадает в production output и offline precache независимо
+  от расширения; обязательные runtime-ресурсы с внешних URL запрещены.
 - Обычный dev/e2e server отдаёт короткий детерминированный manifest, а отдельный
   production boot suite проверяет полный artifact.
 

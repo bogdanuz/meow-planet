@@ -1,0 +1,417 @@
+.app-shell--drawing {
+  grid-template-rows: 1fr;
+  gap: 0;
+  height: 100dvh;
+  max-height: 100dvh;
+  overflow: hidden;
+  padding: 0;
+  background: #fffdf8;
+}
+
+.app-shell--drawing .chrome[hidden],
+.app-shell--drawing .chrome__mascot[hidden] {
+  display: none !important;
+  pointer-events: none !important;
+}
+
+.app-shell--drawing .chrome__main {
+  min-height: 0;
+  height: 100%;
+}
+
+.drawing {
+  /* Левый островок — ×1,5 от прежних 5,4rem; ужимается, чтобы 5 кнопок влезли по высоте. */
+  --dock-item: clamp(5.4rem, calc((100dvh - 9.5rem) / 5.35), 8.1rem);
+  --dock-icon: calc(var(--dock-item) * 0.5);
+  /* Раскрывающиеся панели — ×3 от прежних 2,65rem; все 10 цветов видны сразу (2 колонки × 5). */
+  --pop-item: clamp(4.5rem, calc((100dvh - 11rem) / 5.6), 7.95rem);
+  --pop-icon: calc(var(--pop-item) * 0.52);
+  --pop-gap: 0.6rem;
+  --pop-ms: 200ms;
+  position: relative;
+  height: 100%;
+  min-height: 0;
+  overflow: hidden;
+  background: #fffdf8;
+}
+
+.drawing__canvas {
+  width: 100%;
+  height: 100%;
+  touch-action: none;
+  display: block;
+}
+
+.drawing__stage[hidden],
+.drawing__dock[hidden],
+.drawing__screen[hidden] {
+  display: none !important;
+}
+
+/* Хедер: слева назад+звук, по центру отменить+заново, справа фон/галерея/настройки. */
+.drawing__bar {
+  position: relative;
+  z-index: 6;
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
+  align-items: center;
+  gap: 0.6rem;
+  padding:
+    max(0.6rem, env(safe-area-inset-top))
+    max(0.85rem, env(safe-area-inset-right))
+    0.55rem
+    max(0.85rem, env(safe-area-inset-left));
+}
+
+.drawing__bar-group {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  min-width: 0;
+}
+
+.drawing__bar-group--left {
+  justify-self: start;
+}
+
+.drawing__bar-group--center {
+  justify-self: center;
+  gap: 2.2rem;
+}
+
+.drawing__bar .creative-tool.touch-btn:disabled {
+  opacity: 0.4;
+  box-shadow: none;
+}
+
+.drawing__bar-group--right {
+  justify-self: end;
+}
+
+.drawing__bar .creative-tool.touch-btn {
+  min-width: 5.4rem;
+  min-height: 5.4rem;
+}
+
+.drawing__bar .creative-tool__icon {
+  width: 2.7rem;
+  height: 2.7rem;
+}
+
+.drawing__bar .creative-tool.is-selected {
+  box-shadow:
+    0 0 0 4px #2b2724,
+    0 6px 14px rgb(26 74 107 / 16%);
+}
+
+/* Открытая панель — мягкое свечение; чёрное кольцо только у выбранного инструмента. */
+.drawing .creative-tool.is-open {
+  box-shadow:
+    0 0 0 4px rgb(255 196 92 / 95%),
+    0 0 18px 6px rgb(255 196 92 / 55%);
+}
+
+.drawing__body {
+  position: relative;
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  align-items: center;
+  gap: 0.85rem;
+  padding: 0 0.85rem max(0.75rem, env(safe-area-inset-bottom)) max(0.85rem, env(safe-area-inset-left));
+}
+
+.drawing .drawing__dock {
+  position: relative;
+  z-index: 5;
+  align-self: center;
+}
+
+.drawing .drawing__island {
+  gap: 0.5rem;
+  padding: 0.45rem;
+}
+
+.drawing .drawing__island .creative-tool.touch-btn {
+  width: var(--dock-item);
+  min-width: var(--dock-item);
+  height: var(--dock-item);
+  min-height: var(--dock-item);
+  padding: 0.3rem;
+  border-radius: 1.5rem;
+}
+
+.drawing .drawing__island .creative-tool__icon {
+  width: var(--dock-icon);
+  height: var(--dock-icon);
+}
+
+.drawing .drawing__island .creative-tool__label {
+  font-size: clamp(0.8rem, calc(var(--dock-item) * 0.13), 1.05rem);
+}
+
+.drawing__color-dot {
+  position: absolute;
+  top: 0.35rem;
+  right: 0.35rem;
+  width: calc(var(--dock-item) * 0.3);
+  height: calc(var(--dock-item) * 0.3);
+  border-radius: 50%;
+  box-shadow:
+    0 0 0 3px #fffdf8,
+    0 0 0 5px rgb(43 39 36 / 35%);
+  pointer-events: none;
+}
+
+.drawing__island .creative-tool {
+  position: relative;
+}
+
+/* Вертикальные раскрывающиеся панели поверх холста. */
+.drawing__pop {
+  position: absolute;
+  z-index: 7;
+  display: grid;
+  gap: var(--pop-gap);
+  padding: 0.65rem;
+  border-radius: 1.7rem;
+  background: rgb(255 248 236 / 97%);
+  box-shadow:
+    0 14px 28px rgb(92 58 24 / 22%),
+    0 0 0 3px rgb(232 196 150 / 90%);
+  opacity: 0;
+  visibility: hidden;
+  pointer-events: none;
+  transition:
+    opacity var(--pop-ms) ease,
+    transform var(--pop-ms) cubic-bezier(0.2, 0.9, 0.3, 1.2),
+    visibility 0s linear var(--pop-ms);
+}
+
+.drawing__pop.is-open {
+  opacity: 1;
+  visibility: visible;
+  pointer-events: auto;
+  transform: none;
+  transition:
+    opacity var(--pop-ms) ease,
+    transform var(--pop-ms) cubic-bezier(0.2, 0.9, 0.3, 1.2),
+    visibility 0s;
+}
+
+.drawing__dock .drawing__pop {
+  top: 0;
+  left: calc(100% + 0.6rem);
+  transform: translateX(-0.9rem) scale(0.94);
+  transform-origin: left center;
+}
+
+.drawing__bar .drawing__pop {
+  top: calc(100% + 0.6rem);
+  transform: translateY(-0.9rem) scale(0.94);
+  transform-origin: top right;
+}
+
+.drawing__pop--bg {
+  right: calc(4.5rem + 0.6rem + 5.4rem + 0.6rem);
+  grid-template-columns: var(--pop-item);
+  transform-origin: top center;
+}
+
+.drawing__pop--bg-colors {
+  right: calc(4.5rem + 0.6rem + 5.4rem + 0.6rem + var(--pop-item) + 1.3rem + 0.6rem);
+}
+
+.drawing__pop--swatches {
+  grid-template-columns: repeat(2, var(--pop-item));
+  grid-template-rows: repeat(5, var(--pop-item));
+  grid-auto-flow: column;
+}
+
+.drawing__pop--tools {
+  grid-template-columns: var(--pop-item);
+}
+
+.drawing__pop .creative-tool.touch-btn {
+  width: var(--pop-item);
+  min-width: var(--pop-item);
+  height: var(--pop-item);
+  min-height: var(--pop-item);
+  padding: 0.3rem;
+  border-radius: 1.4rem;
+}
+
+.drawing__pop .creative-tool__icon {
+  width: var(--pop-icon);
+  height: var(--pop-icon);
+}
+
+.drawing__pop .creative-tool__label {
+  font-size: clamp(0.8rem, calc(var(--pop-item) * 0.13), 1.05rem);
+}
+
+.drawing__swatch {
+  width: var(--pop-item);
+  height: var(--pop-item);
+  min-width: 4.5rem;
+  min-height: 4.5rem;
+  padding: 0;
+  border: none;
+  border-radius: 50%;
+  box-shadow:
+    0 0 0 3px rgb(255 252 246 / 95%),
+    0 0 0 5px rgb(92 58 24 / 22%),
+    0 6px 12px rgb(92 58 24 / 18%);
+  cursor: pointer;
+  touch-action: manipulation;
+  transition: transform 140ms ease;
+}
+
+.drawing__swatch.is-selected {
+  box-shadow:
+    0 0 0 4px #fffdf8,
+    0 0 0 8px #2b2724,
+    0 6px 12px rgb(92 58 24 / 18%);
+}
+
+.drawing__swatch:active {
+  transform: scale(0.94);
+}
+
+/* Цвет фона — «листок», а не круглая краска: не путать с палитрой кисти. */
+.drawing__swatch--sheet {
+  border-radius: 0.9rem;
+  width: calc(var(--pop-item) * 0.8);
+  justify-self: center;
+  box-shadow:
+    0 0 0 3px rgb(255 252 246 / 95%),
+    0 0 0 5px rgb(92 58 24 / 30%),
+    4px 6px 0 rgb(92 58 24 / 14%);
+}
+
+/* Галерея и выбор раскраски — под хедером, на месте холста. */
+.drawing__screen {
+  position: absolute;
+  inset: 0 0.85rem max(0.75rem, env(safe-area-inset-bottom));
+  z-index: 4;
+}
+
+.drawing__picker {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  grid-template-rows: minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 0.8rem;
+  height: 100%;
+  padding: 0.9rem;
+  box-sizing: border-box;
+  border-radius: 1.6rem;
+  background: rgb(255 248 236 / 94%);
+  box-shadow:
+    0 14px 28px rgb(92 58 24 / 22%),
+    0 0 0 3px rgb(232 196 150 / 90%);
+}
+
+.drawing__picker-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  grid-template-rows: repeat(2, minmax(0, 1fr));
+  gap: 0.9rem;
+  height: 100%;
+  min-height: 0;
+}
+
+.drawing__picker-nav.touch-btn {
+  width: 5.4rem;
+  height: 5.4rem;
+  min-width: 5.4rem;
+  min-height: 5.4rem;
+  padding: 0 0 0.3rem;
+  border: none;
+  border-radius: 50%;
+  background: rgb(255 252 246 / 96%);
+  box-shadow:
+    0 0 0 3px rgb(232 196 150 / 95%),
+    0 8px 16px rgb(74 46 18 / 16%);
+  color: #6b4a2a;
+  font-size: 3.4rem;
+  line-height: 1;
+}
+
+.drawing__picker-nav:disabled {
+  opacity: 0.3;
+}
+
+.drawing__picker-dots {
+  grid-column: 1 / -1;
+  display: flex;
+  justify-content: center;
+  gap: 0.6rem;
+}
+
+.drawing__picker-dot {
+  width: 0.8rem;
+  height: 0.8rem;
+  border-radius: 50%;
+  background: rgb(107 74 42 / 25%);
+}
+
+.drawing__picker-dot.is-current {
+  background: #e88c4a;
+}
+
+.drawing__card {
+  display: grid;
+  grid-template-rows: minmax(0, 1fr) auto;
+  gap: 0.3rem;
+  min-width: 0;
+  height: 100%;
+  padding: 0.4rem;
+  border: none;
+  border-radius: 1.1rem;
+  background: #fffdf8;
+  box-shadow:
+    0 0 0 3px rgb(232 196 150 / 95%),
+    0 8px 16px rgb(74 46 18 / 16%);
+  overflow: hidden;
+  cursor: pointer;
+  touch-action: manipulation;
+  transition: transform 140ms ease;
+}
+
+.drawing__card:active {
+  transform: scale(0.97);
+}
+
+.drawing__card-thumb {
+  display: block;
+  width: 100%;
+  height: 100%;
+  min-height: 0;
+  object-fit: contain;
+  pointer-events: none;
+}
+
+.drawing__card-title {
+  font-size: 1.05rem;
+  font-weight: 600;
+  text-align: center;
+  line-height: 1.1;
+  color: #4a3522;
+  pointer-events: none;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .drawing {
+    --pop-ms: 1ms;
+  }
+
+  .drawing__pop,
+  .drawing__dock .drawing__pop,
+  .drawing__bar .drawing__pop,
+  .drawing__swatch:active,
+  .drawing__card:active {
+    transform: none;
+  }
+}

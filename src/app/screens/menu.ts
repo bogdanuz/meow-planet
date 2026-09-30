@@ -3,10 +3,16 @@ import type { RouterController } from '../router-controller'
 import { createVisualTile } from '../tile'
 import {
   bindMenuMeowPet,
+  bindMenuOlliPet,
   menuCardPngUrl,
   menuMeowDanceFrameUrl,
+  menuOlliBlinkUrl,
+  menuOlliDanceFrameUrl,
+  OLLI_IDLE_FRAME,
   menuVisitBedPngUrl,
+  menuVisitTreePngUrl,
 } from '../menu-cards'
+import { loadSettings } from '../../shared/storage'
 import { createUiIconImg, uiIconUrl } from '../../shared/ui-icon'
 
 /**
@@ -16,11 +22,11 @@ import { createUiIconImg, uiIconUrl } from '../../shared/ui-icon'
 export const MENU_TILE_IDS = [
   'balloon-pop',
   'sound-world',
+  'drawing',
   'sort-colors',
   'puzzle',
   'shape-build',
   'hide-seek',
-  'seasons',
   'counting',
 ] as const satisfies readonly GameId[]
 
@@ -104,7 +110,7 @@ function attachMenuCardArt(btn: HTMLButtonElement, gameId: string): void {
 }
 
 /**
- * Меню: 8 плиток 2×N (скролл) + «В гости» у Мяу. Назад и свайп → welcome.
+ * Меню: 10 плиток 2×N (скролл) + «В гости» у Мяу. Назад и свайп → welcome.
  */
 export function renderMenuScreen(
   container: HTMLElement,
@@ -119,12 +125,14 @@ export function renderMenuScreen(
 ): void {
   const section = document.createElement('section')
   section.className = 'screen screen--menu screen--menu-enter'
+  section.dataset.companion = loadSettings().companion === 'olli' ? 'olli' : 'meow'
   section.setAttribute('aria-label', 'Меню игр')
 
   const bg = document.createElement('img')
   bg.className = 'menu-bg'
   bg.alt = ''
-  bg.src = `${import.meta.env.BASE_URL}assets/shell/menu-bg.webp`
+  const owlMenu = section.dataset.companion === 'olli'
+  bg.src = `${import.meta.env.BASE_URL}assets/shell/${owlMenu ? 'welcome-bg.webp' : 'menu-bg.webp'}`
   section.append(bg)
 
   const layout = document.createElement('div')
@@ -170,9 +178,10 @@ export function renderMenuScreen(
   scroll.append(grid)
   left.append(scroll)
 
+  const owl = section.dataset.companion === 'olli'
   const presenter = document.createElement('aside')
   presenter.className = 'menu-presenter'
-  presenter.setAttribute('aria-label', 'Мяу')
+  presenter.setAttribute('aria-label', owl ? 'Сова' : 'Мяу')
 
   const visitGame = byId.get('meow-home')
   let visitBtn: HTMLButtonElement | null = null
@@ -187,7 +196,7 @@ export function renderMenuScreen(
     const visitArt = document.createElement('img')
     visitArt.className = 'menu-visit-bed__art'
     visitArt.alt = ''
-    visitArt.src = menuVisitBedPngUrl()
+    visitArt.src = owl ? menuVisitTreePngUrl() : menuVisitBedPngUrl()
     visitBtn.append(visitArt)
 
     const catLayer = document.createElement('div')
@@ -200,18 +209,26 @@ export function renderMenuScreen(
     const meow = document.createElement('img')
     meow.className = 'menu-visit-bed__meow'
     meow.alt = ''
-    meow.src = menuMeowDanceFrameUrl(1)
+    meow.src = owl ? menuOlliDanceFrameUrl(OLLI_IDLE_FRAME) : menuMeowDanceFrameUrl(1)
     const toast = document.createElement('span')
     toast.className = 'menu-visit-bed__toast'
     toast.textContent = 'Погладь меня'
     anchor.append(toast, shadow, meow)
+    if (owl) {
+      const blink = document.createElement('img')
+      blink.className = 'menu-visit-bed__blink'
+      blink.alt = ''
+      blink.setAttribute('aria-hidden', 'true')
+      blink.src = menuOlliBlinkUrl()
+      anchor.append(blink)
+    }
     catLayer.append(anchor)
 
     const stack = document.createElement('div')
     stack.className = 'menu-visit-stack'
     stack.append(visitBtn, catLayer)
     visitStack = stack
-    startPet = () => bindMenuMeowPet(meow, toast)
+    startPet = () => (owl ? bindMenuOlliPet(meow, toast) : bindMenuMeowPet(meow, toast))
     bindArtTilePress(visitBtn, () => leaving)
     visitBtn.addEventListener('click', () => {
       if (leaving) return

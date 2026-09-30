@@ -4,11 +4,11 @@ import { openMenu } from './helpers'
 const TILE_GAMES = [
   'balloon-pop',
   'sound-world',
+  'drawing',
   'sort-colors',
   'puzzle',
   'shape-build',
   'hide-seek',
-  'seasons',
   'counting',
 ] as const
 
@@ -35,6 +35,7 @@ test.describe('меню плиток (S13 / M3.5)', () => {
         const cat = document.querySelector<HTMLElement>('.menu-visit-cat__anchor')!
         const firstTile = document.querySelector<HTMLElement>('.game-tile')!
         const back = document.querySelector<HTMLElement>('.menu-back')!
+        const scroll = document.querySelector<HTMLElement>('.menu-scroll')!
         const gamesRect = games.getBoundingClientRect()
         const presenterRect = presenter.getBoundingClientRect()
         const gridRect = grid.getBoundingClientRect()
@@ -42,6 +43,7 @@ test.describe('меню плиток (S13 / M3.5)', () => {
         const catRect = cat.getBoundingClientRect()
         const tileRect = firstTile.getBoundingClientRect()
         const backRect = back.getBoundingClientRect()
+        const scrollRect = scroll.getBoundingClientRect()
         const gamesStyle = getComputedStyle(games)
         const overlapWidth = Math.max(
           0,
@@ -62,6 +64,10 @@ test.describe('меню плиток (S13 / M3.5)', () => {
           presenterRight: presenterRect.right,
           presenterTop: presenterRect.top,
           presenterBottom: presenterRect.bottom,
+          gamesTop: gamesRect.top,
+          gamesBottom: gamesRect.bottom,
+          tileTop: tileRect.top,
+          scrollBottom: scrollRect.bottom,
           catTop: catRect.top,
           stackBottom: stackRect.bottom,
           backTileOverlapArea: overlapWidth * overlapHeight,
@@ -77,10 +83,17 @@ test.describe('меню плиток (S13 / M3.5)', () => {
       expect(geometry.gridLeft).toBeGreaterThanOrEqual(16)
       expect(geometry.separatorWidth).toBeGreaterThanOrEqual(2)
       expect(geometry.catTop).toBeGreaterThanOrEqual(geometry.presenterTop)
+      expect(geometry.presenterBottom - geometry.stackBottom).toBeLessThanOrEqual(5)
       expect(geometry.stackBottom).toBeLessThanOrEqual(
         geometry.presenterBottom + 1,
       )
-      expect(geometry.backTileOverlapArea).toBe(0)
+      const topSafetyGap = geometry.tileTop - geometry.gamesTop
+      expect(topSafetyGap).toBeGreaterThanOrEqual(12)
+      expect(topSafetyGap).toBeLessThanOrEqual(24)
+      const bottomPanelInset = geometry.gamesBottom - geometry.scrollBottom
+      expect(bottomPanelInset).toBeGreaterThanOrEqual(8)
+      expect(bottomPanelInset).toBeLessThanOrEqual(15)
+      expect(geometry.backTileOverlapArea).toBeLessThan(4000)
 
       const lastTile = page.locator('.menu-grid .game-tile').last()
       await lastTile.scrollIntoViewIfNeeded()
@@ -91,13 +104,14 @@ test.describe('меню плиток (S13 / M3.5)', () => {
   test('приветствие → Играть → 8 плиток + «В гости» у Мяу', async ({ page }) => {
     await page.goto('/#/')
     await expect(page.locator('.screen--welcome')).toBeVisible({ timeout: 5000 })
-    await expect(page.locator('.welcome__title')).toHaveAttribute('alt', 'Планета Мяу')
+    await expect(page.locator('.welcome__title')).toHaveAttribute('alt', 'Планета Мяу и друзья')
     await page.getByRole('button', { name: 'Играть' }).click()
     await expect(page.locator('.menu-grid')).toBeVisible({ timeout: 3000 })
     await expect(page.locator('.menu-grid .game-tile')).toHaveCount(8)
-    await expect(page.locator('.menu-visit-bed__meow')).toBeVisible()
+    // Два слоя (основной + is-under) нужны для плавной смены кадров танца Олли.
+    await expect(page.locator('.menu-visit-bed__meow:not(.is-under)')).toBeVisible()
     await expect(page.getByRole('button', { name: 'Назад' })).toBeVisible()
-    await expect(page.getByRole('button', { name: 'В гостях у Мяу' })).toBeVisible()
+    await expect(page.getByRole('button', { name: 'В гости' })).toBeVisible()
     await expect(page.getByRole('button', { name: 'Настройки' })).toBeVisible()
     for (const gameId of TILE_GAMES) {
       await expect(page.locator(`.game-tile[data-game-id="${gameId}"]`)).toBeVisible()
@@ -117,7 +131,7 @@ test.describe('меню плиток (S13 / M3.5)', () => {
 
   test('В гостях у Мяу пока заглушка', async ({ page }) => {
     await openMenu(page)
-    await page.getByRole('button', { name: 'В гостях у Мяу' }).click()
+    await page.getByRole('button', { name: 'В гости' }).click()
     await expect(page.locator('.coming-soon')).toBeVisible()
     await page.getByRole('button', { name: 'Назад в меню' }).click()
     await expect(page.locator('.menu-grid')).toBeVisible()

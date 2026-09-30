@@ -12,6 +12,7 @@ export type GameMountContext = {
     hideEnglishAlphabet: boolean
     countingLimit: 3 | 10
     balloonTasksEnabled: boolean
+    companion: 'meow' | 'olli'
   }>
   /** Сообщить оболочке мягкую подсказку (текст для Мяу). */
   onSoftHint?: (message: string) => void
@@ -21,6 +22,7 @@ export type GameMountContext = {
   hubNavigation?: {
     goMenu: () => void
     goWelcome: () => void
+    goSettings?: () => void
     onSoundToggle?: (on: boolean) => void
   }
   /** Правая часть chrome (кнопки игры рядом с «Назад»). */

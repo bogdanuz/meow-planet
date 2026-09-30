@@ -125,6 +125,8 @@ describe('sound-world mount chrome', () => {
     expect(drumCard?.getAttribute('src')).toContain('cards/drum.png')
     host.querySelector<HTMLButtonElement>('[data-card-id="drum"]')?.click()
     expect(host.querySelectorAll('.sound-world__drum-pad').length).toBe(3)
+    expect(host.querySelector('.sound-world__drum-floor')).not.toBeNull()
+    expect(host.querySelector('.sound-world__drum-ground')).not.toBeNull()
     const snareArt = host.querySelector<HTMLImageElement>(
       '.sound-world__drum-pad--snare .sound-world__layer-art',
     )
@@ -135,6 +137,10 @@ describe('sound-world mount chrome', () => {
     const css = readFileSync(path.join('src', 'games', 'sound-world', 'sound-world.css'), 'utf8')
     expect(css).toMatch(/\.sound-world__instrument\s*\{[^}]*align-items:\s*center/)
     expect(css).toContain('box-sizing: border-box')
+    expect(css).toContain('72vh * 1.6 * 1.5')
+    expect(host.querySelector('.sound-world__drum-floor')?.getAttribute('style')).toContain(
+      'drum-floor.png',
+    )
   })
 
   it('буквы — PNG глифы с листа', () => {

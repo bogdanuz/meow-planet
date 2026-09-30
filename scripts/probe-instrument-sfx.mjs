@@ -22,12 +22,8 @@ function parseDur(log) {
   return dm ? Number(dm[1]) * 3600 + Number(dm[2]) * 60 + Number(parseFloat(dm[3])) : 0
 }
 
-for (const name of ['sg_203880.mp3', 'maracas source']) {
-  // skip
-}
-
 const files = {
-  newDrum: path.join(root, 'sg_203880.mp3'),
+  newDrum: path.join(root, 'sources', 'games', 'sound-world', 'drum-right.mp3'),
   maracas: path.join(root, 'public', 'assets', 'games', 'sound-world', 'sfx', 'maracas.mp3'),
 }
 

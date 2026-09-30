@@ -2,10 +2,10 @@ import type { GameId, ZoneId } from '../content/catalog'
 import type { GameModule } from '../shared/game-module'
 import { balloonPopGame } from './balloon-pop'
 import { countingGame } from './counting'
+import { drawingGame } from './drawing'
 import { hideSeekGame } from './hide-seek'
 import { meowHomeGame } from './meow-home'
 import { puzzleGame } from './puzzle'
-import { seasonsGame } from './seasons'
 import { shapeBuildGame } from './shape-build'
 import { sortColorsGame } from './sort-colors'
 import { soundWorldGame } from './sound-world'
@@ -17,11 +17,11 @@ import { soundWorldGame } from './sound-world'
 export const GAME_REGISTRY: readonly GameModule[] = [
   balloonPopGame,
   soundWorldGame,
+  drawingGame,
   sortColorsGame,
   puzzleGame,
   shapeBuildGame,
   hideSeekGame,
-  seasonsGame,
   meowHomeGame,
   countingGame,
 ]

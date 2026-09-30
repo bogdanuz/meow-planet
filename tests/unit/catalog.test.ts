@@ -20,6 +20,9 @@ describe('MVP catalog', () => {
     expect(GAME_IDS).toHaveLength(9)
     expect(new Set(GAME_IDS).size).toBe(9)
     expect(new Set(GAMES.map((g) => g.id)).size).toBe(9)
+    expect(GAME_IDS).not.toContain('coloring')
+    expect(GAME_IDS).not.toContain('seasons')
+    expect(GAME_IDS).toContain('drawing')
   })
 
   it('у каждой игры есть зона из ZONE_IDS', () => {
@@ -60,7 +63,7 @@ describe('MVP catalog', () => {
     }
   })
 
-  it('все 9 игр есть в плоском каталоге для меню', () => {
+  it('все игры есть в плоском каталоге для меню', () => {
     expect(GAMES.map((g) => g.id).sort()).toEqual([...GAME_IDS].sort())
   })
 })

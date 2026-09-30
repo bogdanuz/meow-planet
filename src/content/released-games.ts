@@ -1,7 +1,11 @@
 import { GAME_IDS, type GameId } from './catalog'
 
 /** Игры с контентом для первого релиза. Остальные открывают заглушку. */
-export const RELEASED_GAME_IDS = ['balloon-pop', 'sound-world'] as const satisfies readonly GameId[]
+export const RELEASED_GAME_IDS = [
+  'balloon-pop',
+  'sound-world',
+  'drawing',
+] as const satisfies readonly GameId[]
 
 export function isGameReleased(id: GameId): boolean {
   return (RELEASED_GAME_IDS as readonly GameId[]).includes(id)

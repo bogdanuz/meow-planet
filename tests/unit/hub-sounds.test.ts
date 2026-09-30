@@ -6,12 +6,12 @@ import {
 } from '../../src/shared/hub-sounds'
 
 describe('hub-sounds game music', () => {
-  it('общая петля для всех игр кроме «В гостях» и «Времена года»', () => {
+  it('общая петля для игр кроме «В гостях» и «Рисовалки»', () => {
     expect(gameUsesSharedMusic('balloon-pop')).toBe(true)
     expect(gameUsesSharedMusic('sound-world')).toBe(true)
     expect(gameUsesSharedMusic('counting')).toBe(true)
+    expect(gameUsesSharedMusic('drawing')).toBe(false)
     expect(gameUsesSharedMusic('meow-home')).toBe(false)
-    expect(gameUsesSharedMusic('seasons')).toBe(false)
   })
 
   it('game-music.mp3 в каталоге audio', () => {
