@@ -15,14 +15,24 @@ describe('app bootstrap', () => {
     const setProgress = vi.fn()
     const setError = vi.fn()
     const setRetryHandler = vi.fn()
-    const unmount = vi.fn()
-    const renderShell = vi.fn(() => vi.fn())
+    const order: string[] = []
+    const finish = vi.fn(async () => {
+      order.push('finish')
+    })
+    const unmount = vi.fn(() => {
+      order.push('unmount')
+    })
+    const renderShell = vi.fn(() => {
+      order.push('shell')
+      return vi.fn()
+    })
 
     vi.doMock('../../src/app/boot-loader', () => ({
       mountBootLoader: vi.fn(() => ({
         setProgress,
         setError,
         setRetryHandler,
+        finish,
         unmount,
       })),
     }))
@@ -38,12 +48,13 @@ describe('app bootstrap', () => {
     }))
 
     await import('../../src/main')
-    await Promise.resolve()
+    await vi.waitFor(() => expect(renderShell).toHaveBeenCalledTimes(1))
 
     expect(setProgress).toHaveBeenCalledWith({ percent: 100, message: 'Готово!' })
     expect(unmount).toHaveBeenCalledTimes(1)
-    expect(renderShell).toHaveBeenCalledTimes(1)
     expect(renderShell).toHaveBeenCalledWith(root)
+    // Welcome строится под финалом совы — к уходу экрана загрузки он уже готов.
+    expect(order).toEqual(['finish', 'shell', 'unmount'])
   })
 
   it('после ошибки сам продолжает загрузку по событию online и не запускает её дважды', async () => {
@@ -61,6 +72,7 @@ describe('app bootstrap', () => {
         setRetryHandler: (handler: () => void) => {
           retry = handler
         },
+        finish: vi.fn(async () => undefined),
         unmount: vi.fn(),
       })),
     }))

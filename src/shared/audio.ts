@@ -168,6 +168,8 @@ export function createAudioManager(
   let unsubscribeDuck: (() => void) | null = null
   let sfxElement: HTMLAudioElement | null = null
   let voiceElement: HTMLAudioElement | null = null
+  /** Голос через Web Audio: на iPad новый `<audio>` без касания молча не играет, буфер — играет. */
+  let voiceBuffer: EngineVoice | null = null
   let voiceToken = 0
   let voiceEnded: Promise<void> = Promise.resolve()
   let settleVoiceEnded: (() => void) | null = null
@@ -198,6 +200,11 @@ export function createAudioManager(
   }
 
   function stopVoice(): void {
+    if (voiceBuffer) {
+      const current = voiceBuffer
+      voiceBuffer = null
+      current.stop()
+    }
     if (voiceElement) {
       const current = voiceElement
       voiceElement = null
@@ -412,6 +419,9 @@ export function createAudioManager(
     options: { volume?: number; startSec?: number } = {},
   ): Promise<boolean> {
     const token = channel === 'voice' ? ++voiceToken : 0
+    // #region agent log
+    if (channel === 'voice') fetch('http://127.0.0.1:7263/ingest/02ef703c-68df-4e0c-a004-5e4c2bf5e471',{method:'POST',headers:{'Content-Type':'application/json','X-Debug-Session-Id':'38fb21'},body:JSON.stringify({sessionId:'38fb21',hypothesisId:'H1',location:'audio.ts:playUrl:entry',message:'voice requested',data:{url,token,allowed:channelAllowed(channel, settings),unlocked,evt:(window.event as Event | undefined)?.type ?? null,stack:(new Error().stack ?? '').split('\n').slice(1,5).map((s)=>s.trim().slice(0,90))},timestamp:Date.now()})}).catch(()=>{})
+    // #endregion
     if (channel === 'voice') beginVoiceWait()
     if (!channelAllowed(channel, settings)) {
       if (channel === 'voice') finishVoiceWait()
@@ -442,6 +452,30 @@ export function createAudioManager(
         voiceElement = null
         silenceVoiceElement(previous)
       }
+      if (voiceBuffer) {
+        const previous = voiceBuffer
+        voiceBuffer = null
+        previous.stop()
+      }
+      const master = await resumeAudioMaster()
+      const buffer = master ? (getReadyBuffer(url) ?? (await loadBuffer(url))) : null
+      if (token !== voiceToken) return false
+      if (master && buffer) {
+        // #region agent log
+        fetch('http://127.0.0.1:7263/ingest/02ef703c-68df-4e0c-a004-5e4c2bf5e471',{method:'POST',headers:{'Content-Type':'application/json','X-Debug-Session-Id':'38fb21'},body:JSON.stringify({sessionId:'38fb21',runId:'post-fix',hypothesisId:'H1',location:'audio.ts:playUrl:webaudio',message:'voice via web audio',data:{url,token,ctx:master.ctx.state,evt:(window.event as Event | undefined)?.type ?? null,dur:buffer.duration},timestamp:Date.now()})}).catch(()=>{})
+        // #endregion
+        const voice = startBufferVoice(master, buffer, {
+          volume: options.volume ?? 0.7,
+          startSec: options.startSec ?? 0,
+          onEnded: () => {
+            if (voiceBuffer !== voice) return
+            voiceBuffer = null
+            if (token === voiceToken) finishVoiceWait()
+          },
+        })
+        voiceBuffer = voice
+        return true
+      }
     } else {
       stopSfx()
       // Web Audio не отнимает у голоса аудиосессию и звучит без задержки на повторах.
@@ -462,6 +496,13 @@ export function createAudioManager(
     }
     if (channel === 'voice') voiceElement = audio
     else sfxElement = audio
+    // #region agent log
+    const dbgT0 = performance.now()
+    if (channel === 'voice') {
+      audio.addEventListener('error', () => { fetch('http://127.0.0.1:7263/ingest/02ef703c-68df-4e0c-a004-5e4c2bf5e471',{method:'POST',headers:{'Content-Type':'application/json','X-Debug-Session-Id':'38fb21'},body:JSON.stringify({sessionId:'38fb21',hypothesisId:'H2',location:'audio.ts:playUrl:error',message:'voice media error',data:{url,code:audio.error?.code,msg:audio.error?.message},timestamp:Date.now()})}).catch(()=>{}) })
+      fetch('http://127.0.0.1:7263/ingest/02ef703c-68df-4e0c-a004-5e4c2bf5e471',{method:'POST',headers:{'Content-Type':'application/json','X-Debug-Session-Id':'38fb21'},body:JSON.stringify({sessionId:'38fb21',hypothesisId:'H1',location:'audio.ts:playUrl:before',message:'voice play start',data:{url,token,unlocked,activation:(navigator as unknown as {userActivation?:{isActive:boolean}}).userActivation?.isActive,ctx:getAudioMaster()?.ctx.state,sw:Boolean(navigator.serviceWorker?.controller)},timestamp:Date.now()})}).catch(()=>{})
+    }
+    // #endregion
     try {
       if (startSec > 0 && audio.readyState < 1) {
         await new Promise<void>((resolve) => {
@@ -472,6 +513,9 @@ export function createAudioManager(
         audio.currentTime = Math.min(startSec, Math.max(0, audio.duration - 0.05))
       }
       await audio.play()
+      // #region agent log
+      if (channel === 'voice') fetch('http://127.0.0.1:7263/ingest/02ef703c-68df-4e0c-a004-5e4c2bf5e471',{method:'POST',headers:{'Content-Type':'application/json','X-Debug-Session-Id':'38fb21'},body:JSON.stringify({sessionId:'38fb21',hypothesisId:'H1,H3',location:'audio.ts:playUrl:played',message:'voice play resolved',data:{url,token,current:voiceToken,superseded:token!==voiceToken,ms:Math.round(performance.now()-dbgT0)},timestamp:Date.now()})}).catch(()=>{})
+      // #endregion
       if (channel === 'voice' && token !== voiceToken) {
         silenceVoiceElement(audio)
         if (voiceElement === audio) voiceElement = null
@@ -487,7 +531,10 @@ export function createAudioManager(
         if (sfxElement === audio) sfxElement = null
       }
       return true
-    } catch {
+    } catch (dbgErr) {
+      // #region agent log
+      if (channel === 'voice') fetch('http://127.0.0.1:7263/ingest/02ef703c-68df-4e0c-a004-5e4c2bf5e471',{method:'POST',headers:{'Content-Type':'application/json','X-Debug-Session-Id':'38fb21'},body:JSON.stringify({sessionId:'38fb21',hypothesisId:'H1,H2,H3',location:'audio.ts:playUrl:catch',message:'voice play rejected',data:{url,token,current:voiceToken,name:(dbgErr as Error)?.name,msg:String((dbgErr as Error)?.message ?? dbgErr),mediaErr:audio.error?.code,ms:Math.round(performance.now()-dbgT0)},timestamp:Date.now()})}).catch(()=>{})
+      // #endregion
       if (channel === 'voice') {
         if (token !== voiceToken) return false
         if (voiceElement === audio) voiceElement = null

@@ -136,6 +136,8 @@ export default defineConfig({
         // получает в precacheAndRoute. Boot больше не поддерживает второй,
         // вручную составленный список ассетов.
         manifestTransforms: [emitRuntimePrecacheManifest],
+        // Подключается раньше Workbox: Range-запросы <audio> на iPad получают 206 из precache.
+        importScripts: ['sw-range.js'],
         cleanupOutdatedCaches: true,
         // Файл >64 МиБ почти наверняка является ошибочно положенным мастером.
         // Общий бюджет дополнительно проверяет verify-precache-manifest.mjs.

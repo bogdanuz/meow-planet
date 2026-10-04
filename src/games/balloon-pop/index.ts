@@ -37,9 +37,12 @@ import {
 import { fillSpeechElement, taskSpeechColor } from './speech'
 import { balloonVoiceFileForLine, balloonVoiceUrl } from './voice'
 import { runAfterCurrentVoice } from './after-voice'
+import { addSoftShadow, type SoftShadow } from '../../shared/soft-shadow'
 import './balloon-pop.css'
 
 const POP_MS = 420
+const BALLOON_SHADOW: SoftShadow = { x: 0, y: 8, blur: 12, color: 'rgb(26 74 107 / 22%)' }
+const PRESENTER_SHADOW: SoftShadow = { x: 0, y: 6, blur: 10, color: 'rgb(26 74 107 / 22%)' }
 const DRAG_POP_COOLDOWN_MS = 120
 const TASK_SUCCESS_CELEBRATION_MS = 1600
 
@@ -116,15 +119,19 @@ export const balloonPopGame: GameModule = {
     meowSpeech.setAttribute('aria-live', 'polite')
 
     const meowImg = document.createElement('img')
-    meowImg.className = 'balloon-pop__meow meow-idle'
+    meowImg.className = 'balloon-pop__meow'
     meowImg.alt = ''
     meowImg.setAttribute('aria-hidden', 'true')
     meowImg.decoding = 'async'
     meowImg.src = presenterPoseUrl(context.settings.companion, 'idle')
+    // Покачивание — на рамке позы: оба слоя кадра и их тени двигаются вместе.
     const poseHost = document.createElement('div')
-    poseHost.className = 'balloon-pop__pose'
+    poseHost.className = 'balloon-pop__pose meow-idle'
     poseHost.append(meowImg)
     const poseSlot = createPoseSlot(meowImg)
+    for (const layer of [meowImg, poseSlot.under]) {
+      addSoftShadow(layer, [PRESENTER_SHADOW], '', { followOpacity: true })
+    }
     for (const pose of ['idle', 'happy', 'miss'] as const) {
       const preload = new Image()
       preload.src = presenterPoseUrl(context.settings.companion, pose)
@@ -132,9 +139,7 @@ export const balloonPopGame: GameModule = {
     let poseReset: ReturnType<typeof setTimeout> | undefined
 
     const paintPose = (pose: 'idle' | 'happy' | 'miss'): void => {
-      const idle = pose === 'idle'
-      meowImg.classList.toggle('meow-idle', idle)
-      poseSlot.under.classList.toggle('meow-idle', idle)
+      poseHost.classList.toggle('meow-idle', pose === 'idle')
       void poseSlot.show(presenterPoseUrl(context.settings.companion, pose))
     }
 
@@ -374,6 +379,7 @@ export const balloonPopGame: GameModule = {
       visual.decoding = 'async'
       visual.draggable = false
       motion.append(visual)
+      addSoftShadow(visual, [BALLOON_SHADOW])
       btn.append(glow, motion)
 
       btn.addEventListener('click', () => {

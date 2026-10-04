@@ -67,6 +67,15 @@ export function getAudioMaster(): AudioMaster | null {
   if (master) return master
   const AC = audioContextCtor()
   if (!AC) return null
+  // Web Audio на iPad по умолчанию молчит при беззвучном режиме — а голос и звуки нужны всегда.
+  const session = (navigator as unknown as { audioSession?: { type: string } }).audioSession
+  if (session) {
+    try {
+      session.type = 'playback'
+    } catch {
+      // старый Safari
+    }
+  }
   let ctx: AudioContext
   try {
     ctx = new AC({ latencyHint: 'interactive' })

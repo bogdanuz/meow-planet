@@ -237,7 +237,22 @@
   height: 100%;
   object-fit: fill;
   pointer-events: none;
-  filter: drop-shadow(0 8px 10px rgb(26 42 51 / 18%));
+}
+
+/* Тени и свечение — картинками (shared/soft-shadow.ts): drop-shadow на iPad оставлял рамку и шлейф. */
+.counting__box-hover,
+.counting__box-hint {
+  opacity: 0;
+  transition: opacity 0.18s ease;
+}
+
+.counting__box.is-drop-hover .counting__box-hover {
+  opacity: 1;
+}
+
+.counting__box.is-glow .counting__box-hint {
+  opacity: 1;
+  animation: cnt-glow 1.1s ease-in-out infinite alternate;
 }
 
 .counting__box-hit {
@@ -277,11 +292,6 @@
 
 .counting__box.is-drop-hover {
   scale: 1.05;
-  filter: drop-shadow(0 0 0.6rem rgb(255 255 255 / 95%));
-}
-
-.counting__box.is-glow {
-  animation: cnt-glow 1.1s ease-in-out infinite alternate;
 }
 
 /* Коврик = рамка нарисованного овала на фоне (RUG_ASPECT в logic.ts); места и размер игрушек — rugSlots. */
@@ -329,7 +339,10 @@
   height: 100%;
   object-fit: contain;
   pointer-events: none;
-  filter: drop-shadow(0 5px 5px rgb(26 42 51 / 22%));
+}
+
+.counting__toy-glow {
+  opacity: 0;
 }
 
 .counting__toy.is-dragging {
@@ -339,12 +352,14 @@
   cursor: grabbing;
 }
 
-.counting__toy.is-dragging .counting__toy-art,
-.counting__toy.is-glow .counting__toy-art {
-  filter:
-    drop-shadow(0 0 0.45rem #fff)
-    drop-shadow(0 0 0.9rem rgb(255 207 74 / 90%))
-    drop-shadow(0 10px 8px rgb(26 42 51 / 25%));
+.counting__toy.is-dragging .counting__toy-glow,
+.counting__toy.is-glow .counting__toy-glow {
+  opacity: 1;
+}
+
+.counting__toy.is-dragging .counting__toy-shadow,
+.counting__toy.is-glow .counting__toy-shadow {
+  opacity: 0;
 }
 
 .counting__toy.is-glow {
@@ -461,7 +476,6 @@
 .counting .game-presenter[data-companion] .game-presenter__art {
   width: calc(var(--stage-unit) * 22);
   height: auto;
-  filter: drop-shadow(0 6px 10px rgb(26 74 107 / 22%));
 }
 
 .counting .game-presenter[data-companion] .game-presenter__speech {
@@ -646,11 +660,11 @@
 
 @keyframes cnt-glow {
   from {
-    filter: drop-shadow(0 0 0.3rem rgb(255 207 74 / 70%));
+    opacity: 0.35;
   }
 
   to {
-    filter: drop-shadow(0 0 1.4rem rgb(255 207 74 / 100%));
+    opacity: 1;
   }
 }
 
@@ -696,8 +710,8 @@
     0 0 1.2rem rgb(255 207 74 / 100%);
 }
 
-.counting--still .counting__box.is-glow {
-  filter: drop-shadow(0 0 1rem rgb(255 207 74 / 100%));
+.counting--still .counting__box.is-glow .counting__box-hint {
+  opacity: 0.8;
 }
 
 @media (prefers-reduced-motion: reduce) {

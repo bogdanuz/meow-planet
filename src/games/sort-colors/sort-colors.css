@@ -164,7 +164,22 @@
   height: 100%;
   object-fit: fill;
   pointer-events: none;
-  filter: drop-shadow(0 8px 10px rgb(26 42 51 / 18%));
+}
+
+/* Тени и свечение коробки — картинками (shared/soft-shadow.ts), без filter: на iPad фильтр
+   на качающейся коробке рисовался жёлтым прямоугольником. */
+.sort-colors__bin-hover,
+.sort-colors__bin-hint {
+  opacity: 0;
+  transition: opacity 0.18s ease;
+}
+
+.sort-colors__bin.is-drop-hover .sort-colors__bin-hover {
+  opacity: 1;
+}
+
+.sort-colors__bin.is-soft-highlight .sort-colors__bin-hint {
+  animation: sort-bin-glow 1.1s ease-in-out infinite alternate;
 }
 
 .sort-colors__bin-inside {
@@ -190,27 +205,29 @@
   width: 100%;
   height: 100%;
   object-fit: contain;
-  filter: drop-shadow(0 3px 4px rgb(26 42 51 / 20%));
 }
 
 .sort-colors__sticker {
   position: absolute;
   aspect-ratio: 1;
-  object-fit: contain;
   transform: translate(-50%, -50%);
   pointer-events: none;
-  filter: drop-shadow(0 2px 3px rgb(120 90 60 / 28%));
+}
+
+.sort-colors__sticker img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
 }
 
 .sort-colors__bin.is-drop-hover {
   scale: 1.06;
-  filter: drop-shadow(0 0 0.6rem rgb(255 255 255 / 95%));
 }
 
 .sort-colors__bin.is-soft-highlight {
   outline: none;
   box-shadow: none;
-  animation: sort-bin-glow 1.1s ease-in-out infinite alternate;
 }
 
 .sort-colors__bin:focus:not(:focus-visible) {
@@ -270,7 +287,6 @@
   height: 100%;
   object-fit: contain;
   pointer-events: none;
-  filter: drop-shadow(0 6px 6px rgb(26 42 51 / 22%));
 }
 
 .sort-colors__toy.is-selected {
@@ -278,12 +294,20 @@
   translate: 0 -12%;
 }
 
-.sort-colors__toy.is-selected .sort-colors__toy-art,
-.sort-colors__toy.is-dragging .sort-colors__toy-art {
-  filter:
-    drop-shadow(0 0 0.45rem #fff)
-    drop-shadow(0 0 0.9rem rgb(255 207 74 / 85%))
-    drop-shadow(0 12px 10px rgb(26 42 51 / 25%));
+/* Тени — картинками (shared/soft-shadow.ts): drop-shadow на iPad оставлял рамку и шлейф. */
+.sort-colors__toy-glow {
+  opacity: 0;
+  transition: opacity 0.18s ease;
+}
+
+.sort-colors__toy.is-selected .sort-colors__toy-glow,
+.sort-colors__toy.is-dragging .sort-colors__toy-glow {
+  opacity: 1;
+}
+
+.sort-colors__toy.is-selected .soft-shadow:not(.sort-colors__toy-glow),
+.sort-colors__toy.is-dragging .soft-shadow:not(.sort-colors__toy-glow) {
+  opacity: 0;
 }
 
 .sort-colors__toy.is-falling {
@@ -320,7 +344,6 @@
 .sort-colors .game-presenter[data-companion] .game-presenter__art {
   width: calc(var(--stage-unit) * 22);
   height: auto;
-  filter: drop-shadow(0 6px 10px rgb(26 74 107 / 22%));
 }
 
 .sort-colors .game-presenter[data-companion] .game-presenter__speech {
@@ -383,10 +406,10 @@
 
 @keyframes sort-bin-glow {
   0% {
-    filter: drop-shadow(0 0 0.3rem rgb(255 207 74 / 70%));
+    opacity: 0.35;
   }
   100% {
-    filter: drop-shadow(0 0 1.3rem rgb(255 207 74 / 100%));
+    opacity: 1;
   }
 }
 
@@ -453,8 +476,8 @@
     animation: none;
   }
 
-  .sort-colors__bin.is-soft-highlight {
+  .sort-colors__bin.is-soft-highlight .sort-colors__bin-hint {
     animation: none;
-    filter: drop-shadow(0 0 1rem rgb(255 207 74 / 100%));
+    opacity: 0.8;
   }
 }

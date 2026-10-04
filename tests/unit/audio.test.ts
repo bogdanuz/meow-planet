@@ -1,5 +1,6 @@
 import { describe, expect, it, vi } from 'vitest'
 import { backgroundAudioManagersForTests, createAudioManager } from '../../src/shared/audio'
+import { resetAudioEngineForTests } from '../../src/shared/audio-engine'
 
 describe('audio manager', () => {
   it('тихий режим глушит яркое движение и музыку', () => {
@@ -425,6 +426,67 @@ describe('audio manager', () => {
     await audio.unlock()
     expect(audio.isUnlocked()).toBe(true)
     vi.unstubAllGlobals()
+  })
+})
+
+describe('голос на iPad', () => {
+  it('фраза идёт через Web Audio, а не через новый <audio>: на iPad он без касания молчит', async () => {
+    resetAudioEngineForTests()
+    const sources: { onended: (() => void) | null; start: ReturnType<typeof vi.fn> }[] = []
+    const param = () => ({
+      value: 1,
+      setValueAtTime: vi.fn(),
+      linearRampToValueAtTime: vi.fn(),
+      cancelScheduledValues: vi.fn(),
+    })
+    class FakeCtx {
+      state = 'running'
+      currentTime = 0
+      destination = {}
+      resume = vi.fn(async () => undefined)
+      createBuffer() {
+        return {}
+      }
+      createBufferSource() {
+        const source = {
+          buffer: null as unknown,
+          onended: null as (() => void) | null,
+          playbackRate: param(),
+          connect: vi.fn(),
+          disconnect: vi.fn(),
+          start: vi.fn(),
+          stop: vi.fn(),
+        }
+        sources.push(source)
+        return source
+      }
+      createGain() {
+        return { gain: param(), connect: vi.fn(), disconnect: vi.fn() }
+      }
+      decodeAudioData = vi.fn(async () => ({ duration: 1.2 }))
+    }
+    vi.stubGlobal(
+      'AudioContext',
+      vi.fn(function AudioContext() {
+        return new FakeCtx()
+      }),
+    )
+    vi.stubGlobal('fetch', vi.fn(async () => ({ ok: true, arrayBuffer: async () => new ArrayBuffer(8) })))
+    const audioCtor = vi.fn()
+    vi.stubGlobal('Audio', audioCtor)
+    const audio = createAudioManager()
+    expect(await audio.playUrl('voice', '/voice/hello.mp3')).toBe(true)
+    expect(audioCtor).not.toHaveBeenCalled()
+    const voice = sources.at(-1)!
+    expect(voice.start).toHaveBeenCalled()
+    let ended = false
+    void audio.waitUntilVoiceEnded().then(() => (ended = true))
+    await Promise.resolve()
+    expect(ended).toBe(false)
+    voice.onended?.()
+    await vi.waitFor(() => expect(ended).toBe(true))
+    vi.unstubAllGlobals()
+    resetAudioEngineForTests()
   })
 })
 

@@ -96,9 +96,10 @@ async function installBootProbe(
       }
       const progressText =
         document.querySelector('.boot-loader__progress')?.textContent ?? ''
-      if (progressText.includes('100%')) {
+      if (progressText.includes('100%') && !probe.saw100Percent) {
+        const bar = document.querySelector<HTMLElement>('.boot-loader__bar')
         probe.saw100Percent = true
-        probe.verifiedTextAt100 = progressText
+        probe.verifiedTextAt100 = `${bar?.dataset.done} из ${bar?.dataset.total}`
       }
     })
     observer.observe(document, {
@@ -156,6 +157,8 @@ test('cold production boot после полного 100% показывает w
   await expect(page.locator('.screen--welcome')).toBeVisible({
     timeout: 90_000,
   })
+  // Welcome строится под финалом совы; экран загрузки уходит после него.
+  await expect(page.locator('.boot-loader')).toHaveCount(0, { timeout: 5_000 })
 
   const probe = await readProbe(page)
   expect(probe.saw100Percent).toBe(true)
@@ -196,6 +199,37 @@ test('warm production boot с активным controller не блокируе�
   expect(probe.pageAssetFetches).toBe(0)
 })
 
+test('офлайн-кэш отдаёт звук кусками (206), как требует Safari для <audio>', async ({
+  context,
+  page,
+}) => {
+  await installBootProbe(context)
+  await page.goto('./')
+  await expect(page.locator('.screen--welcome')).toBeVisible({ timeout: 90_000 })
+  await page.evaluate(() => navigator.serviceWorker.ready)
+  await page.reload()
+  await page.waitForFunction(() => Boolean(navigator.serviceWorker.controller))
+  await context.setOffline(true)
+
+  const parts = await page.evaluate(async () => {
+    const get = async (range: string) => {
+      const res = await fetch('assets/audio/hub-music.mp3', { headers: { Range: range } })
+      return {
+        status: res.status,
+        contentRange: res.headers.get('content-range'),
+        type: res.headers.get('content-type'),
+        bytes: (await res.arrayBuffer()).byteLength,
+      }
+    }
+    return { head: await get('bytes=0-1'), tail: await get('bytes=100-') }
+  })
+  expect(parts.head).toMatchObject({ status: 206, bytes: 2, type: 'audio/mpeg' })
+  expect(parts.head.contentRange).toMatch(/^bytes 0-1\/\d+$/)
+  const size = Number(parts.head.contentRange!.split('/')[1])
+  expect(parts.tail).toMatchObject({ status: 206, bytes: size - 100 })
+  expect(parts.tail.contentRange).toBe(`bytes 100-${size - 1}/${size}`)
+})
+
 test('cold production boot тихо повторяет нулевой сетевой провал', async ({
   context,
   page,
@@ -211,6 +245,22 @@ test('cold production boot тихо повторяет нулевой сетев
   expect(probe.manifestLoads).toBe(2)
   expect(probe.pageAssetFetches).toBe(0)
   expect(probe.saw100Percent).toBe(true)
+})
+
+test('cold boot: на экране только проценты, на 100% сова убирает листья и welcome плавно проявляется', async ({
+  context,
+  page,
+}) => {
+  await installBootProbe(context)
+  await page.goto('./')
+
+  await expect(page.locator('.boot-loader')).toBeVisible({ timeout: 10_000 })
+  await expect(page.locator('.boot-loader__progress')).toHaveText(/^\d{1,3}%$/)
+  await expect(page.locator('.boot-loader')).not.toContainText('файлов')
+
+  await expect(page.locator('.boot-loader--finale')).toBeAttached({ timeout: 90_000 })
+  await expect(page.locator('.screen--welcome')).toBeVisible({ timeout: 10_000 })
+  await expect(page.locator('.boot-loader')).toHaveCount(0, { timeout: 5_000 })
 })
 
 test('reduced motion оставляет сову и листья статичными', async ({
@@ -231,27 +281,27 @@ test('reduced motion оставляет сову и листья статичн�
     const owl = getComputedStyle(
       document.querySelector<HTMLElement>('.boot-loader__owl')!,
     )
-    const leaves = getComputedStyle(
-      document.querySelector<HTMLElement>('.boot-loader__leaves')!,
+    const lid = getComputedStyle(
+      document.querySelector<HTMLElement>('.boot-loader__lid')!,
+    )
+    const fill = getComputedStyle(
+      document.querySelector<HTMLElement>('.boot-loader__bar-fill')!,
     )
     return {
       owlAnimation: owl.animationName,
-      owlBackground: owl.backgroundImage,
-      owlTransition: owl.transitionDuration,
-      leavesClipPath: leaves.clipPath,
-      leavesMask: leaves.maskImage || leaves.webkitMaskImage,
-      leavesTransition: leaves.transitionDuration,
+      owlArt:
+        document.querySelector<HTMLImageElement>('.boot-loader__owl-art')?.src ?? '',
+      lidAnimation: lid.animationName,
+      fillTransition: fill.transitionDuration,
       captionGap:
         caption.getBoundingClientRect().top - title.getBoundingClientRect().bottom,
     }
   })
   expect(motion).toEqual({
     owlAnimation: 'none',
-    owlBackground: expect.stringContaining('boot-owl-vacuum.png'),
-    owlTransition: '0s',
-    leavesClipPath: 'none',
-    leavesMask: expect.stringContaining('linear-gradient'),
-    leavesTransition: '0s',
+    owlArt: expect.stringContaining('boot-owl-vacuum.png'),
+    lidAnimation: 'none',
+    fillTransition: '0s',
     captionGap: expect.any(Number),
   })
   expect(motion.captionGap).toBeGreaterThanOrEqual(22)

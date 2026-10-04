@@ -15,8 +15,23 @@ import {
 import { fitMenuToast, menuToastHeight, menuVisitScale } from '../menu-toast-fit'
 import { loadSettings } from '../../shared/storage'
 import { createUiIconImg, uiIconUrl } from '../../shared/ui-icon'
+import { addSoftShadow, type SoftShadow } from '../../shared/soft-shadow'
 
 export { MENU_TILE_IDS }
+
+/** Тени плиток и лежанки — картинками (shared/soft-shadow.ts); нажатие меняет слой прозрачностью. */
+const TILE_SHADOW: readonly SoftShadow[] = [
+  { x: 0, y: 5, blur: 4, color: 'rgb(55 45 35 / 22%)' },
+  { x: 0, y: 1, blur: 0, color: 'rgb(255 255 255 / 35%)' },
+]
+const TILE_PRESSED_SHADOW: SoftShadow = { x: 0, y: 2, blur: 2, color: 'rgb(55 45 35 / 18%)' }
+const BED_SHADOW: SoftShadow = { x: 0, y: 6, blur: 5, color: 'rgb(55 45 35 / 20%)' }
+const BED_PRESSED_SHADOW: SoftShadow = { x: 0, y: 2, blur: 3, color: 'rgb(55 45 35 / 16%)' }
+
+function addPressShadows(art: HTMLImageElement, rest: readonly SoftShadow[], pressed: SoftShadow): void {
+  addSoftShadow(art, rest, 'press-shadow press-shadow--rest')
+  addSoftShadow(art, [pressed], 'press-shadow press-shadow--pressed')
+}
 
 /** Левый край (px): свайп вправо отсюда → приветствие (P15-03: шире для iPad). */
 const SWIPE_EDGE_PX = 88
@@ -95,6 +110,7 @@ function attachMenuCardArt(btn: HTMLButtonElement, gameId: string): void {
   art.src = menuCardPngUrl(gameId)
   btn.classList.add('game-tile--art')
   btn.prepend(art)
+  addPressShadows(art, TILE_SHADOW, TILE_PRESSED_SHADOW)
 }
 
 /**
@@ -186,6 +202,7 @@ export function renderMenuScreen(
     visitArt.alt = ''
     visitArt.src = owl ? menuVisitTreePngUrl() : menuVisitBedPngUrl()
     visitBtn.append(visitArt)
+    addPressShadows(visitArt, [BED_SHADOW], BED_PRESSED_SHADOW)
 
     const catLayer = document.createElement('div')
     catLayer.className = 'menu-visit-cat'

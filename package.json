@@ -1,7 +1,7 @@
 {
   "name": "meow-planet",
   "private": true,
-  "version": "0.22.1",
+  "version": "0.22.2",
   "type": "module",
   "description": "Planeta Meow PWA mini-games hub for toddlers 2-3 (iPad)",
   "scripts": {

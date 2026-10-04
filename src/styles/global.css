@@ -16,7 +16,7 @@
   font-family: var(--font-ui);
   /* Сцена: персонажи и объекты считаются от высоты экрана, чтобы на любом iPad
      картинка выглядела одинаково. Ширина ограничивает только очень узкие окна. */
-  --stage-h: min(100dvh, 70vw);
+  --stage-h: min(var(--app-h, 100dvh), 70vw);
   --stage-unit: calc(var(--stage-h) / 100);
 }
 
@@ -36,13 +36,28 @@ body {
   overscroll-behavior: none;
 }
 
-/* В standalone-режиме iPad 100dvh не доходит до полосы «домой» — снизу оставалась
-   пустая полоса. Fixed-корень с inset: 0 закрывает весь экран под вырезами. */
+/* В standalone-режиме iPad окно считается короче экрана на строку состояния — снизу
+   оставалась пустая полоса. `--app-h` (app/full-height.ts) растягивает корень до экрана. */
 #app {
   position: fixed;
-  inset: 0;
+  inset: 0 0 auto;
+  height: var(--app-h, 100%);
+  /* Окна с position: fixed внутри (загрузка, поворот, обрезка фото) тянутся по корню, а не по окну. */
+  contain: layout;
   overflow: hidden;
   overscroll-behavior: none;
+}
+
+/* Блок с overflow: hidden браузер прокручивает сам при перетаскивании у края или фокусе —
+   экран съезжал вверх, снизу открывалась полоса. clip режет так же, но не прокручивается. */
+@supports (overflow: clip) {
+  #app,
+  #app .app-shell,
+  #app .chrome__main,
+  #app .screen--game,
+  #app .screen--game > section {
+    overflow: clip;
+  }
 }
 
 html:has(.boot-loader),

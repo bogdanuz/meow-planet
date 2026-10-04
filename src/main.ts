@@ -5,6 +5,7 @@ import './styles/game-common.css'
 import './styles/shell.css'
 import './styles/parent.css'
 import { mountBootLoader, type BootLoaderHandle } from './app/boot-loader'
+import { installFullHeight } from './app/full-height'
 import {
   hasActiveServiceWorkerController,
   runBootSequence,
@@ -16,6 +17,7 @@ if (!appRoot) {
   throw new Error('Не найден #app')
 }
 const root: HTMLDivElement = appRoot
+installFullHeight()
 
 const AUTO_RESUME_INTERVAL_MS = 15_000
 
@@ -28,7 +30,7 @@ async function boot(): Promise<void> {
 
   const ensureLoader = (): BootLoaderHandle => {
     if (loader) return loader
-    loader = mountBootLoader(root)
+    loader = mountBootLoader(document.body)
     loader.setRetryHandler(() => void attempt())
     return loader
   }
@@ -46,8 +48,11 @@ async function boot(): Promise<void> {
         failed = false
         window.removeEventListener('online', onOnline)
         window.clearInterval(autoResumeTimer)
-        loader?.unmount()
+        // Welcome строится под экраном загрузки, пока сова убирает листья.
+        const finale = loader?.finish()
         renderShell(root)
+        await finale
+        loader?.unmount()
       } else {
         failed = true
         ensureLoader().setError(res.errorMessage)

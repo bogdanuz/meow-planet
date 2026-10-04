@@ -479,9 +479,16 @@
   margin: 0;
 }
 
-.welcome__title--breathe {
+/* Тень — картинкой (shared/soft-shadow.ts) и дышит вместе с заголовком: filter на большом
+   движущемся слое iPad перерисовывает каждый кадр. */
+.welcome__title-box {
+  position: relative;
+  display: block;
+}
+
+.welcome__title--breathe,
+.welcome__title-box .soft-shadow {
   animation: welcome-title-breathe 3.4s ease-in-out infinite alternate;
-  filter: drop-shadow(0 6px 0 rgb(90 50 110 / 18%));
 }
 
 @keyframes welcome-title-breathe {
@@ -855,9 +862,21 @@
   aspect-ratio: 1;
   width: 100%;
   min-height: 0;
-  filter: drop-shadow(0 5px 4px rgb(55 45 35 / 22%))
-    drop-shadow(0 1px 0 rgb(255 255 255 / 35%));
-  transition: transform 140ms ease, filter 140ms ease;
+  transition: transform 140ms ease;
+}
+
+/* Тень плитки и лежанки (menu.ts): в покое — обычная, при нажатии — короткая. */
+.press-shadow {
+  transition: opacity 140ms ease;
+}
+
+.press-shadow--pressed,
+:is(:active, .is-pressed) > .press-shadow--rest {
+  opacity: 0;
+}
+
+:is(:active, .is-pressed) > .press-shadow--pressed {
+  opacity: 1;
 }
 
 .touch-btn.game-tile--art:hover {
@@ -869,7 +888,6 @@
 .touch-btn.game-tile--art.is-pressed {
   transform: translateY(5px) scale(0.97);
   box-shadow: none;
-  filter: drop-shadow(0 2px 2px rgb(55 45 35 / 18%));
 }
 
 .game-tile--art .tile-mark,
@@ -1039,8 +1057,7 @@
   touch-action: manipulation;
   -webkit-tap-highlight-color: transparent;
   overflow: visible;
-  filter: drop-shadow(0 6px 5px rgb(55 45 35 / 20%));
-  transition: transform 140ms ease, filter 140ms ease;
+  transition: transform 140ms ease;
 }
 
 .menu-visit-bed__art {
@@ -1221,7 +1238,6 @@
 .menu-visit-bed:active,
 .menu-visit-bed.is-pressed {
   transform: translateY(4px) scale(0.98);
-  filter: drop-shadow(0 2px 3px rgb(55 45 35 / 16%));
 }
 
 .menu-visit-bed .mascot-ph--presenter {
@@ -1432,6 +1448,7 @@
   }
 
   .welcome__title--breathe,
+  .welcome__title-box .soft-shadow,
   .welcome__meow-mover,
   .welcome__meow-shadow,
   .welcome__olli-closed,
@@ -1580,24 +1597,106 @@ body.is-small-screen-blocked #app {
   }
 }
 
-/* —— Boot: сова убирает листья по реальному progress Workbox —— */
+/* —— Boot: сова ждёт у листьев, пока внизу идёт полоска Workbox; на 100% всасывает листья —— */
 
-@keyframes boot-owl-sway {
+/* Переминается с лапы на лапу. */
+@keyframes boot-owl-shift {
   0%,
   100% {
-    transform: translateY(0) rotate(-0.3deg);
+    transform: rotate(-1.6deg);
+  }
+
+  25%,
+  75% {
+    transform: translateY(-1.5%);
   }
 
   50% {
-    transform: translateY(-0.16rem) rotate(0.3deg);
+    transform: rotate(1.6deg);
+  }
+}
+
+/* Иногда наклоняется — поглядывает на полоску. */
+@keyframes boot-owl-glance {
+  0%,
+  62%,
+  100% {
+    rotate: 0deg;
+  }
+
+  70%,
+  86% {
+    rotate: 5deg;
+  }
+}
+
+@keyframes boot-owl-blink {
+  0%,
+  92%,
+  100% {
+    opacity: 0;
+  }
+
+  94%,
+  97% {
+    opacity: 1;
+  }
+}
+
+@keyframes boot-sweep {
+  to {
+    transform: translateX(105%);
+  }
+}
+
+@keyframes boot-sweep-back {
+  to {
+    transform: translateX(-105%);
+  }
+}
+
+/* Листик взлетает над кучей и по дуге уходит в щётку. */
+@keyframes boot-swirl {
+  0% {
+    opacity: 0;
+    transform: translate(calc(150% + var(--i) * 45%), calc(-60% - var(--i) * 25%)) rotate(0deg) scale(0.9);
+  }
+
+  15% {
+    opacity: 1;
+  }
+
+  50% {
+    transform: translate(calc(60% + var(--i) * 20%), calc(-230% - var(--i) * 20%)) rotate(-140deg) scale(1);
+  }
+
+  100% {
+    opacity: 0;
+    transform: translate(-50%, -50%) rotate(-300deg) scale(0.2);
+  }
+}
+
+@keyframes boot-leaf-wiggle {
+  0%,
+  100% {
+    rotate: -8deg;
+  }
+
+  50% {
+    rotate: 8deg;
+  }
+}
+
+@keyframes boot-fade-out {
+  to {
+    opacity: 0;
   }
 }
 
 .boot-loader {
-  --boot-leaf-clear: 0%;
-  --boot-leaf-fade-start: 0%;
-  --boot-leaf-fade-end: 0%;
-  --boot-owl-left: 1%;
+  --boot-progress: 0;
+  /* Где у совы щётка пылесоса: от неё начинается уборка. */
+  --boot-nozzle: calc(1% + var(--stage-unit) * 21);
   position: fixed;
   inset: 0;
   z-index: 9999;
@@ -1612,7 +1711,6 @@ body.is-small-screen-blocked #app {
     max(1rem, env(safe-area-inset-left));
   background: #f7d99c;
   overflow: hidden;
-  transition: opacity 360ms ease;
 }
 
 .boot-loader__bg,
@@ -1634,9 +1732,10 @@ body.is-small-screen-blocked #app {
     linear-gradient(0deg, rgb(75 46 28 / 16%) 0%, transparent 34%);
 }
 
+/* Анимация, а не transition: слой переезжает в body и сразу тает — transition бы не сработал. */
 .boot-loader--leave {
-  opacity: 0;
   pointer-events: none;
+  animation: boot-fade-out 380ms ease forwards;
 }
 
 
@@ -1682,61 +1781,147 @@ body.is-small-screen-blocked #app {
   margin-inline: auto;
 }
 
-.boot-loader__leaves {
+/* Куча и сова двигаются только transform: без filter и mask на кадр — iPad не перерисовывает. */
+.boot-loader__pile-clip,
+.boot-loader__pile,
+.boot-loader__walker {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 0;
+  width: 100%;
+  pointer-events: none;
+}
+
+.boot-loader__pile-clip {
+  overflow: hidden;
+}
+
+.boot-loader__leaves-box {
   position: absolute;
   right: 3%;
   bottom: 3%;
   width: 86%;
-  height: auto;
-  max-height: 36%;
-  object-fit: fill;
-  object-position: center bottom;
-  clip-path: none;
-  -webkit-mask-image: linear-gradient(
-    to right,
-    transparent 0,
-    transparent var(--boot-leaf-fade-start),
-    #000 var(--boot-leaf-fade-end),
-    #000 100%
-  );
-  mask-image: linear-gradient(
-    to right,
-    transparent 0,
-    transparent var(--boot-leaf-fade-start),
-    #000 var(--boot-leaf-fade-end),
-    #000 100%
-  );
-  -webkit-mask-repeat: no-repeat;
-  mask-repeat: no-repeat;
-  filter: drop-shadow(0 0.28rem 0.18rem rgb(86 51 30 / 20%));
+  height: min(36%, calc(min(94vw, 76rem) * 0.86 * 295 / 1212));
 }
 
-.boot-loader__owl,
+.boot-loader__leaves {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: fill;
+}
+
 .boot-loader__owl-shadow {
   position: absolute;
-  left: var(--boot-owl-left);
-  transition: left 260ms ease-out;
+  bottom: 4%;
+  left: calc(1% + var(--stage-unit) * 5.7);
+  width: calc(var(--stage-unit) * 19);
+  height: calc(var(--stage-unit) * 1.8);
+  border-radius: 50%;
+  background: radial-gradient(closest-side, rgb(76 47 27 / 30%), rgb(76 47 27 / 0%));
 }
 
 .boot-loader__owl {
+  position: absolute;
+  left: 1%;
   bottom: 5%;
   width: calc(var(--stage-unit) * 30);
   aspect-ratio: 360 / 304;
-  background-repeat: no-repeat;
-  background-position: center;
-  background-size: contain;
-  filter: drop-shadow(0 0.34rem 0.2rem rgb(68 39 24 / 22%));
-  animation: boot-owl-sway 2s ease-in-out infinite;
+  transform-origin: 50% 100%;
+  animation:
+    boot-owl-shift 2.4s ease-in-out infinite,
+    boot-owl-glance 7s ease-in-out infinite;
 }
 
-.boot-loader__owl-shadow {
-  bottom: 4%;
-  width: calc(var(--stage-unit) * 19);
-  height: calc(var(--stage-unit) * 1.3);
-  margin-left: calc(var(--stage-unit) * 5.7);
+.boot-loader__owl-art {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+
+.boot-loader__lid {
+  position: absolute;
   border-radius: 50%;
-  background: rgb(76 47 27 / 24%);
-  filter: blur(0.2rem);
+  background: #f9e7d6;
+  opacity: 0;
+  animation: boot-owl-blink 4.6s linear infinite;
+}
+
+.boot-loader__lid::after {
+  content: "";
+  position: absolute;
+  inset: 34% 12% 34%;
+  border-bottom: max(2px, 0.12rem) solid #4b2a1a;
+  border-radius: 0 0 50% 50% / 0 0 100% 100%;
+}
+
+.boot-loader__lid--left {
+  left: 41.9%;
+  top: 22.4%;
+  width: 8.4%;
+  height: 10.6%;
+}
+
+.boot-loader__lid--right {
+  left: 55.3%;
+  top: 23.4%;
+  width: 4.5%;
+  height: 8.6%;
+}
+
+/* Листики летят в щётку пылесоса — только в финале. */
+.boot-loader__swirl {
+  position: absolute;
+  left: 80%;
+  top: 88%;
+  display: none;
+}
+
+.boot-loader__swirl-leaf {
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: calc(var(--stage-unit) * 6);
+  opacity: 0;
+  animation: boot-swirl 0.5s ease-in infinite;
+  animation-delay: calc(var(--i) * -0.125s);
+}
+
+.boot-loader--finale .boot-loader__swirl {
+  display: block;
+}
+
+.boot-loader--finale .boot-loader__owl {
+  animation: boot-owl-shift 0.32s linear infinite;
+}
+
+.boot-loader--finale .boot-loader__lid {
+  animation: none;
+}
+
+/* Сова идёт вправо, а край кучи едет вместе со щёткой: всё, что слева, уже убрано. */
+.boot-loader--finale .boot-loader__walker,
+.boot-loader--finale .boot-loader__pile-clip {
+  animation: boot-sweep 1.1s cubic-bezier(0.5, 0, 0.75, 1) forwards;
+}
+
+/* Мягкий край под щёткой вместо ровного среза; маска едет вместе со слоем — без перерисовки. */
+.boot-loader--finale .boot-loader__pile-clip {
+  left: var(--boot-nozzle);
+  -webkit-mask-image: linear-gradient(to right, transparent, #000 calc(var(--stage-unit) * 6));
+  mask-image: linear-gradient(to right, transparent, #000 calc(var(--stage-unit) * 6));
+}
+
+.boot-loader--finale .boot-loader__pile {
+  left: calc(-1 * var(--boot-nozzle));
+  animation: boot-sweep-back 1.1s cubic-bezier(0.5, 0, 0.75, 1) forwards;
+}
+
+.boot-loader--swept .boot-loader__walker,
+.boot-loader--swept .boot-loader__pile-clip {
+  visibility: hidden;
+  animation: none;
 }
 
 .boot-loader__panel {
@@ -1765,12 +1950,65 @@ body.is-small-screen-blocked #app {
   font-family: var(--font-display);
 }
 
+.boot-loader__bar-row {
+  display: flex;
+  align-items: center;
+  gap: clamp(0.8rem, 2vw, 1.2rem);
+  width: min(30rem, 74vw);
+  padding-block: 0.35rem 0.2rem;
+}
+
+.boot-loader__bar {
+  position: relative;
+  flex: 1;
+  height: clamp(0.95rem, 2.2vh, 1.2rem);
+  margin-inline: 0.7rem;
+}
+
+.boot-loader__bar-track {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  border-radius: 999px;
+  background: rgb(116 75 52 / 16%);
+  box-shadow: inset 0 0.12rem 0.18rem rgb(84 51 32 / 18%);
+}
+
+.boot-loader__bar-fill,
+.boot-loader__bar-run {
+  position: absolute;
+  inset: 0;
+  transition: transform 260ms ease-out;
+}
+
+.boot-loader__bar-fill {
+  border-radius: inherit;
+  background: linear-gradient(180deg, #ffd56f, #ee9a45);
+  transform: translateX(calc((var(--boot-progress) - 1) * 100%));
+}
+
+.boot-loader__bar-run {
+  transform: translateX(calc(var(--boot-progress) * 100%));
+}
+
+.boot-loader__bar-leaf {
+  position: absolute;
+  top: 50%;
+  left: 0;
+  width: clamp(2rem, 4.6vh, 2.6rem);
+  translate: -50% -58%;
+  animation: boot-leaf-wiggle 1.6s ease-in-out infinite;
+}
+
 .boot-loader__progress {
+  min-width: 3.4em;
   color: #6b405b;
-  font-size: clamp(1.3rem, 3.2vw, 2rem);
+  font-size: clamp(1.15rem, 2.6vw, 1.6rem);
   font-weight: 800;
+  font-variant-numeric: tabular-nums;
   letter-spacing: 0.015em;
   line-height: 1.05;
+  text-align: right;
 }
 
 .boot-loader__message {
@@ -1809,7 +2047,7 @@ body.is-small-screen-blocked #app {
   outline-offset: 3px;
 }
 
-.boot-loader--error .boot-loader__owl {
+.boot-loader--error :is(.boot-loader__owl, .boot-loader__lid, .boot-loader__bar-leaf) {
   animation-play-state: paused;
 }
 
@@ -1845,16 +2083,32 @@ body.is-small-screen-blocked #app {
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .boot-loader,
-  .boot-loader__leaves,
-  .boot-loader__owl,
-  .boot-loader__owl-shadow {
+  .boot-loader__bar-fill,
+  .boot-loader__bar-run {
     transition: none;
   }
 
-  .boot-loader__owl {
+  .boot-loader__owl,
+  .boot-loader--finale .boot-loader__owl,
+  .boot-loader__lid,
+  .boot-loader__bar-leaf,
+  .boot-loader--finale .boot-loader__walker,
+  .boot-loader--finale .boot-loader__pile {
     animation: none;
-    background-position: center;
+  }
+
+  .boot-loader--finale .boot-loader__swirl {
+    display: none;
+  }
+
+  /* Без прохода совы: листья просто тихо исчезают. */
+  .boot-loader--finale .boot-loader__pile-clip {
+    left: 0;
+    animation: boot-fade-out 300ms ease forwards;
+  }
+
+  .boot-loader--finale .boot-loader__pile {
+    left: 0;
   }
 }
 

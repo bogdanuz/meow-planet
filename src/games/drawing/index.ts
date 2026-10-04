@@ -1,6 +1,7 @@
 import type { GameModule } from '../../shared/game-module'
 import { askChoice } from '../../shared/ask-choice'
 import { createAudioManager } from '../../shared/audio'
+import { createFrameBatch } from '../../shared/frame-batch'
 import { renderCreativeGallery, renderWorkViewer } from './creative-gallery'
 import { drawingsWord, shareOrDownload, uniqueFileNames } from './gallery-export'
 import { getCreativeRepository } from './creative-repository'
@@ -779,6 +780,11 @@ export const drawingGame: GameModule = {
       screenHost.append(picker)
     }
 
+    const strokeFrame = createFrameBatch(redraw)
+    // #region agent log
+    let dbgPerf = { renders: 0, totalMs: 0, maxMs: 0, moves: 0, startedAt: 0 }
+    // #endregion
+
     function onPointerDown(event: PointerEvent): void {
       if (!booted || busy || view !== 'canvas' || event.target !== canvas) return
       if (event.pointerType === 'mouse' && event.button !== 0) return
@@ -797,6 +803,9 @@ export const drawingGame: GameModule = {
         return
       }
       const draft: DrawingStroke = { tool, color: colorId, size, points: [point] }
+      // #region agent log
+      dbgPerf = { renders: 0, totalMs: 0, maxMs: 0, moves: 0, startedAt: performance.now() }
+      // #endregion
       if (tool === 'watercolor') draft.seed = newStrokeSeed()
       drafts.set(event.pointerId, draft)
       try {
@@ -811,7 +820,10 @@ export const drawingGame: GameModule = {
         const draft = drafts.get(event.pointerId)
         if (!nextPoint || !draft) return
         draft.points = appendDrawingPoint(draft.points, nextPoint)
-        redraw()
+        // #region agent log
+        dbgPerf.moves += 1
+        // #endregion
+        strokeFrame.request()
         if (shouldPlayStrokeSound(lastSoundAt, Date.now())) playStroke()
       }
       const detach = (): void => {
@@ -823,8 +835,12 @@ export const drawingGame: GameModule = {
       const up = (upEvent: PointerEvent): void => {
         if (upEvent.pointerId !== event.pointerId) return
         detach()
+        strokeFrame.cancel()
         const draft = drafts.get(event.pointerId)
         drafts.delete(event.pointerId)
+        // #region agent log
+        fetch('http://127.0.0.1:7263/ingest/02ef703c-68df-4e0c-a004-5e4c2bf5e471',{method:'POST',headers:{'Content-Type':'application/json','X-Debug-Session-Id':'38fb21'},body:JSON.stringify({sessionId:'38fb21',runId:'perf',hypothesisId:'P1',location:'drawing/index.ts:up',message:'stroke render cost',data:{tool:draft?.tool,points:draft?.points.length,moves:dbgPerf.moves,renders:dbgPerf.renders,totalMs:Math.round(dbgPerf.totalMs),avgMs:+(dbgPerf.totalMs/Math.max(1,dbgPerf.renders)).toFixed(2),maxMs:Math.round(dbgPerf.maxMs),strokeMs:Math.round(performance.now()-dbgPerf.startedAt),canvas:`${canvas.width}x${canvas.height}`},timestamp:Date.now()})}).catch(()=>{});
+        // #endregion
         if (!draft || draft.points.length === 0) return
         pushHistory()
         strokes = trimDrawingStrokes([...strokes, draft])
@@ -865,8 +881,17 @@ export const drawingGame: GameModule = {
 
     function redraw(): void {
       if (disposed) return
+      // #region agent log
+      const dbgT0 = performance.now()
+      // #endregion
       syncHistoryButtons()
       renderer.render(strokes, [...drafts.values()], currentSources())
+      // #region agent log
+      const dbgMs = performance.now() - dbgT0
+      dbgPerf.renders += 1
+      dbgPerf.totalMs += dbgMs
+      dbgPerf.maxMs = Math.max(dbgPerf.maxMs, dbgMs)
+      // #endregion
     }
 
     function fitCanvas(): void {
@@ -1130,6 +1155,7 @@ export const drawingGame: GameModule = {
     cleanup = () => {
       void persist()
       disposed = true
+      strokeFrame.cancel()
       for (const detach of [...strokeCleanups]) detach()
       stopLifecycle()
       window.clearTimeout(saveTimer)

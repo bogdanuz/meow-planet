@@ -33,9 +33,13 @@ for (const ipad of IPADS) {
       await expect(page.locator('.screen--welcome')).toBeVisible({ timeout: 30_000 })
       await expectFullBleed(page, '#app')
       await expectFullBleed(page, '.welcome__atmosphere')
-      const owlShare = await page
-        .locator('.welcome__olli-open')
-        .evaluate((el) => el.getBoundingClientRect().height / window.innerHeight)
+      const owl = page.locator('.welcome__olli-open')
+      await expect
+        .poll(() => owl.evaluate((el: HTMLImageElement) => el.complete && el.naturalHeight > 0), {
+          timeout: 20_000,
+        })
+        .toBe(true)
+      const owlShare = await owl.evaluate((el) => el.getBoundingClientRect().height / window.innerHeight)
       expect(owlShare).toBeGreaterThan(0.34)
       expect(owlShare).toBeLessThan(0.46)
     })

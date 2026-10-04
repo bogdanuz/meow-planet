@@ -17,6 +17,7 @@ import {
   type SandboxPhotoMeta,
 } from '../../shared/sandbox-photos'
 import '../../shared/select-mode.css'
+import { addSoftShadow, canvasWithSoftShadow, softShadowUrl, type SoftShadow } from '../../shared/soft-shadow'
 import { uiIconUrl } from '../../shared/ui-icon'
 import { sandboxCabinetUrl, sandboxHandUrl, sandboxRoomUrls } from './art'
 import { clampCamera, edgeDirection, fitScale, growRoom, roomFrame, zoomAround } from './camera'
@@ -112,6 +113,14 @@ const TOAST_MS = 1800
 const FLY_MS = 480
 const SHAKE_MS = 650
 const SHELF_ICON_PX = 96
+/** Деталь из шкафа под пальцем: показывается 6rem. */
+const CARRY_PX = 96
+const CARRY_SHADOW: SoftShadow = { x: 0, y: 8, blur: 10, color: 'rgb(74 46 18 / 28%)' }
+const HAND_SHADOW: SoftShadow = { x: 0, y: 6, blur: 8, color: 'rgb(74 46 18 / 25%)' }
+/** Рамка шкафа (9 частей): срезы картинки, px — и их ширина на экране, rem (как в shape-build.css). */
+const CABINET_SLICE = [130, 100, 140, 100] as const
+const CABINET_SLICE_REM = [1.7, 1.15, 1.8, 1.15] as const
+const CABINET_SHADOW: SoftShadow = { x: 0, y: 0, blur: 14, color: 'rgb(92 58 24 / 24%)' }
 /** Быстрее этого (единиц/с) — бросок: пунктирный след и «ух!». */
 const THROW_TRAIL_SPEED = 7
 const TRAIL_MS = 900
@@ -513,9 +522,23 @@ export const shapeBuildGame: GameModule = {
     cabinet.className = 'shape-build__cabinet'
     cabinet.setAttribute('aria-label', 'Шкаф с деталями')
     const cabinetArt = sandboxCabinetUrl()
+    // Тень шкафа — отдельный блок под ним с тенью рамки картинкой: filter на шкафу iPad
+    // перерисовывал при каждом изменении полок и пока шкаф выезжает.
+    const cabinetShadow = document.createElement('div')
+    cabinetShadow.className = 'shape-build__cabinet-shadow'
+    cabinetShadow.setAttribute('aria-hidden', 'true')
     if (cabinetArt) {
       cabinet.classList.add('has-art')
       cabinet.style.borderImageSource = `url("${cabinetArt}")`
+      const scale = CABINET_SLICE[0] / (CABINET_SLICE_REM[0] * 16)
+      void softShadowUrl(cabinetArt, [CABINET_SHADOW], scale).then((baked) => {
+        if (!baked) return
+        const slice = CABINET_SLICE.map((s) => s + baked.pad).join(' ')
+        const padCss = CABINET_SLICE.map((s, i) => (baked.pad * CABINET_SLICE_REM[i]! * 16) / s)
+        const width = CABINET_SLICE_REM.map((rem, i) => `calc(${rem}rem + ${padCss[i]!.toFixed(2)}px)`).join(' ')
+        const outset = padCss.map((px) => `${px.toFixed(2)}px`).join(' ')
+        cabinetShadow.style.borderImage = `url("${baked.url}") ${slice} fill / ${width} / ${outset} stretch`
+      })
     }
     const handle = document.createElement('button')
     handle.type = 'button'
@@ -718,13 +741,17 @@ export const shapeBuildGame: GameModule = {
     toast.setAttribute('role', 'status')
     toast.setAttribute('aria-live', 'polite')
     toast.hidden = true
-    const hand = document.createElement('img')
+    const hand = document.createElement('span')
     hand.className = 'shape-build__hand'
-    hand.src = sandboxHandUrl()
-    hand.alt = ''
-    hand.decoding = 'async'
     hand.setAttribute('aria-hidden', 'true')
     hand.hidden = true
+    const handArt = document.createElement('img')
+    handArt.className = 'shape-build__hand-art'
+    handArt.src = sandboxHandUrl()
+    handArt.alt = ''
+    handArt.decoding = 'async'
+    hand.append(handArt)
+    addSoftShadow(handArt, [HAND_SHADOW])
 
     // ── «Как играть» для взрослого ──
     const howto = document.createElement('section')
@@ -1160,6 +1187,7 @@ export const shapeBuildGame: GameModule = {
       fx,
       flash,
       roomBtn,
+      cabinetShadow,
       cabinet,
       menu,
       toast,
@@ -1773,8 +1801,9 @@ export const shapeBuildGame: GameModule = {
 
     /** Деталь из шкафа едет под пальцем картинкой, пока её не вынесли в комнату. */
     function startCarry(current: Press, kind: PieceKind, clientX: number, clientY: number): void {
-      const ghost = shelfIcon(kind, world.nextColor(kind))
+      const { canvas: ghost, pad } = canvasWithSoftShadow(shelfIcon(kind, world.nextColor(kind)), CARRY_PX, [CARRY_SHADOW])
       ghost.className = 'shape-build__carry'
+      ghost.style.setProperty('--carry-pad', String(pad))
       rootEl.append(ghost)
       current.carry = ghost
       moveCarry(current, clientX, clientY)

@@ -59,7 +59,22 @@ import {
   type VoiceLine,
 } from './phrases'
 import { capitalizeRu, numberWordRu, toyCountRu, toyGender, toyOneRu } from './words'
+import { addSoftShadow, type SoftShadow } from '../../shared/soft-shadow'
 import './counting.css'
+
+const TOY_SHADOW: SoftShadow = { x: 0, y: 5, blur: 5, color: 'rgb(26 42 51 / 22%)' }
+/** Игрушку несут или подсказывают: белый ореол, жёлтое свечение и тень ниже. */
+const TOY_GLOW: readonly SoftShadow[] = [
+  { x: 0, y: 10, blur: 8, color: 'rgb(26 42 51 / 25%)' },
+  { x: 0, y: 0, blur: 14.4, color: 'rgb(255 207 74 / 90%)' },
+  { x: 0, y: 0, blur: 7.2, color: '#fff' },
+]
+const PRESENTER_SHADOW: SoftShadow = { x: 0, y: 6, blur: 10, color: 'rgb(26 74 107 / 22%)' }
+const BOX_SHADOW: SoftShadow = { x: 0, y: 8, blur: 10, color: 'rgb(26 42 51 / 18%)' }
+/** Над ящиком несут игрушку. */
+const BOX_HOVER_GLOW: SoftShadow = { x: 0, y: 0, blur: 9.6, color: 'rgb(255 255 255 / 95%)' }
+/** Подсказка «сюда»: пульсирует прозрачностью, не фильтром. */
+const BOX_HINT_GLOW: SoftShadow = { x: 0, y: 0, blur: 22.4, color: 'rgb(255 207 74 / 100%)' }
 
 /** Последняя выбранная игрушка — встречает при следующем входе. */
 const TOY_KEY = 'meow-planet.counting-toy'
@@ -300,7 +315,7 @@ export const countingGame: GameModule = {
     }
     digits.style.setProperty('--digits', String(limit))
 
-    const presenter = createGamePresenter(settings.companion)
+    const presenter = createGamePresenter(settings.companion, { shadow: PRESENTER_SHADOW })
     const dragLayer = document.createElement('div')
     dragLayer.className = 'counting__drag-layer'
     dragLayer.setAttribute('aria-hidden', 'true')
@@ -389,6 +404,9 @@ export const countingGame: GameModule = {
       inside.className = 'counting__box-inside'
       inside.style.clipPath = clip
       el.append(art, hit, digit, inside)
+      addSoftShadow(art, [BOX_SHADOW])
+      addSoftShadow(art, [BOX_HOVER_GLOW], 'counting__box-hover')
+      addSoftShadow(art, [BOX_HINT_GLOW], 'counting__box-hint')
       return { el, inside, hit, digit, ids: [] }
     }
 
@@ -407,6 +425,8 @@ export const countingGame: GameModule = {
       img.decoding = 'async'
       img.src = toyArtUrl(kind, color)
       el.append(img)
+      addSoftShadow(img, [TOY_SHADOW], 'counting__toy-shadow')
+      addSoftShadow(img, TOY_GLOW, 'counting__toy-glow')
       el.addEventListener('click', (event) => {
         const afterPointerTap = lastPointerTapAt > 0 && performance.now() - lastPointerTapAt < CLICK_AFTER_TAP_MS
         if (event.detail !== 0 && afterPointerTap) return

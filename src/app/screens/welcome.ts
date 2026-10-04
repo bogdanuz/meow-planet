@@ -3,6 +3,9 @@ import type { AudioManager } from '../../shared/audio'
 import { playHubMusic, playScreenTransition } from '../../shared/hub-sounds'
 import type { AppSettings } from '../../shared/storage'
 import { createUiIconImg, uiIconUrl } from '../../shared/ui-icon'
+import { addSoftShadow, type SoftShadow } from '../../shared/soft-shadow'
+
+const TITLE_SHADOW: SoftShadow = { x: 0, y: 6, blur: 0, color: 'rgb(90 50 110 / 18%)' }
 
 export type WelcomeScreenOptions = {
   audio: AudioManager
@@ -40,9 +43,13 @@ export function renderWelcomeScreen(
   title.alt = 'Планета Мяу и друзья'
   title.src = `${import.meta.env.BASE_URL}assets/shell/welcome-title.png`
 
+  const titleBox = document.createElement('span')
+  titleBox.className = 'welcome__title-box'
+  titleBox.append(title)
+  addSoftShadow(title, [TITLE_SHADOW])
   const titleWrap = document.createElement('h1')
   titleWrap.className = 'welcome__title-wrap'
-  titleWrap.append(title)
+  titleWrap.append(titleBox)
 
   const cta = document.createElement('div')
   cta.className = 'welcome__cta'

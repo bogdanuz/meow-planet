@@ -22,9 +22,10 @@
 
 1. `vite-plugin-pwa` / Workbox формирует production manifest.
 2. `manifestTransforms` создаёт из него `dist/precache-manifest.json`.
-3. Boot-loader берёт из JSON ожидаемый набор, а `N из M` считает по фактическим
-   записям `workbox-precache` в Cache Storage. Отдельно скачивать те же URL страницей
-   запрещено.
+3. Boot-loader берёт из JSON ожидаемый набор, а прогресс считает по фактическим
+   записям `workbox-precache` в Cache Storage (на экране — только проценты, `N из M`
+   лежит в `data-done` / `data-total` полоски для тестов). Отдельно скачивать те же URL
+   страницей запрещено.
 4. `scripts/verify-precache-manifest.mjs` сравнивает:
    - Workbox entries;
    - runtime progress entries;
@@ -32,6 +33,13 @@
 
 Исключения — только `sw.js` и `workbox-*.js`: браузер устанавливает их как Service
 Worker scripts, а не как записи app precache.
+
+**Звук и видео кусками (Range).** Safari на iPad запрашивает `<audio>` / `<video>`
+с заголовком `Range` и играет только ответ 206. Workbox precache сам отдаёт целый файл
+(200) — без интернета музыка молчала бы. Поэтому `public/sw-range.js` подключён через
+`workbox.importScripts` раньше Workbox: Range-запрос к медиафайлу получает нужный
+кусок из того же precache-кэша. Своего списка файлов в нём нет и быть не должно.
+Проверка — тест «офлайн-кэш отдаёт звук кусками (206)» в `boot-transition.spec.ts`.
 
 ## Правило для любых новых файлов
 
@@ -66,7 +74,9 @@ Unit и e2e — только затронутые и пересекающиес�
 
 `npm run test:e2e:boot` запускает `vite preview`, а не dev-server, и проверяет:
 
-- cold install: полный список → 100% → `loader.unmount()` → welcome;
+- cold install: полный список → 100% → финал совы (`loader.finish()`, под ним строится
+  welcome) → `loader.unmount()`;
+- Range-запрос к музыке под SW и офлайн → 206;
 - warm start с активным controller;
 - один тихий retry после нулевого сетевого сбоя;
 - два сбоя, контролируемую ошибку, кнопку «Повторить» и восстановление.
@@ -87,7 +97,7 @@ GitHub Actions запускает этот же suite после production buil
 ## Ручная проверка iPad перед релизом
 
 1. Удалить ярлык PWA и данные `bogdanuz.github.io` в Safari.
-2. Установить заново по Wi‑Fi и дождаться полного счётчика и welcome.
+2. Установить заново по Wi‑Fi и дождаться 100%, прохода совы и welcome.
 3. Закрыть и открыть PWA повторно — warm start не должен блокироваться.
 4. Включить авиарежим и проверить welcome, меню и все выпущенные игры.
 5. Для update-path сначала оставить установленную предыдущую версию, затем открыть

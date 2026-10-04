@@ -191,7 +191,6 @@
   object-fit: contain;
   object-position: bottom center;
   pointer-events: none;
-  filter: drop-shadow(0 6px 10px rgb(26 74 107 / 22%));
 }
 
 .balloon-pop__meow.is-pose-under {
@@ -375,7 +374,6 @@
   display: block;
   pointer-events: none;
   object-fit: contain;
-  filter: drop-shadow(0 8px 12px rgb(26 74 107 / 22%));
 }
 
 /* Размеры ×1,1 (маленький) и ×1,5 (большой) от версии до теста на iPad — BALLOON_SIZE_BOOST в layout.ts.

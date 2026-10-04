@@ -17,6 +17,14 @@ import {
   type LayerBox,
 } from './instrument-layout'
 import { playInstrumentSfx, type InstrumentSfxOptions } from './instrument-sfx'
+import { addSoftShadow, type SoftShadow } from '../../shared/soft-shadow'
+
+/** Тени — картинками (shared/soft-shadow.ts): drop-shadow на iPad рисует рамку и шлейф у качающихся слоёв. */
+const DRUM_SHADOW: SoftShadow = { x: 0, y: 4, blur: 3, color: 'rgb(82 46 24 / 12%)' }
+const MARACA_SHADOW: SoftShadow = { x: 0, y: 10, blur: 6, color: 'rgb(24 42 58 / 26%)' }
+const BELL_SHADOW: SoftShadow = { x: 0, y: 18, blur: 10, color: 'rgb(24 42 58 / 48%)' }
+const PIANO_SHADOW: SoftShadow = { x: 0, y: 16, blur: 10, color: 'rgb(24 42 58 / 42%)' }
+const INSTRUMENT_SHADOW: SoftShadow = { x: 0, y: 14, blur: 10, color: 'rgb(42 74 98 / 38%)' }
 
 export const INSTRUMENT_IDS = new Set([
   'drum',
@@ -177,7 +185,7 @@ function pct(n: number): string {
   return `${(n * 100).toFixed(3)}%`
 }
 
-function layerButton(layer: LayerBox, extraClass: string): HTMLButtonElement {
+function layerButton(layer: LayerBox, extraClass: string, shadow: SoftShadow): HTMLButtonElement {
   const btn = document.createElement('button')
   btn.type = 'button'
   btn.className = `${extraClass} touch-btn sound-world__hit`
@@ -197,6 +205,7 @@ function layerButton(layer: LayerBox, extraClass: string): HTMLButtonElement {
   img.draggable = false
   img.setAttribute('aria-hidden', 'true')
   btn.append(img)
+  addSoftShadow(img, [shadow])
   return btn
 }
 
@@ -259,6 +268,7 @@ export function mountInstrumentView(stage: HTMLElement, opts: MountOpts): void {
       const btn = layerButton(
         layer,
         `sound-world__drum-pad sound-world__drum-pad--${layer.piece}`,
+        DRUM_SHADOW,
       )
       bindPress(btn, (x, y) => {
         play(layer.sfxId, true)
@@ -279,6 +289,7 @@ export function mountInstrumentView(stage: HTMLElement, opts: MountOpts): void {
       const btn = layerButton(
         layer,
         `sound-world__maraca sound-world__maraca--${layer.piece}`,
+        MARACA_SHADOW,
       )
       bindMaraca(
         btn,
@@ -303,12 +314,16 @@ export function mountInstrumentView(stage: HTMLElement, opts: MountOpts): void {
     const frame = document.createElement('div')
     frame.className = 'sound-world__instrument-frame sound-world__instrument-frame--bell'
 
+    const swing = document.createElement('div')
+    swing.className = 'sound-world__instrument-art-box sound-world__bell-swing'
     const art = document.createElement('img')
     art.className = 'sound-world__instrument-art'
     art.src = instrumentPlayUrl('bell')
     art.alt = ''
     art.draggable = false
     art.setAttribute('aria-hidden', 'true')
+    swing.append(art)
+    addSoftShadow(art, [BELL_SHADOW])
 
     const hit = document.createElement('button')
     hit.type = 'button'
@@ -336,7 +351,7 @@ export function mountInstrumentView(stage: HTMLElement, opts: MountOpts): void {
       lastT = now
       const prevVel = pendulum.vel
       pendulum = stepPendulum(pendulum, dt)
-      art.style.transform = `rotate(${pendulum.angle * (180 / Math.PI)}deg)`
+      swing.style.transform = `rotate(${pendulum.angle * (180 / Math.PI)}deg)`
       if (pendulumShouldRing(prevVel, pendulum) && now - lastRing > 180) {
         lastRing = now
         play('bell', true)
@@ -344,7 +359,7 @@ export function mountInstrumentView(stage: HTMLElement, opts: MountOpts): void {
       }
       if (pendulumAtRest(pendulum)) {
         pendulum = { angle: 0, vel: 0 }
-        art.style.transform = 'rotate(0deg)'
+        swing.style.transform = 'rotate(0deg)'
         raf = 0
         return
       }
@@ -362,7 +377,7 @@ export function mountInstrumentView(stage: HTMLElement, opts: MountOpts): void {
       }
     })
 
-    frame.append(art, hit)
+    frame.append(swing, hit)
     panel.append(frame)
     return
   }
@@ -379,6 +394,7 @@ export function mountInstrumentView(stage: HTMLElement, opts: MountOpts): void {
     body.draggable = false
     body.setAttribute('aria-hidden', 'true')
     scene.append(body)
+    addSoftShadow(body, [PIANO_SHADOW])
 
     for (let i = 0; i < PIANO_NOTES.length; i += 1) {
       const row = PIANO_NOTES[i]!
@@ -465,6 +481,7 @@ export function mountInstrumentView(stage: HTMLElement, opts: MountOpts): void {
   }
 
   box.append(art, overlay)
+  addSoftShadow(art, [INSTRUMENT_SHADOW])
   frame.append(box)
   panel.append(frame)
 }

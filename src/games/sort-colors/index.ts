@@ -51,7 +51,24 @@ import {
   type VoiceLine,
 } from './phrases'
 import { sortVoiceUrl } from './voice'
+import { addSoftShadow, type SoftShadow } from '../../shared/soft-shadow'
 import './sort-colors.css'
+
+const TOY_SHADOW: SoftShadow = { x: 0, y: 6, blur: 6, color: 'rgb(26 42 51 / 22%)' }
+/** Выбранная или перетаскиваемая игрушка: белый ореол, жёлтое свечение и тень ниже. */
+const TOY_GLOW: readonly SoftShadow[] = [
+  { x: 0, y: 12, blur: 10, color: 'rgb(26 42 51 / 25%)' },
+  { x: 0, y: 0, blur: 14.4, color: 'rgb(255 207 74 / 85%)' },
+  { x: 0, y: 0, blur: 7.2, color: '#fff' },
+]
+const PRESENTER_SHADOW: SoftShadow = { x: 0, y: 6, blur: 10, color: 'rgb(26 74 107 / 22%)' }
+const BIN_SHADOW: SoftShadow = { x: 0, y: 8, blur: 10, color: 'rgb(26 42 51 / 18%)' }
+/** Над коробкой несут игрушку. */
+const BIN_HOVER_GLOW: SoftShadow = { x: 0, y: 0, blur: 9.6, color: 'rgb(255 255 255 / 95%)' }
+/** Подсказка «сюда»: мягко пульсирует (прозрачностью, не фильтром). */
+const BIN_HINT_GLOW: SoftShadow = { x: 0, y: 0, blur: 20.8, color: 'rgb(255 207 74 / 100%)' }
+const STICKER_SHADOW: SoftShadow = { x: 0, y: 2, blur: 3, color: 'rgb(120 90 60 / 28%)' }
+const BIN_TOY_SHADOW: SoftShadow = { x: 0, y: 3, blur: 4, color: 'rgb(26 42 51 / 20%)' }
 
 type Mode = 'free' | 'task'
 
@@ -149,7 +166,7 @@ export const sortColorsGame: GameModule = {
     bg.decoding = 'async'
     bg.src = sortBackgroundUrl()
 
-    const presenter = createGamePresenter(settings.companion)
+    const presenter = createGamePresenter(settings.companion, { shadow: PRESENTER_SHADOW })
 
     function say(
       line: VoiceLine,
@@ -308,6 +325,8 @@ export const sortColorsGame: GameModule = {
       }
       img.src = url
       btn.append(img)
+      addSoftShadow(img, [TOY_SHADOW])
+      addSoftShadow(img, TOY_GLOW, 'sort-colors__toy-glow')
       btn.addEventListener('click', (event) => {
         const afterPointerTap = lastPointerTapAt > 0 && performance.now() - lastPointerTapAt < CLICK_AFTER_TAP_MS
         if (event.detail !== 0 && afterPointerTap) return
@@ -334,16 +353,22 @@ export const sortColorsGame: GameModule = {
       inside.className = 'sort-colors__bin-inside'
       inside.style.clipPath = clip
 
-      const sticker = document.createElement('img')
+      const sticker = document.createElement('span')
       sticker.className = 'sort-colors__sticker'
-      sticker.alt = ''
-      sticker.draggable = false
-      sticker.src = stickerArtUrl(kind)
       sticker.style.left = `${g.sticker.x * 100}%`
       sticker.style.top = `${g.sticker.y * 100}%`
       sticker.style.width = `${g.sticker.w * 100}%`
+      const stickerArt = document.createElement('img')
+      stickerArt.alt = ''
+      stickerArt.draggable = false
+      stickerArt.src = stickerArtUrl(kind)
+      sticker.append(stickerArt)
 
       bin.append(art, inside, sticker)
+      addSoftShadow(art, [BIN_SHADOW])
+      addSoftShadow(art, [BIN_HOVER_GLOW], 'sort-colors__bin-hover')
+      addSoftShadow(art, [BIN_HINT_GLOW], 'sort-colors__bin-hint')
+      addSoftShadow(stickerArt, [STICKER_SHADOW])
       bin.addEventListener('click', () => onBinActivate(kind))
       binEls.set(kind, { el: bin, inside })
       binContents.set(kind, [])
@@ -410,6 +435,7 @@ export const sortColorsGame: GameModule = {
           img.draggable = false
           img.src = toyArtUrl(toy.kind, toy.color)
           el.append(img)
+          addSoftShadow(img, [BIN_TOY_SHADOW])
           entry.inside.append(el)
         }
         const s = slots[i]!

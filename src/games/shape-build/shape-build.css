@@ -447,7 +447,13 @@
   opacity: 0;
   transform-origin: 0.45rem 0.2rem;
   pointer-events: none;
-  filter: drop-shadow(0 6px 8px rgb(74 46 18 / 25%));
+}
+
+/* Тени руки и детали под пальцем — картинкой (shared/soft-shadow.ts), не filter: на iPad от него шлейф. */
+.shape-build__hand-art {
+  display: block;
+  width: 100%;
+  height: auto;
 }
 
 /* ── Удержание пальца: кружок заполняется — открывается меню ── */
@@ -501,14 +507,15 @@
 }
 
 .shape-build__carry {
+  --carry-side: calc(6rem * (1 + 2 * var(--carry-pad, 0)));
+
   position: absolute;
-  top: -3rem;
-  left: -3rem;
+  top: calc(var(--carry-side) / -2);
+  left: calc(var(--carry-side) / -2);
   z-index: 8;
-  width: 6rem;
-  height: 6rem;
+  width: var(--carry-side);
+  height: var(--carry-side);
   pointer-events: none;
-  filter: drop-shadow(0 8px 10px rgb(74 46 18 / 28%));
 }
 
 /* Мини-снимок после «Фото»: по центру, потом улетает в «Ещё» */
@@ -937,10 +944,23 @@
   border-image-width: 1.7rem 1.15rem 1.8rem 1.15rem;
   border-image-repeat: stretch;
   box-shadow: none;
-  filter: drop-shadow(-6px 8px 14px rgb(92 58 24 / 24%));
 }
 
-.shape-build[data-cabinet='closed'] .shape-build__cabinet {
+/* Тень рамки шкафа (index.ts печёт её картинкой): та же коробка, что у шкафа, сдвиг как у тени. */
+.shape-build__cabinet-shadow {
+  position: absolute;
+  top: calc(var(--bar-h) + 0.4rem);
+  right: 0;
+  bottom: calc(var(--floor) - 0.3rem);
+  z-index: 4;
+  width: var(--cab-w);
+  border: 0 solid transparent;
+  translate: -6px 8px;
+  pointer-events: none;
+  transition: transform 0.38s cubic-bezier(0.3, 0.8, 0.3, 1);
+}
+
+.shape-build[data-cabinet='closed'] :is(.shape-build__cabinet, .shape-build__cabinet-shadow) {
   transform: translateX(100%);
 }
 
@@ -1293,6 +1313,7 @@
 
 @media (prefers-reduced-motion: reduce) {
   .shape-build__cabinet,
+  .shape-build__cabinet-shadow,
   .shape-build__overlay::before,
   .shape-build__shelf-item {
     transition: none;
