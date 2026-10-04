@@ -8,7 +8,8 @@ description: Step-by-step approach for diagnosing and fixing bugs, failing tests
 ## Root cause before fix
 
 1. Run the failing command and read **full** output:
-   - `npm run typecheck` → `npm run test` → `npm run build` → `npm run test:e2e -- --project=chromium`
+   - only the failing command/spec first (scope — `.cursor/rules/targeted-testing.mdc`);
+     a full-suite single random failure that passes alone twice = load flake, not a regression
 2. Read **current** file contents — don't trust chat memory (`source-of-truth.mdc`).
 3. Reproduce consistently; note recent changes.
 

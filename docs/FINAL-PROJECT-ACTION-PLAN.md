@@ -250,7 +250,7 @@
 
 ### S16.4. Звуки и голос
 
-- **UI-звуки**: клик, переход экрана — `ASSET-MANIFEST.md` + кандидаты в `_candidates/ui-sounds/`.
+- **UI-звуки**: клик, переход экрана — `ASSET-MANIFEST.md` + кандидаты в `archive/public-assets/_candidates/ui-sounds/` (с 0.22.1 в архиве).
 - **Игровые SFX**: по папкам каждой игры, часть уже есть.
 - **Голос Мяу и voice prompts**: ElevenLabs, тексты в `src/content/`.
 - **Музыка**: по `MUSIC-BGM-MANIFEST.md` — welcome/menu/сутки/сон/по играм/сезоны.

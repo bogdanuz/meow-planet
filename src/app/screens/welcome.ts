@@ -120,7 +120,7 @@ export function renderWelcomeScreen(
       playHubMusic(options.audio)
     }
     window.setTimeout(() => {
-      router.navigate({ screen: 'menu' })
+      if (router.getRoute().screen === 'welcome') router.navigate({ screen: 'menu' })
     }, 420)
   }
 

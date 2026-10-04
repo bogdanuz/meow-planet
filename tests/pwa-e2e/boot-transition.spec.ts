@@ -268,11 +268,11 @@ test('два cold production провала показывают контрол�
   await installBootProbe(context, 'always-manifest')
   await page.goto('./')
 
-  await expect(page.getByRole('button', { name: 'Повторить' })).toBeVisible({
+  await expect(page.getByRole('button', { name: 'Продолжить загрузку' })).toBeVisible({
     timeout: 90_000,
   })
   await expect(page.locator('.boot-loader__message')).toContainText(
-    'Пылесос сломался',
+    'Связь прервалась',
   )
 
   const probe = await readProbe(page)
@@ -286,7 +286,7 @@ test('два cold production провала показывают контрол�
       }
     ).__MEOW_BOOT_PROBE__.failureMode = 'none'
   })
-  await page.getByRole('button', { name: 'Повторить' }).click()
+  await page.getByRole('button', { name: 'Продолжить загрузку' }).click()
   await expect(page.locator('.screen--welcome')).toBeVisible({
     timeout: 90_000,
   })

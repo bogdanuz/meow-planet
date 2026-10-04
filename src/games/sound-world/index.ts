@@ -13,7 +13,8 @@ import {
   type SoundNavigation,
 } from './logic'
 import { letterGridColumn1Based, letterGridLayout } from './letter-grid-layout'
-import { INSTRUMENT_IDS, mountInstrumentView } from './instrument-view'
+import { INSTRUMENT_IDS, mountInstrumentView, unmountInstrumentView } from './instrument-view'
+import { INSTRUMENT_SFX_IDS } from './instrument-sfx'
 import { loadSfxExtensions, loadSfxInventory } from './sfx-inventory'
 import { playCatalogSfx } from './sfx'
 import { buildKnownSfxUrls } from './sfx-url'
@@ -142,6 +143,16 @@ export const soundWorldGame: GameModule = {
     root.append(bg, gameBar, stage)
     container.replaceChildren(root)
 
+    let instrumentSfxPreloaded = false
+    function preloadInstrumentSfx(): void {
+      if (instrumentSfxPreloaded || sfxUrls.size === 0) return
+      instrumentSfxPreloaded = true
+      const urls = INSTRUMENT_SFX_IDS.map((sfxId) => sfxUrls.get(sfxId)).filter(
+        (url): url is string => Boolean(url),
+      )
+      void audio.preload(urls)
+    }
+
     function hasSfxFile(sfxBase: string): boolean {
       if (sfxUrls.size > 0) return sfxUrls.has(sfxBase)
       if (sfxReady.size === 0) return true
@@ -259,13 +270,18 @@ export const soundWorldGame: GameModule = {
 
     function renderGrid(): void {
       grid.replaceChildren()
-      stage.querySelector('.sound-world__instrument')?.remove()
+      unmountInstrumentView(stage)
       nav = buildNavigation(hideEn, nav.mainTab, nav.letterScript)
       root!.dataset.mainTab = nav.mainTab
       root!.dataset.letterScript = nav.letterScript
       root!.classList.toggle('sound-world--instrument-open', activeInstrumentId != null)
       if (activeInstrumentId) root!.dataset.instrumentId = activeInstrumentId
       else delete root!.dataset.instrumentId
+
+      // Внутри инструмента фоновая музыка уходит в тишину, у списка — возвращается.
+      if (activeInstrumentId) audio.duckMusic(400)
+      else audio.restoreMusic(400)
+      if (nav.mainTab === 'instruments') preloadInstrumentSfx()
 
       if (activeInstrumentId) {
         grid.hidden = true
@@ -386,6 +402,10 @@ export const soundWorldGame: GameModule = {
     cleanup = () => {
       stage.removeEventListener('pointerdown', onSwipeStart)
       stage.removeEventListener('pointerup', onSwipeEnd)
+      unmountInstrumentView(stage)
+      audio.stopSfx()
+      audio.restoreMusic(0)
+      audio.dispose?.()
       if (root?.parentElement) root.parentElement.removeChild(root)
       root = null
       cleanup = null

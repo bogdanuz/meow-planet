@@ -1,126 +1,160 @@
-# Игра «Куда положить?» — иллюстрации (2.3, sort-colors)
+# «Куда положить?» — рисунки (S16, sort-colors)
 
-**Дата:** 24.09.2026 · **SSOT механики:** `docs/games/S14-sort-colors-GAME-POLISH.md`
+**Дата:** 01.10.2026 · **Механика:** [S16-sort-colors-BRIEF.md](../games/S16-sort-colors-BRIEF.md) · **Озвучка:** [sort-colors-VOICE-SCRIPT.md](sort-colors-VOICE-SCRIPT.md)
 
-## Экран (MVP)
+Старые промпты S14 (5 корзинок форма = цвет) больше не действуют.
 
-| Зона | Сейчас | После S16 |
+**Статус:** все 10 мастеров получены и в игре с 01.10.2026. Ящик пришёл прямоугольным (вид спереди-сверху, справа боковая стенка), не круглой кадкой. Под него в `src/games/sort-colors/art.ts` (`ART_BIN`) заданы линия переднего края, проём для горки и место наклейки. Если ящик перерисуется, эти доли нужно снять заново по скриншоту.
+
+## Что нужно нарисовать
+
+| # | Файл мастера (кладёте вы) | Что на нём | Что делает Cursor |
+|---|---|---|---|
+| 1–7 | `sort-toys-<вид>.jpg` (7 штук) | один предмет в 4 цветах в ряд | режет на 28 PNG |
+| 8 | `sort-bin.jpg` | один пустой ящик | вырезает фон, PNG |
+| 9 | `sort-stickers.jpg` | 7 наклеек в ряд | режет на 7 PNG |
+| 10 | `sort-playroom.jpg` | фон «детская» 4:3 | WebP на весь экран |
+
+Папка мастеров: `assets-master/games/sort-colors/`. После каждого файла напишите в чат «готово sort-toys-ball» (или другое имя). Cursor запустит `npm run assets:sort-colors`. Порядок: сначала **мячик** и **ящик** — по ним проверяем стиль и масштаб, потом остальные.
+
+`<вид>`: `ball` мячик · `cube` кубик · `star` звёздочка · `pyramid` пирамидка · `heart` сердечко · `duck` уточка · `ring` колечко.
+
+**Image A** во всех промптах — `assets-master/reference/ref-style-board.jpg` (только краска и линия).  
+**Image B** для предметов — `public/assets/menu/card-counting.png` (как выглядит объём кубиков: вид 3/4, блик сверху слева, тень снизу справа).
+
+## Цвета (одинаковые на всех 7 листах, слева направо)
+
+| Место | Цвет | Hex-ориентир |
 |---|---|---|
-| Фон | CSS лоток + цветные корзинки | `SORT-BG-01` landscape |
-| Корзинки | `placeholderClass` + подпись **фигуры** (Мячик, Кубик, …) | 5 PNG |
-| Игрушки | placeholder, 10 кнопок (5 типов × 2) | 5 PNG (дубликаты в коде) |
-| Подсказки | `chrome__hint` (тост), **без** Мяu в chrome | то же + голос S16 |
+| 1 | красный (tomato red) | `#E8503F` |
+| 2 | жёлтый (sunflower yellow) | `#F4C23A` |
+| 3 | синий (cornflower blue) | `#4A8BD6` |
+| 4 | зелёный (grass green) | `#55AE5C` |
 
-**Правило:** форма ↔ корзинка; цвет **1:1** с формой (как «Лопни шарик»).
+## Фраза стиля (дословно в каждый промпт)
 
-## Куда класть файлы
+`warm children's book illustration style, soft gouache/watercolor textures, clean readable silhouettes, thick soft outlines, gentle rounded shapes, pastel but warm color palette, no harsh shadows, calm and friendly mood, made for a toddler app`
+
+---
+
+## 1–7. Листы предметов — `sort-toys-<вид>.jpg`
+
+Один и тот же шаблон, меняется только строка **Subject** из таблицы ниже.
+
+```
+Subject: four copies of the same chunky toddler toy standing in one horizontal row, identical shape and size, only the color differs: 1) tomato red #E8503F, 2) sunflower yellow #F4C23A, 3) cornflower blue #4A8BD6, 4) grass green #55AE5C. The toy: {SUBJECT}.
+Action: each toy rests calmly, seen from a slight three-quarter view from above so its volume reads clearly.
+Location: solid flat pure white #FFFFFF background, no floor, no cast shadow on the background, no table.
+Composition: 4:1 wide row, four equal invisible cells, each toy centered in its cell and filling about 75% of the cell height, clear white gap of at least one toy-width/4 between toys, nothing touching the image edges.
+Style: warm children's book illustration style, soft gouache/watercolor textures, clean readable silhouettes, thick soft outlines, gentle rounded shapes, pastel but warm color palette, no harsh shadows, calm and friendly mood, made for a toddler app. Painted soft volume like the toy blocks in Image B: lighter highlight on the upper-left, deeper warm shade on the lower-right, matte gouache, not glossy plastic, not a 3D render.
+Lighting: soft even daylight from the upper left.
+References: Image A = brush texture and outline only. Image B = how much volume and which viewing angle, not the objects or colors.
+The image contains no letters, no numbers, no logo, and no watermark. No faces on the toys except the duck.
+Aspect ratio: 21:9 (or the widest available). Resolution: 4K.
+```
+
+| Вид | `{SUBJECT}` |
+|---|---|
+| ball | a round soft rubber toddler ball, one simple curved stripe band around it in a slightly lighter tint of the same color |
+| cube | a rounded wooden toy block cube with softly bevelled edges, three faces visible, plain faces without letters or numbers |
+| star | a plump five-point star toy block with thick depth and rounded tips, front face and side thickness visible |
+| pyramid | a chunky triangular toy building block (a triangular prism like a construction-set roof piece), thick depth, rounded corners, front triangle face and side visible |
+| heart | a plump rounded heart-shaped toy block with thick depth, front face and side thickness visible |
+| duck | a classic rubber bath duck toy facing left, small orange beak, two simple dot eyes, rounded body; the body is the cell color, the beak stays orange on all four |
+| ring | a single thick stacking ring from a toddler ring-stacker toy, a fat rounded donut shape with a clear hole in the middle, seen from slightly above so the hole is visible |
+
+**Проверка:** четыре одинаковые формы, разные только цветом; между ними белое поле; у уточки клюв везде оранжевый, а у синей уточки тело синее.
+
+---
+
+## 8. Ящик — `sort-bin.jpg`
+
+```
+Subject: one empty open plastic toddler toy storage tub, creamy off-white plastic #F7EEDC with a soft warm shade, rounded rectangular shape, slightly wider at the top, thick rounded rim. The front wall is smooth and completely plain (a picture label will be added later, so leave the front wall empty).
+Action: static, viewed from the front and above at about 45 degrees so the inside floor and the inner back wall are clearly visible.
+Location: solid flat light sky-blue #D6EEF8 background, no floor, no cast shadow on the background.
+Composition: single tub centered, filling about 80% of the width, symmetric left and right, the whole rim fully visible, nothing touching the edges.
+Style: warm children's book illustration style, soft gouache/watercolor textures, clean readable silhouettes, thick soft outlines, gentle rounded shapes, pastel but warm color palette, no harsh shadows, calm and friendly mood, made for a toddler app. Soft painted volume, matte, not glossy plastic, not a 3D render.
+Lighting: soft even daylight from the upper left.
+References: Image A = brush texture and outline only. Image B = public/assets/menu/card-sort-colors.png, only the idea of an open plastic tub seen from above.
+The image contains no letters, no logo, no label, no handles with holes, and no watermark.
+Aspect ratio: 4:3. Resolution: 2K.
+```
+
+**Проверка:** внутри видно дно и заднюю стенку; передняя стенка гладкая, пустая; ящик ровно по центру.
+
+---
+
+## 9. Наклейки — `sort-stickers.jpg`
+
+Порядок слева направо: мячик, кубик, звёздочка, пирамидка, сердечко, уточка, колечко.
+
+```
+Subject: seven square picture-label stickers in one horizontal row, each a soft rounded square of pale cream paper #FFF7E8 with a thin darker cream edge. On each sticker one simple toy drawing in dark navy line #26365E with a very light pale-blue fill #E3ECF7, no other colors, in this order: 1) a round ball with one curved stripe, 2) a toy block cube in three-quarter view, 3) a plump five-point star, 4) a triangular toy block, 5) a plump heart, 6) a rubber bath duck facing left, 7) a fat stacking ring with a hole.
+Action: flat, front facing.
+Location: solid flat light sky-blue #D6EEF8 background.
+Composition: seven equal stickers in one row with clear gaps between them, the drawing fills about 70% of each sticker, same line thickness on all seven.
+Style: warm children's book illustration style, soft gouache line, thick soft outline, gentle rounded shapes, calm and friendly, made for a toddler app. Simple and very readable at small size.
+References: Image A = line quality only.
+The image contains no letters, no numbers, no logo, and no watermark.
+Aspect ratio: 21:9 (or the widest available). Resolution: 4K.
+```
+
+**Проверка:** на наклейках нет цвета, кроме тёмно-синей линии и бледно-голубой заливки; все 7 одинаковой толщины линии.
+
+---
+
+## 10. Фон — `sort-playroom.jpg`
+
+```
+Subject: an empty cozy toddler playroom, warm cream wall with a very soft pattern in the upper part, a light honey wooden floor, a large soft oval rug in a calm warm pastel color lying on the floor in the lower third, centered.
+Action: calm still scene, no characters, no toys.
+Location: the wall takes the upper 45%, the floor the lower 55%. Only at the far left and right edges a few soft hints of a room: a window with light curtains on one side, a low empty shelf on the other, both partly cut by the frame edge.
+Composition: full-bleed 4:3 landscape, no paper border, no rounded frame. The center of the frame is open and quiet: game boxes will stand in the middle and a pile of toys will lie on the rug, so nothing busy behind them. The rug spans about 70% of the width and is fully visible.
+Style: warm children's book illustration style, soft gouache/watercolor textures, clean readable silhouettes, thick soft outlines, gentle rounded shapes, pastel but warm color palette, no harsh shadows, calm and friendly mood, made for a toddler app.
+Lighting: soft warm daylight from the window side.
+References: Image A = palette and brush texture only.
+The image contains no letters, no logo, and no watermark.
+Aspect ratio: 4:3. Resolution: 4K.
+```
+
+**Проверка:** в центре пусто и спокойно; коврик целиком в нижней трети; по краям только намёки на окно и полку.
+
+---
+
+## Файлы в игре (делает Cursor)
 
 `public/assets/games/sort-colors/`
 
-```
-sort-colors/
-  bg/sort-colors-workshop-bg.webp
-  baskets/sort-basket-{shape}-{color}.png
-  toys/sort-toy-{shape}-{color}.png
-```
+| ID | Файл | Откуда |
+|---|---|---|
+| SORT-TOY-`<вид>`-`<цвет>` | `toys/<вид>-<цвет>.png` (28) | листы 1–7, `<цвет>` = `red` `yellow` `blue` `green` |
+| SORT-BIN | `bin.png` | лист 8 |
+| SORT-STICKER-`<вид>` | `stickers/<вид>.png` (7) | лист 9 |
+| SORT-BG | `sort-playroom-bg.webp` | лист 10, 2400×1792 |
+| SORT-VOICE | `voice/*.mp3` (158) | трек озвучки |
+| SORT-SFX | `sfx/*.mp3` (3) | см. ниже |
 
-`{shape}`: `circle` | `square` | `triangle` | `heart` | `star`  
-`{color}`: `red` | `orange` | `yellow` | `green` | `violet`
+Пока файлов нет, игра рисует временные объёмные фигуры и ящик из кода. Как только файлы появились, скрипт отмечает их в `src/games/sort-colors/art-ready.ts`, и игра сама берёт PNG.
 
-## Таблица ID → файл
+## Звуки (не голос)
 
-| ID | RU подпись | shape | color | Basket PNG | Toy PNG |
-|---|---|---|---|---|---|
-| SORT-BASKET-01 | Мячик | circle | red | `sort-basket-circle-red.png` | — |
-| SORT-BASKET-02 | Кубик | square | orange | `sort-basket-square-orange.png` | — |
-| SORT-BASKET-03 | Пирамидка | triangle | yellow | `sort-basket-triangle-yellow.png` | — |
-| SORT-BASKET-04 | Сердечко | heart | green | `sort-basket-heart-green.png` | — |
-| SORT-BASKET-05 | Звёздочка | star | violet | `sort-basket-star-violet.png` | — |
-| SORT-TOY-01 | (мячик) | circle | red | — | `sort-toy-circle-red.png` |
-| SORT-TOY-02 | (кубик) | square | orange | — | `sort-toy-square-orange.png` |
-| SORT-TOY-03 | (пирамидка) | triangle | yellow | — | `sort-toy-triangle-yellow.png` |
-| SORT-TOY-04 | (сердечко) | heart | green | — | `sort-toy-heart-green.png` |
-| SORT-TOY-05 | (звёздочка) | star | violet | — | `sort-toy-star-violet.png` |
-| SORT-BG-01 | фон зоны | — | — | `sort-colors-workshop-bg.webp` | — |
+| Файл | Когда | Источник |
+|---|---|---|
+| общий `assets/audio/pickup.mp3` | взял игрушку | Kenney Interface Sounds `pluck_001` (CC0); тот же звук в «Собери пазл» |
+| общий `assets/audio/drop.mp3` | игрушка упала в нужный ящик | Kenney Interface Sounds `select_001` (CC0); тот же звук в «Собери пазл» |
+| `sfx/pile.mp3` | новая куча падает сверху | ElevenLabs Sound Effects, промпт ниже |
+| промах | не тот ящик | общий `assets/audio/soft-miss.mp3` (уже есть) |
 
-`SORT-01…10` в коде — **экземпляры** игрушек; ассетов **5** (повторяются).
-
-## Safe area / размеры
-
-- **Фон:** landscape **4:3** или **16:10**, ~2048×1536, без мелких деталей по краям (iPad).
-- **Корзинка:** 1:1, export **512×512** PNG alpha; силуэт читается на **~80px** высоты на экране.
-- **Игрушка:** 1:1, **512×512** PNG alpha; тот же силуэт, что на корзинке (узнаваемость).
-- **Текст на PNG не рисуем** — подписи только в UI.
-
-## Стиль
-
-Блок Style из `GENERATION-GUIDE.md` §2 — **дословно** во все промпты.
-
-Палитра корзин/игрушек — те же hex, что placeholder CSS (`sort-colors.css` data-color).
-
-## Промпты — фон SORT-BG-01
+**Промпт ElevenLabs Sound Effects — `sort-pile.mp3`** (длительность 1,2 с, prompt influence ~0.5):
 
 ```
-Subject: empty toddler sorting play area in a cozy star workshop, soft wooden shelf
-ledges, warm cream wall, subtle stars and craft tools blurred in background, no characters.
-Action: static scene, calm daylight.
-Setting: landscape tablet game background, horizontal composition with open center for UI.
-Style: warm children's book illustration style, soft gouache/watercolor textures, clean
-readable silhouettes, thick soft outlines, gentle rounded shapes, pastel but warm color
-palette, no harsh shadows, calm and friendly mood, made for a toddler app.
-Composition: wide shot, lower third slightly darker for toy tray contrast, no hard horizon line.
-Constraints: no text, no watermark, no scary tools, no clutter, no mascot cat, no baskets with
-labels drawn in image.
-Aspect ratio: 4:3. Resolution: 2K. Export: WebP ~2048×1536.
+A small pile of soft wooden and rubber toddler toys gently tumbling onto a soft rug, a few muffled light thuds and one tiny rubber squeak, cozy and quiet, no voices, no music, no harsh impacts.
 ```
 
-## Промпт — корзинка (шаблон)
+Готовый файл положите в `assets-master/games/sort-colors/sort-pile.mp3` и напишите «готово sort-pile». «Взял» и «положил» общие для нескольких игр: замена — сразу файлом `public/assets/audio/pickup.mp3` / `drop.mp3`, поменяется везде.
 
-Подставить `{SHAPE}`, `{COLOR_NAME}`, `{COLOR_HEX}`, `{SHAPE_DESC}`.
+**Запасные промпты** (если CC0 не понравятся):
 
-```
-Subject: a single empty woven toddler toy basket for sorting game, soft rounded basket rim,
-pastel {COLOR_NAME} tint ({COLOR_HEX}), large friendly {SHAPE_DESC} icon embossed or painted
-on the front center (same silhouette as matching toy).
-Action: static front view, slightly 3/4 so depth is readable.
-Setting: isolated object, transparent background.
-Style: (copy Style block from GENERATION-GUIDE §2 verbatim).
-Composition: basket fills ~75% of frame height, icon large and simple for ages 2-3.
-Constraints: no text label on basket, no fruit, no other shapes, no scary shadows, no watermark.
-Aspect ratio: 1:1. Resolution: 2K. Export: 512×512 PNG with alpha.
-```
-
-| shape | SHAPE_DESC |
-|---|---|
-| circle | soft red ball / toddler ball icon |
-| square | rounded orange cube block icon |
-| triangle | yellow stacking pyramid / triangle block icon |
-| heart | green rounded cartoon heart icon |
-| star | violet five-point star icon |
-
-## Промпт — игрушка (шаблон)
-
-Тот же `{SHAPE_DESC}` и цвет, что у парной корзинки; **один** объект, не сцена.
-
-```
-Subject: a single toddler sorting toy — {SHAPE_DESC}, solid {COLOR_NAME} ({COLOR_HEX}),
-friendly cartoon prop, chunky and graspable look.
-Action: static, slight soft shadow under object only (or none for alpha).
-Setting: isolated, transparent background.
-Style: (copy Style block from GENERATION-GUIDE §2 verbatim).
-Composition: object centered, fills ~70% of frame height, silhouette matches basket icon exactly.
-Constraints: no basket, no text, no face on geometric shapes, no extra decorations, no watermark.
-Aspect ratio: 1:1. Resolution: 2K. Export: 512×512 PNG with alpha.
-```
-
-## Порядок генерации (рекомендация)
-
-1. Одна игрушка + её корзинка (circle/red) — проверить **совпадение силуэта**.
-2. Остальные 4 пары тем же шаблоном.
-3. Фон — когда пары утверждены (подогнать контраст лотка).
-4. MEGAFILE: 5 пар промптов + 1 фон (`docs/assets/MEGAFILE.md`).
-
-## Звук / голос (не PNG)
-
-- SFX drop/success — общий банк или `sort-colors/sfx/` (TBD S16).
-- Похвала шага — короткие фразы без «корзинку»; ElevenLabs — `GENERATION-GUIDE` §11.
+- `sort-pickup.mp3`, 0,4 с: `a soft gentle cartoon "pup" pop of picking up a small toy, light and friendly, no music`
+- `sort-drop.mp3`, 0,5 с: `a soft muffled toy dropping into a plastic tub, one gentle hollow plop, friendly, no music`

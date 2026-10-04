@@ -32,7 +32,8 @@ MIT/Apache-инструменты для разработки (не встраи
 
 | Пакет | Назначение в проекте | Лицензия | Источник |
 |---|---|---|---|
-| `interactjs` | Drag&drop/тап для игр «Куда положить?», «Собери пазл» и «Собери фигурку» | **MIT** | https://interactjs.io/ |
+| `interactjs` | Drag&drop/тап для игр «Куда положить?» и «Собери пазл» | **MIT** | https://interactjs.io/ |
+| `planck` 1.5.0 | Физика песочницы «Собери что угодно!» (порт Box2D, добавлен 02.10.2026) | **MIT** | https://github.com/piqnt/planck.js |
 
 Добавлены 22.09.2026, проверено запуском `typecheck`/`test`/`build` — зелёные. Подробный
 разбор — `docs/assets/FREE-RESOURCES-RESEARCH.md` §1.
@@ -51,9 +52,9 @@ MIT/Apache-инструменты для разработки (не встраи
 
 | Набор | Автор | Лицензия | Где лежит в репозитории | Статус |
 |---|---|---|---|---|
-| Kenney Game Icons (105 иконок) | Kenney (kenney.nl) | **CC0 1.0** (общественное достояние, атрибуция не обязательна) | `public/assets/ui/ui-*.png` (6 файлов: home/back/parent-gate/settings/sound-on/sound-off) | Кандидат на финал — ждёт визуального подтверждения владельца |
-| Kenney Interface Sounds (100 звуков) | Kenney (kenney.nl) | **CC0 1.0** | `public/assets/_candidates/ui-sounds/*.ogg` (16 файлов-кандидатов) | Кандидаты — владелец должен прослушать и выбрать финальный файл на каждую из 5 UI-звук-ролей |
-| Kenney Animal Pack Redux (30 животных × 8 стилей) | Kenney (kenney.nl) | **CC0 1.0** | `public/assets/_dev-placeholders/bank/*.png` (18 файлов) | **Временная заглушка для разработки** — не для финального релиза, заменится на Nano Banana Pro арт |
+| Kenney Game Icons (105 иконок) | Kenney (kenney.nl) | **CC0 1.0** (общественное достояние, атрибуция не обязательна) | `archive/public-assets/ui/ui-*.png` (6 файлов: home/back/parent-gate/settings/sound-on/sound-off) | **В архиве с 0.22.1** — в игре не используются (иконки — `public/assets/ui/icons/icon-*.png`) |
+| Kenney Interface Sounds (100 звуков) | Kenney (kenney.nl) | **CC0 1.0** | `archive/public-assets/_candidates/ui-sounds/*.ogg` (16 файлов-кандидатов) | **В архиве с 0.22.1** — в игре не используются (звуки хаба — `public/assets/audio/`) |
+| Kenney Animal Pack Redux (30 животных × 8 стилей) | Kenney (kenney.nl) | **CC0 1.0** | `archive/public-assets/_dev-placeholders/bank/*.png` (18 файлов) | **В архиве с 0.22.1** — черновая заглушка, в игре не используется |
 | `crow_caw.wav` (ворона/птицы) | OpenGameArt (CC0) | **CC0** | `public/assets/games/sound-world/sfx/sparrow.wav`, `crow.wav` (копия одного файла) | MVP-заглушка для воробья; заменить на мягкий CC0 из Critter Zone |
 | `dog_barking_mono.wav` | Brandon Morris (OGA, CC0) | **CC0** | `public/assets/games/sound-world/sfx/dog.wav` | MVP; прослушать — не слишком резкий для 2–3 лет |
 | Буквы RU/EN `letter-*.wav` | Сгенерировано **локально** скриптом `scripts/bootstrap-sound-world-sfx.ps1` (Windows **SAPI**, голос системы) | Условия голоса Microsoft / ОС — **не** сторонний скачанный пак; перед коммерческим релизом заменить на записанные/ CC0 клипы | `public/assets/games/sound-world/sfx/letter-ru-*.wav`, `letter-en-*.wav` (59 файлов) | Рабочий черновик; финал — TTS/Rhvoice/ElevenLabs по `GENERATION-GUIDE.md` |

@@ -328,14 +328,16 @@ Old balloon card layout, huge sky+hills filling the icon, different button shape
 [TEXT_IN_IMAGE] "Собери" / "пазл"
 ```
 
-### 5. Собери фигурку — `card-shape-build.jpg`
+### 5. Собери что угодно! — `card-shape-build.jpg` (02.10.2026, сгенерировал Cursor)
+
+Старая карточка «Собери фигурку» — `archive/assets-master/menu/card-shape-build-v1.jpg`.
 
 ```
 [Paste общий префикс]
 
-[SUBJECT] Simple house from basic shapes: green square body, coral triangle roof, sky-blue circle window, cream door — chunky, upper-center. Background: soft cream-to-green pastel wash (outdoor hill optional).
+[SUBJECT] A playful balanced tower of chunky painted wooden toy blocks, upper-center: a coral arch block at the bottom, a sky-blue cube on it, a sunny-yellow triangle roof on the cube, and a long mint-green plank balanced across the top like a seesaw with a small coral ball on one end; a small red party balloon with a string floats to the right. Background inside button: soft cream-to-pale-green pastel wash.
 
-[TEXT_IN_IMAGE] "Собери" / "фигурку"
+[TEXT_IN_IMAGE] "Собери" / "что угодно!"
 ```
 
 ### 6. Прятки — `card-hide-seek.jpg`
@@ -501,6 +503,10 @@ Aspect ratio: 1:1. Resolution: 2K.
 
 Голос и sfx — `balloon-pop-VOICE-SCRIPT.md`, `MUSIC-BGM-MANIFEST.md`. Старые `*-ART.md` в архиве — не SSOT. **Канон — этот гайд + BRANDBOOK.**
 
+### 7.3 «Куда положить?» — предметы, ящик, наклейки, фон (01.10.2026)
+
+Полные копируемые промпты: **[sort-colors-ART.md](sort-colors-ART.md)** — 7 листов предметов (один предмет в 4 цветах в ряд, белый фон), пустой сливочный ящик под 45° на `#D6EEF8`, лист 7 наклеек (тёмно-синий контур), фон «детская» 4:3. Объём — как кубики на плитке «Учимся считать» (Image B), матовая гуашь, не глянцевый пластик. Озвучка — [sort-colors-VOICE-SCRIPT.md](sort-colors-VOICE-SCRIPT.md), 158 фраз одним треком.
+
 ### 7.2 «Изучаем звуки» — промпты карточек (26.09.2026)
 
 Полные копируемые промпты: **[sound-world-CARD-ART.md](sound-world-CARD-ART.md)** (18 животных, 6 транспорт, 5 иконок инструментов с названием, 5 инструментов 4:3 на вырезку, без бубна, 2 листа алфавита).
@@ -560,7 +566,7 @@ Image A = `ref-style-board.jpg`. Карточки **1:1** на белом `#FFFF
 
 ---
 
-#### C. Мяу-ведущий (голова/бust + облачко речи) — `balloon-pop-meow-presenter-sheet.jpg`
+#### C. Мяу-ведущий (голова/bust + облачко речи) — `balloon-pop-meow-presenter-sheet.jpg`
 
 **Куда:** `assets-master/games/balloon-pop/balloon-pop-meow-presenter-sheet.jpg` → Cursor: 3 PNG + опционально 2 кадра idle для «дыхания».
 

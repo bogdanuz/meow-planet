@@ -4,8 +4,8 @@
 .app-shell--coming-soon {
   position: relative;
   grid-template-rows: 1fr;
-  height: 100dvh;
-  max-height: 100dvh;
+  height: 100%;
+  max-height: 100%;
   overflow: hidden;
   padding: 0;
   background: #f7fbff;
@@ -49,13 +49,22 @@
   position: absolute;
   top: 0;
   left: 0;
+  right: 0;
   z-index: 4;
+  display: grid;
+  grid-template-columns: 4.5rem minmax(0, 1fr) 4.5rem;
+  align-items: center;
+  gap: 0.75rem;
   padding:
     max(0.85rem, env(safe-area-inset-top))
-    0
+    max(0.85rem, env(safe-area-inset-right))
     0
     max(0.85rem, env(safe-area-inset-left));
   pointer-events: none;
+}
+
+.parent-bar .parent-hub__tabs {
+  pointer-events: auto;
 }
 
 .parent-bar__back.touch-btn,
@@ -77,19 +86,47 @@
     0 6px 14px rgb(26 74 107 / 16%);
 }
 
+/* Настройки на весь экран под полосой «Назад» + вкладки. */
 .parent-hub {
-  position: relative;
+  position: absolute;
   z-index: 2;
-  width: min(44rem, calc(100% - 2rem));
-  max-height: calc(100% - 5.4rem);
-  margin: 5.2rem auto 1rem;
-  display: grid;
-  gap: 0.85rem;
-  overflow: auto;
+  inset:
+    calc(max(0.85rem, env(safe-area-inset-top)) + 5.3rem)
+    max(1rem, env(safe-area-inset-right))
+    max(1rem, env(safe-area-inset-bottom))
+    max(1rem, env(safe-area-inset-left));
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+}
+
+.parent-settings,
+.parent-about-host {
+  flex: 1;
+  min-height: 0;
+}
+
+.parent-settings[hidden],
+.parent-about-host[hidden] {
+  display: none;
+}
+
+.parent-about-host {
+  overflow-x: hidden;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  -webkit-overflow-scrolling: touch;
+  touch-action: pan-y;
   padding: 0.25rem 0.15rem 1.2rem;
 }
 
+.parent-about-host > .parent-about {
+  max-width: 56rem;
+  margin: 0 auto;
+}
+
 .parent-hub__tabs {
+  grid-column: 2;
   display: flex;
   flex-wrap: wrap;
   gap: 0.55rem;
@@ -115,18 +152,117 @@
     0 8px 16px rgb(26 74 107 / 18%);
 }
 
-.parent-settings {
-  width: min(36rem, 100%);
-  justify-self: center;
-}
-
+/* Как настройки iPad: слева разделы, справа пункты выбранного. */
 .settings-form {
   display: grid;
-  gap: 0.75rem;
-  padding: 1rem 1.1rem 1.15rem;
+  grid-template-columns: minmax(14rem, 19rem) minmax(0, 1fr);
+  gap: 1rem;
+  height: 100%;
+  min-height: 0;
+}
+
+.settings-nav,
+.settings-pages {
+  min-height: 0;
+  overflow: auto;
   border-radius: 1.35rem;
-  background: rgb(255 252 246 / 90%);
+  background: rgb(255 252 246 / 92%);
   box-shadow: 0 10px 24px rgb(26 74 107 / 12%);
+}
+
+.settings-nav {
+  display: flex;
+  flex-direction: column;
+  gap: 0.45rem;
+  padding: 0.75rem;
+}
+
+.settings-nav__item {
+  display: flex;
+  align-items: center;
+  gap: 0.8rem;
+  min-height: 4.4rem;
+  padding: 0.45rem 0.75rem;
+  border: none;
+  border-radius: 1.05rem;
+  background: transparent;
+  color: var(--text);
+  font: inherit;
+  font-size: 1.1rem;
+  font-weight: 700;
+  text-align: left;
+  cursor: pointer;
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+  transition: background-color 140ms ease, box-shadow 140ms ease;
+}
+
+.settings-nav__item.is-active {
+  background: #fff;
+  box-shadow:
+    0 0 0 3px rgb(126 184 218 / 85%),
+    0 6px 14px rgb(26 74 107 / 14%);
+}
+
+.settings-nav__icon {
+  flex: 0 0 auto;
+  width: 3.2rem;
+  height: 3.2rem;
+  border-radius: 0.8rem;
+  object-fit: contain;
+}
+
+.settings-nav__label {
+  min-width: 0;
+  line-height: 1.15;
+}
+
+.settings-pages {
+  padding: 1.2rem 1.4rem 1.4rem;
+}
+
+.settings-page {
+  display: grid;
+  align-content: start;
+  gap: 1rem;
+  max-width: 48rem;
+}
+
+.settings-page[hidden] {
+  display: none;
+}
+
+.settings-page__title {
+  margin: 0;
+  font-size: 1.65rem;
+}
+
+.settings-group {
+  display: grid;
+  gap: 0.65rem;
+  padding: 0.95rem 1.1rem 1.05rem;
+  border: 2px solid rgb(126 184 218 / 28%);
+  border-radius: 1.15rem;
+  background: rgb(255 255 255 / 72%);
+}
+
+.settings-group__title {
+  margin: 0;
+  color: #4f6f84;
+  font-size: 0.95rem;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+}
+
+.settings-group .settings-companion {
+  padding: 0;
+  border: none;
+}
+
+.settings-pair {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.7rem;
 }
 
 .settings-field {
@@ -163,6 +299,31 @@
 .settings-toggle {
   width: 1.5rem;
   height: 1.5rem;
+}
+
+.settings-cheats {
+  display: grid;
+  gap: 0.55rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  line-height: 1.4;
+}
+
+.settings-cheats li {
+  padding: 0.5rem 0.8rem;
+  border-radius: 0.9rem;
+  background: rgb(255 248 236 / 80%);
+}
+
+.settings-cheats b {
+  color: #8a5a2e;
+}
+
+.settings-kinds {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(11rem, 1fr));
+  column-gap: 1.4rem;
 }
 
 .settings-audio-btn.touch-btn {
@@ -228,6 +389,8 @@
 .settings-actions {
   display: flex;
   flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
   gap: 0.65rem;
 }
 
@@ -259,6 +422,13 @@
   margin: 0 0 0.75rem;
   text-align: center;
   font-weight: 600;
+}
+
+.parent-about__helper {
+  margin: 0 auto 1rem;
+  max-width: 40rem;
+  text-align: center;
+  opacity: 0.85;
 }
 
 .parent-about__list {

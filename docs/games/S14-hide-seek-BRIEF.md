@@ -21,7 +21,7 @@ SSOT арта (черновик): **`docs/assets/hide-seek-ART.md`**
 ## Сейчас в коде
 
 - `src/games/hide-seek/` — `HIDE_SCENES` 5×5, `shuffleTargetPositions`, `pickTarget`, `evaluateTap`.
-- Shell: `app-shell--hide-seek` — компактный chrome, **без** Мяu / task-cue / дублирующего hint.
+- Shell: `app-shell--hide-seek` — компактный chrome, **без** Мяу / task-cue / дублирующего hint.
 - `praise.ts`, `hide-seek-sfx.ts`; e2e `tests/e2e/hide-seek.spec.ts`.
 
 ## Решения викторины (24.09.2026)

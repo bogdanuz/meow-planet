@@ -1,14 +1,26 @@
 /**
- * Пазл 2×2: рама, 4 фиксированных слота (toddler frame puzzle).
+ * «Собери пазл» (S16): 17 картинок, главный герой — сова, Мяу рядом.
+ * Промпты и порядок — docs/assets/puzzle-ART.md.
  */
 
 export const PUZZLE_SCENE_IDS = [
-  'meow-home',
-  'meadow',
-  'forest',
-  'sea',
-  'winter',
-  'summer',
+  'bake',
+  'picnic',
+  'bath',
+  'beach',
+  'snowman',
+  'garden',
+  'bedtime',
+  'birthday',
+  'train',
+  'autumn',
+  'music',
+  'rain',
+  'farm',
+  'painting',
+  'garage',
+  'dentist',
+  'newyear',
 ] as const
 
 export type PuzzleSceneId = (typeof PUZZLE_SCENE_IDS)[number]
@@ -16,40 +28,53 @@ export type PuzzleSceneId = (typeof PUZZLE_SCENE_IDS)[number]
 export type PuzzleScene = {
   id: PuzzleSceneId
   titleRu: string
-  /** CSS-цвет заглушки фона */
+  /** Основной цвет заглушки, пока нет картинки. */
   tint: string
-  /** Файл в `public/assets/games/puzzle/scenes/` (S16) */
-  imageFile: string
 }
 
-/** Щедрый радиус «магнита» для рамы 2×2 (px, центр кусочка → центр слота). */
 /** Запас для resolveMagnetDrop после попадания в расширенный rect слота. */
 export const PUZZLE_FRAME_MAGNET_PX = 160
 
 export const PUZZLE_SCENES: readonly PuzzleScene[] = [
-  { id: 'meow-home', titleRu: 'Мяу дома', tint: '#f4c27a', imageFile: 'puzzle-meow-home.png' },
-  { id: 'meadow', titleRu: 'Поляна', tint: '#8fce6b', imageFile: 'puzzle-meadow.png' },
-  { id: 'forest', titleRu: 'Лес', tint: '#5cbf7a', imageFile: 'puzzle-forest.png' },
-  { id: 'sea', titleRu: 'Море', tint: '#5aa6e0', imageFile: 'puzzle-sea.png' },
-  { id: 'winter', titleRu: 'Зима', tint: '#c5d8f0', imageFile: 'puzzle-winter.png' },
-  { id: 'summer', titleRu: 'Лето', tint: '#ffe08a', imageFile: 'puzzle-summer.png' },
+  { id: 'bake', titleRu: 'Пирог', tint: '#f4b860' },
+  { id: 'picnic', titleRu: 'Пикник', tint: '#8fce6b' },
+  { id: 'bath', titleRu: 'Купание', tint: '#7cc4e8' },
+  { id: 'beach', titleRu: 'Море', tint: '#4fb3d9' },
+  { id: 'snowman', titleRu: 'Снеговик', tint: '#b9d4f0' },
+  { id: 'garden', titleRu: 'Сад', tint: '#6cc070' },
+  { id: 'bedtime', titleRu: 'Сказка на ночь', tint: '#5b6fb8' },
+  { id: 'birthday', titleRu: 'День рождения', tint: '#f08a9c' },
+  { id: 'train', titleRu: 'Паровозик', tint: '#e8604c' },
+  { id: 'autumn', titleRu: 'Осень', tint: '#e8923a' },
+  { id: 'music', titleRu: 'Оркестр', tint: '#b07ad8' },
+  { id: 'rain', titleRu: 'Дождик', tint: '#5aa0d0' },
+  { id: 'farm', titleRu: 'Ферма', tint: '#d9a05a' },
+  { id: 'painting', titleRu: 'Рисуем', tint: '#f2c94c' },
+  { id: 'garage', titleRu: 'Автосервис', tint: '#3d5a99' },
+  { id: 'dentist', titleRu: 'Зубной врач', tint: '#8fd3c7' },
+  { id: 'newyear', titleRu: 'Новый год', tint: '#d9483b' },
 ]
-
-export type PuzzlePieceId = 0 | 1 | 2 | 3
-
-/** Слоты 2×2: tl=0, tr=1, bl=2, br=3 */
-export const PUZZLE_SLOTS: readonly PuzzlePieceId[] = [0, 1, 2, 3]
-
-export function pieceFits(pieceId: PuzzlePieceId, slotId: PuzzlePieceId): boolean {
-  return pieceId === slotId
-}
-
-export function allSlotsFilled(filled: ReadonlySet<PuzzlePieceId>): boolean {
-  return PUZZLE_SLOTS.every((id) => filled.has(id))
-}
 
 export function getPuzzleScene(id: PuzzleSceneId): PuzzleScene {
   const scene = PUZZLE_SCENES.find((s) => s.id === id)
   if (!scene) throw new Error(`Unknown puzzle scene: ${id}`)
   return scene
+}
+
+export function isPuzzleSceneId(value: unknown): value is PuzzleSceneId {
+  return typeof value === 'string' && (PUZZLE_SCENE_IDS as readonly string[]).includes(value)
+}
+
+/** Для «Ещё»: следующая по кругу, сначала несобранные. */
+export function nextUnsolvedScene(
+  current: PuzzleSceneId | null,
+  solved: ReadonlySet<string>,
+): PuzzleSceneId {
+  const ids = PUZZLE_SCENE_IDS
+  const start = current ? ids.indexOf(current) : -1
+  for (let step = 1; step <= ids.length; step += 1) {
+    const id = ids[(start + step) % ids.length]!
+    if (id !== current && !solved.has(id)) return id
+  }
+  return ids[(start + 1) % ids.length]!
 }

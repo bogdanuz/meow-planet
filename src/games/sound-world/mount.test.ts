@@ -3,6 +3,7 @@ import path from 'node:path'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import { soundWorldGame } from './index'
 import { DEFAULT_SETTINGS } from '../../shared/storage'
+import { isMusicDucked } from '../../shared/audio-engine'
 
 function mountContext() {
   return {
@@ -111,6 +112,27 @@ describe('sound-world mount chrome', () => {
     back!.click()
     expect(ctx.hubNavigation.goMenu).not.toHaveBeenCalled()
     expect(host.querySelector('[data-card-id="drum"]')).not.toBeNull()
+  })
+
+  it('внутри инструмента музыка затихает, у списка инструментов — возвращается', () => {
+    const host = document.createElement('div')
+    soundWorldGame.mount(host, mountContext())
+    expect(isMusicDucked()).toBe(false)
+    host.querySelector<HTMLButtonElement>('[data-main-tab="instruments"]')?.click()
+    host.querySelector<HTMLButtonElement>('[data-card-id="piano"]')?.click()
+    expect(isMusicDucked()).toBe(true)
+    host.querySelector<HTMLButtonElement>('[aria-label="К инструментам"]')?.click()
+    expect(isMusicDucked()).toBe(false)
+  })
+
+  it('выход из игры прямо из инструмента возвращает музыку', () => {
+    const host = document.createElement('div')
+    soundWorldGame.mount(host, mountContext())
+    host.querySelector<HTMLButtonElement>('[data-main-tab="instruments"]')?.click()
+    host.querySelector<HTMLButtonElement>('[data-card-id="piano"]')?.click()
+    expect(isMusicDucked()).toBe(true)
+    soundWorldGame.unmount()
+    expect(isMusicDucked()).toBe(false)
   })
 
   it('барабан — три цели по центру, без бубна в сетке', () => {

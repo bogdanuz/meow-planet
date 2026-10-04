@@ -38,14 +38,20 @@ Browser MCP exploration **does not** replace committed Playwright tests.
 
 ## Verification checklist before saying "done"
 
+**Scope = targeted** (owner 2026-10-02, `.cursor/rules/targeted-testing.mdc`): only what changed
+plus what interacts/overlaps with it. Full suites only when the owner explicitly asks
+(«проверь всё», «полная проверка», «все игры», «общий тест»…).
+
 Run for real and report output:
 
 1. `npm run typecheck`
-2. `npm run test`
+2. Affected unit files only: `npx vitest run tests/unit/<files>`
 3. `npm run build`
-4. UI/interaction changes: `npm run test:e2e -- --project=chromium`
-5. Любой runtime-файл, ассет, игра, Vite/PWA/build:
+4. UI/interaction changes: affected specs only —
+   `npx playwright test tests/e2e/<spec>.spec.ts --project=chromium --project=ipad-chromium`
+5. Runtime file/asset, Vite/PWA/build changes:
    `npm run test:e2e:boot` (production preview, не dev shortcut)
+6. Full `npm run test` + `npm run test:e2e` — only on the owner's explicit request.
 
 Forbidden without owner ask: `test.only`, unexplained `test.skip`, arbitrary `waitForTimeout`, weakening assertions to green CI.
 

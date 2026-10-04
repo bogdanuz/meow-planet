@@ -11,16 +11,29 @@ export type BalloonLayoutOptions = {
   fieldProfile?: 'free' | 'task'
 }
 
+/**
+ * Во сколько раз шарики крупнее, чем до теста на iPad (решение владельца 01.10.2026):
+ * большой ×1,5, маленький ×1,1. Те же множители стоят в balloon-pop.css.
+ */
+export const BALLOON_SIZE_BOOST: Record<BalloonSize, number> = {
+  sm: 1.1,
+  lg: 1.5,
+}
+
 /** Охранный радиус для **задания** (консервативно). */
 const TASK_GUARD_RADIUS: Record<BalloonSize, number> = {
-  sm: 10.5,
-  lg: 21,
+  sm: 10.5 * BALLOON_SIZE_BOOST.sm,
+  lg: 21 * BALLOON_SIZE_BOOST.lg,
 }
 
 /** Свобода: радиусы ближе к реальному rem на iPad при scale ≥ 0.82. */
 const FREE_GUARD_RADIUS: Record<BalloonSize, number> = {
-  sm: 8.5,
-  lg: 17,
+  sm: 8.5 * BALLOON_SIZE_BOOST.sm,
+  lg: 17 * BALLOON_SIZE_BOOST.lg,
+}
+
+export function balloonGuardRadius(size: BalloonSize, profile: 'free' | 'task'): number {
+  return profile === 'free' ? FREE_GUARD_RADIUS[size] : TASK_GUARD_RADIUS[size]
 }
 
 const MEOW_BUBBLE_GUARD = {
@@ -404,6 +417,83 @@ export function layoutBalloonsForField(
     guardGapPct,
   )
   return { layoutScale: scale, modeScale, placementsById: map }
+}
+
+/** Ниже этого масштаба разница размеров уже заметно теряется — лучше убрать шарик. */
+export const KEEP_SIZE_SCALE_MIN = 0.9
+export const FIT_MIN_COUNT = { free: 5, task: 3 } as const
+
+export type BalloonFitOptions<T extends SizedBalloon> = BalloonLayoutOptions & {
+  /** Цели задания: их никогда не убираем. */
+  isRequired?: (balloon: T) => boolean
+  minCount?: number
+}
+
+function pickDropVictim<T extends SizedBalloon>(
+  balloons: readonly T[],
+  isRequired: (balloon: T) => boolean,
+): T | null {
+  const optional = balloons.filter((b) => !isRequired(b))
+  // Один «не тот» шарик остаётся всегда, иначе задание теряет выбор.
+  if (optional.length <= 1) return null
+  const countOf = (size: BalloonSize) => balloons.filter((b) => b.size === size).length
+  // Большие занимают больше всего места, но хотя бы один большой и один маленький
+  // остаются — иначе не видно разницы размеров.
+  const lg = optional.filter((b) => b.size === 'lg')
+  if (lg.length > 0 && countOf('lg') > 1) return lg[lg.length - 1]!
+  const sm = optional.filter((b) => b.size === 'sm')
+  if (sm.length > 0 && countOf('sm') > 1) return sm[sm.length - 1]!
+  return optional[optional.length - 1] ?? null
+}
+
+/**
+ * Шарики крупные: если весь набор не помещается без заметного уменьшения,
+ * сначала убираем лишние шарики (не цели задания), и только потом уменьшаем масштаб.
+ */
+export function fitBalloonsToField<T extends SizedBalloon>(
+  balloons: readonly T[],
+  rng: Rng = Math.random,
+  options: BalloonFitOptions<T> = {},
+): { plan: BalloonLayoutPlan; kept: T[] } {
+  const profile = options.fieldProfile ?? 'task'
+  const minCount = options.minCount ?? FIT_MIN_COUNT[profile]
+  const isRequired = options.isRequired ?? (() => false)
+  let kept = [...balloons]
+  while (true) {
+    const plan = probeLayout(kept, rng, options, KEEP_SIZE_SCALE_MIN)
+    if (plan) return { plan, kept }
+    if (kept.length <= minCount) break
+    const victim = pickDropVictim(kept, isRequired)
+    if (!victim) break
+    kept = kept.filter((b) => b !== victim)
+  }
+  // Меньше шариков уже нельзя — полный поиск с уменьшением масштаба.
+  return { plan: layoutBalloonsForField(kept, rng, options), kept }
+}
+
+/** Быстрая проба: помещаются ли шарики без уменьшения ниже minScale. */
+function probeLayout(
+  balloons: readonly SizedBalloon[],
+  rng: Rng,
+  options: BalloonLayoutOptions,
+  minScale: number,
+): BalloonLayoutPlan | null {
+  const modeScale = options.modeScale ?? 1
+  const profile = options.fieldProfile ?? 'task'
+  const guardGapPct = profile === 'free' ? 2.2 : 3.5
+  if (balloons.length === 0) return { layoutScale: 1, modeScale, placementsById: new Map() }
+  const list = [...balloons]
+  const step = profile === 'free' ? 0.018 : 0.032
+  for (let attempt = 0; attempt < 24; attempt += 1) {
+    for (let layoutScale = 1; layoutScale >= minScale - 1e-9; layoutScale -= step) {
+      const map =
+        profile === 'free'
+          ? tryPlaceFreeScattered(list, layoutScale, modeScale, rng, guardGapPct)
+          : tryPlaceGreedyTask(list, layoutScale, modeScale, rng, guardGapPct)
+      if (map) return { layoutScale, modeScale, placementsById: map }
+    }
+  }
+  return null
 }
 
 export function layoutBalloonPositions(

@@ -105,6 +105,18 @@ describe('sound-world card art', () => {
     }
   })
 
+  it('все звуки в форматах, которые играет iPad (без ogg), и файлы на месте', () => {
+    const sfx = path.join(ROOT, 'sfx')
+    const files = JSON.parse(readFileSync(path.join(sfx, 'sfx-files.json'), 'utf8')) as Record<
+      string,
+      string
+    >
+    for (const [id, ext] of Object.entries(files)) {
+      expect(['mp3', 'wav'], id).toContain(ext)
+      expect(existsSync(path.join(sfx, `${id}.${ext}`)), id).toBe(true)
+    }
+  })
+
   it('русская нарезка: А отдельно от Б, Й не проглатывается', () => {
     const cuts = JSON.parse(
       readFileSync(path.join(ROOT, 'sfx', 'letter-ru-cuts.json'), 'utf8'),

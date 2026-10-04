@@ -55,11 +55,14 @@ Build также защищает iPad cold-start от случайных тяж
 
 ```bash
 npm run typecheck
-npm run test
+npx vitest run tests/unit/<затронутые>
 npm run build
 npm run test:e2e:boot
-npm run test:e2e -- --project=chromium
+npx playwright test tests/e2e/<затронутые>.spec.ts
 ```
+
+Unit и e2e — только затронутые и пересекающиеся файлы; полный `npm run test` и
+`npm run test:e2e` — по явной просьбе владельца (`.cursor/rules/targeted-testing.mdc`).
 
 `npm run test:e2e:boot` запускает `vite preview`, а не dev-server, и проверяет:
 

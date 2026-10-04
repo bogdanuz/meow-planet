@@ -199,6 +199,8 @@ const destCx = canvasW / 2
 
 await mkdir(publicDir, { recursive: true })
 for (let i = 0; i < fitted.length; i++) {
+  // Кадр 4 (улыбка) меню не показывает — см. OLLI_DANCE_FRAMES в src/app/menu-cards.ts.
+  if (i + 1 === 4) continue
   const frame = fitted[i]
   const stat = stats[i]
   const out = Buffer.alloc(canvasW * canvasH * 4)

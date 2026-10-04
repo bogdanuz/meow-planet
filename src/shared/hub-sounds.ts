@@ -12,6 +12,8 @@ export const hubSoundUrl = {
   music: () => asset('hub-music.mp3'),
   gameMusic: () => asset('game-music.mp3'),
   softMiss: () => asset('soft-miss.mp3'),
+  pickup: () => asset('pickup.mp3'),
+  drop: () => asset('drop.mp3'),
 }
 
 /** Без общей фоновой петли — своя музыка или тишина. */
@@ -90,4 +92,23 @@ export function playBalloonPopSound(audio: AudioManager): void {
 /** Тихий звук «не то». Один на все игры. */
 export function playSoftMiss(audio: AudioManager): void {
   void audio.playUrl('sfx', hubSoundUrl.softMiss(), { volume: 0.5 })
+}
+
+/** «Взял» и «положил» — одни на все игры с перетаскиванием. */
+export function playPickupSound(audio: AudioManager): void {
+  void audio.playUrl('sfx', hubSoundUrl.pickup(), { volume: 0.7 })
+}
+
+export function playDropSound(audio: AudioManager): void {
+  void audio.playUrl('sfx', hubSoundUrl.drop(), { volume: 0.7 })
+}
+
+/** Короткая мелодия «готово!» в конце картинки (пазл, прятки). */
+export function playCelebrationTune(audio: AudioManager): void {
+  const notes = [523, 659, 784, 1047] as const
+  notes.forEach((freq, i) => {
+    window.setTimeout(() => {
+      void audio.playTone(freq, { channel: 'sfx', durationSec: 0.22, gain: 0.17 })
+    }, i * 110)
+  })
 }

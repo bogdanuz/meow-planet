@@ -26,20 +26,20 @@ export function seamClassNamesForSlot(
   const classes: string[] = []
   const n = seamNeighbors(id, grid)
   if (n.right !== undefined && filled.has(id) && filled.has(n.right)) {
-    classes.push('puzzle-game__slot--seam-right-off')
+    classes.push('puzzle__slot--seam-right-off')
   }
   if (n.bottom !== undefined && filled.has(id) && filled.has(n.bottom)) {
-    classes.push('puzzle-game__slot--seam-bottom-off')
+    classes.push('puzzle__slot--seam-bottom-off')
   }
   return classes
 }
 
 /** Финал: все швы исчезают с анимацией. */
 export function applySeamsMergedAll(board: HTMLElement): void {
-  for (const slot of board.querySelectorAll<HTMLElement>('.puzzle-game__slot')) {
+  for (const slot of board.querySelectorAll<HTMLElement>('.puzzle__slot')) {
     slot.classList.add(
-      'puzzle-game__slot--seam-right-off',
-      'puzzle-game__slot--seam-bottom-off',
+      'puzzle__slot--seam-right-off',
+      'puzzle__slot--seam-bottom-off',
     )
   }
 }
@@ -49,10 +49,10 @@ export function applySeamsToBoard(
   filled: ReadonlySet<number>,
   grid: PuzzleGrid,
 ): void {
-  for (const slot of board.querySelectorAll<HTMLElement>('.puzzle-game__slot')) {
+  for (const slot of board.querySelectorAll<HTMLElement>('.puzzle__slot')) {
     slot.classList.remove(
-      'puzzle-game__slot--seam-right-off',
-      'puzzle-game__slot--seam-bottom-off',
+      'puzzle__slot--seam-right-off',
+      'puzzle__slot--seam-bottom-off',
     )
     const id = Number(slot.dataset.slotId)
     if (!Number.isFinite(id)) continue

@@ -286,13 +286,13 @@ const sheetBuf = await sharp({
   .composite(aligned.map((input, index) => ({ input, left: index * canvasW, top: 0 })))
   .png()
   .toBuffer()
-await sharp(sheetBuf).toFile(path.join(publicDir, 'menu-meow-dance-sheet.png'))
+// Лист и превью — только для просмотра; в public/ (и в offline-кэш) не кладём.
 await sharp(sheetBuf).toFile(path.join(masterDir, 'menu-meow-dance-sheet.png'))
 
 const order = [0, 1, 2, 3, 4, 5, 4, 3, 2, 1]
 await sharp(order.map((index) => aligned[index]), { join: { animated: true } })
   .webp({ loop: 0, delay: order.map(() => 180) })
-  .toFile(path.join(publicDir, 'menu-meow-dance-preview.webp'))
+  .toFile(path.join(masterDir, 'menu-meow-dance-preview.webp'))
 
 
 console.log('canvas', canvasW, canvasH)

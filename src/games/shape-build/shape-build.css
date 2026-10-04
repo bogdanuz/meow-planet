@@ -1,249 +1,1318 @@
-/* Собери фигурку — галерея слева, крупная доска, float drag */
+/* Собери что угодно! — рамка S16: детская на весь экран; слева назад + звук,
+   справа инструменты с подписью и шестерёнка; шкаф выезжает справа */
 
-.shape-build {
-  flex: 1;
-  min-height: 0;
-  max-height: 100%;
+.app-shell--shape-build {
+  grid-template-rows: 1fr;
+  gap: 0;
   height: 100%;
-  display: grid;
-  grid-template-columns: clamp(4.25rem, 11vw, 6rem) minmax(0, 1fr);
-  gap: clamp(0.3rem, 0.8vw, 0.5rem);
-  padding: 0 0.2rem 0.15rem;
+  max-height: 100%;
+  overflow: hidden;
+  padding: 0;
+}
+
+.app-shell--shape-build .chrome[hidden],
+.app-shell--shape-build .chrome__mascot[hidden] {
+  display: none !important;
+  pointer-events: none !important;
+}
+
+.app-shell--shape-build .chrome__main {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  height: 100%;
   overflow: hidden;
 }
 
-.shape-build__picker {
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
-  gap: clamp(0.25rem, 0.6vh, 0.4rem);
-  overflow-y: auto;
-  overflow-x: hidden;
-  padding: 0.1rem 0.05rem;
+.app-shell--shape-build .screen--game {
+  flex: 1;
+  height: 100%;
   min-height: 0;
-  max-height: 100%;
-  scrollbar-width: none;
+  overflow: hidden;
+  padding-bottom: 0;
 }
 
-.shape-build__picker::-webkit-scrollbar {
+.shape-build {
+  --bar-h: calc(max(0.85rem, env(safe-area-inset-top)) + 5.4rem + 0.6rem);
+  --side: max(1rem, env(safe-area-inset-left));
+  --side-r: max(1rem, env(safe-area-inset-right));
+  --bottom: max(1rem, env(safe-area-inset-bottom));
+  --cab-w: clamp(17.5rem, 28vw, 22rem);
+  --floor: 10%;
+
+  position: relative;
+  flex: 1;
+  height: 100%;
+  min-height: 100%;
+  overflow: hidden;
+  background: #fbe8d2;
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+.shape-build [hidden] {
+  display: none !important;
+}
+
+.shape-build__room,
+.shape-build__scene,
+.shape-build__overlay,
+.shape-build__flash {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+}
+
+.shape-build__room {
+  z-index: 0;
+  pointer-events: none;
+}
+
+.shape-build__scene {
+  z-index: 1;
+  touch-action: none;
+}
+
+/* ── «Замри!» и «Гравитация»: мягкая подсветка комнаты ── */
+.shape-build__overlay {
+  z-index: 2;
+  pointer-events: none;
+}
+
+.shape-build__overlay::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  opacity: 0;
+  background: linear-gradient(180deg, rgb(52 62 124 / 34%) 0%, rgb(52 62 124 / 12%) 60%, transparent 90%);
+  transition: opacity 0.5s ease;
+}
+
+.shape-build[data-gravity='off'] .shape-build__overlay::before {
+  opacity: 1;
+}
+
+.shape-build[data-gravity='off'] .shape-build__spark {
+  opacity: 0.8;
+  animation: shape-build-float 3.4s ease-in-out infinite;
+  animation-delay: calc(var(--i) * -0.29s);
+}
+
+/* «Бум!»: трясётся комната, а не шапка */
+.shape-build.is-shaking .shape-build__room,
+.shape-build.is-shaking .shape-build__scene {
+  animation: shape-build-shake 0.6s ease-out;
+}
+
+@keyframes shape-build-shake {
+  10% {
+    translate: -10px 4px;
+  }
+
+  25% {
+    translate: 9px -5px;
+  }
+
+  40% {
+    translate: -7px 3px;
+  }
+
+  60% {
+    translate: 5px -2px;
+  }
+
+  80% {
+    translate: -2px 1px;
+  }
+}
+
+.shape-build__spark {
+  position: absolute;
+  width: 0.9rem;
+  height: 0.9rem;
+  opacity: 0;
+  background: radial-gradient(circle, #fff9d8 0 30%, rgb(247 201 92 / 0%) 70%);
+  border-radius: 50%;
+  transition: opacity 0.4s ease;
+}
+
+/* «Замри!»: комната чуть голубеет, как будто подморозило */
+.shape-build[data-frozen='1'] .shape-build__overlay {
+  background: linear-gradient(180deg, rgb(140 200 238 / 26%) 0%, rgb(140 200 238 / 14%) 100%);
+}
+
+.shape-build[data-frozen='1'] .shape-build__spark {
+  opacity: 1;
+  animation: shape-build-float 2.6s ease-in-out infinite;
+  animation-delay: calc(var(--i) * -0.23s);
+}
+
+@keyframes shape-build-float {
+  0%,
+  100% {
+    translate: 0 0;
+    scale: 0.8;
+  }
+
+  50% {
+    translate: 0 -1.4rem;
+    scale: 1.2;
+  }
+}
+
+.shape-build__flash {
+  z-index: 9;
+  background: #fffdf8;
+  opacity: 0;
+  pointer-events: none;
+}
+
+.shape-build__flash.is-on {
+  animation: shape-build-flash 0.5s ease-out;
+}
+
+@keyframes shape-build-flash {
+  from {
+    opacity: 0.85;
+  }
+
+  to {
+    opacity: 0;
+  }
+}
+
+/* ── Верхняя полоса ── */
+.shape-build__bar {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 6;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  padding: max(0.85rem, env(safe-area-inset-top)) var(--side-r) 0 var(--side);
+  pointer-events: none;
+}
+
+.shape-build__bar-nav,
+.shape-build__bar-tools {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  pointer-events: auto;
+}
+
+.shape-build__bar-tools .game-tool.touch-btn {
+  min-width: 4.9rem;
+}
+
+/* «Замри!» включена — кнопка мигает, чтобы было видно, почему всё висит */
+.shape-build[data-frozen='1'] .shape-build__bar-tools [data-role='wand'] {
+  animation: shape-build-blink 1.2s ease-in-out infinite;
+}
+
+@keyframes shape-build-blink {
+  50% {
+    box-shadow:
+      0 0 0 4px #fffdf8,
+      0 0 0 9px rgb(185 163 227 / 90%);
+  }
+}
+
+/* ── «Ещё»: «Галерея» и «Как играть» ── */
+.shape-build__more {
+  position: absolute;
+  top: calc(var(--bar-h) - 0.2rem);
+  right: 5rem;
+  z-index: 7;
+  display: flex;
+  gap: 0.5rem;
+  padding: 0.6rem;
+  border-radius: 1.3rem;
+  background: rgb(255 248 236 / 97%);
+  box-shadow:
+    0 12px 24px rgb(92 58 24 / 22%),
+    0 0 0 3px rgb(232 196 150 / 90%);
+}
+
+.shape-build__more .game-tool.touch-btn {
+  min-width: 5.6rem;
+}
+
+/* ── Кнопки у детали: кольцо вокруг неё, у каждой подпись, главное действие крупнее ── */
+.shape-build__piece-menu {
+  position: absolute;
+  inset: 0;
+  z-index: 5;
+  pointer-events: none;
+}
+
+.shape-build__piece-btn.touch-btn {
+  position: absolute;
+  top: 0;
+  left: 0;
+  display: block;
+  width: 64px;
+  min-width: 64px;
+  height: 64px;
+  min-height: 64px;
+  padding: 0.4rem;
+  border: none;
+  border-radius: 50%;
+  background: #fff;
+  box-shadow:
+    inset 0 -3px 0 rgb(160 104 58 / 18%),
+    0 6px 14px rgb(92 58 24 / 22%),
+    0 0 0 2px rgb(232 196 150 / 90%);
+  pointer-events: auto;
+  will-change: transform;
+  animation: shape-build-ring-in 0.22s ease-out;
+}
+
+.shape-build__piece-btn--main.touch-btn {
+  width: 80px;
+  min-width: 80px;
+  height: 80px;
+  min-height: 80px;
+  padding: 0.5rem;
+}
+
+@keyframes shape-build-ring-in {
+  from {
+    opacity: 0;
+    scale: 0.6;
+  }
+}
+
+.shape-build__piece-btn > img,
+.shape-build__piece-btn > canvas {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  pointer-events: none;
+}
+
+.shape-build__piece-label {
+  position: absolute;
+  top: calc(100% + 2px);
+  left: 50%;
+  translate: -50% 0;
+  padding: 0.05rem 0.45rem;
+  border-radius: 0.7rem;
+  background: rgb(255 252 246 / 94%);
+  color: #3b2a1a;
+  font-size: 0.82rem;
+  font-weight: 700;
+  line-height: 1.2;
+  white-space: nowrap;
+  pointer-events: none;
+}
+
+.shape-build__piece-btn--main .shape-build__piece-label {
+  font-size: 0.95rem;
+}
+
+.shape-build__piece-btn.is-selected.touch-btn {
+  box-shadow:
+    inset 0 -3px 0 rgb(160 104 58 / 18%),
+    0 6px 14px rgb(92 58 24 / 22%),
+    0 0 0 3px rgb(247 201 92 / 95%);
+}
+
+/* «Провод» / «Склеить»: ждём второй тап — комната чуть темнеет по краям */
+.shape-build[data-pick] .shape-build__scene {
+  cursor: crosshair;
+}
+
+.shape-build[data-pick] .shape-build__overlay {
+  box-shadow: inset 0 0 0 6px rgb(247 201 92 / 70%);
+}
+
+/* «Вся комната»: внизу слева, видна, когда комната больше экрана */
+.shape-build__room-btn.game-tool.touch-btn {
+  position: absolute;
+  left: var(--side);
+  bottom: max(1rem, env(safe-area-inset-bottom));
+  z-index: 5;
+  box-shadow:
+    0 8px 18px rgb(92 58 24 / 22%),
+    0 0 0 3px rgb(140 200 238 / 85%);
+}
+
+/* Мяу или Олли катается — сердечки */
+.shape-build__heart {
+  position: absolute;
+  color: #f28b7d;
+  font-size: 1.6rem;
+  line-height: 1;
+  text-shadow: 0 2px 0 #fffdf8;
+  pointer-events: none;
+  animation: shape-build-heart 1.2s ease-out both;
+  animation-delay: var(--d, 0ms);
+}
+
+@keyframes shape-build-heart {
+  from {
+    opacity: 0;
+    translate: 0 0;
+    scale: 0.6;
+  }
+
+  25% {
+    opacity: 1;
+    scale: 1.1;
+  }
+
+  to {
+    opacity: 0;
+    translate: 0 -60px;
+    scale: 1;
+  }
+}
+
+/* Вентилятор выключен — кнопка серая, включён — с голубым кольцом */
+.shape-build__piece-btn--power.touch-btn {
+  box-shadow:
+    inset 0 -3px 0 rgb(160 104 58 / 18%),
+    0 0 0 3px rgb(126 217 87 / 95%);
+}
+
+.shape-build__piece-btn--power.is-off.touch-btn {
+  box-shadow:
+    inset 0 -3px 0 rgb(160 104 58 / 18%),
+    0 0 0 2px rgb(232 196 150 / 90%);
+}
+
+.shape-build__piece-btn--power.is-off > img {
+  opacity: 0.5;
+  filter: grayscale(1);
+}
+
+.shape-build__piece-btn:disabled {
+  opacity: 0.35;
+}
+
+.shape-build__piece-btn--remove.touch-btn {
+  box-shadow:
+    inset 0 -3px 0 rgb(160 104 58 / 18%),
+    0 0 0 2px rgb(242 139 125 / 80%);
+}
+
+/* «Отменить» в шапке всегда на месте; отменять нечего — бледная, нажатие мягко качает её */
+.shape-build__bar-tools [data-role='undo'][aria-disabled='true'] {
+  opacity: 0.45;
+  box-shadow: none;
+}
+
+/* ── Тост ── */
+.shape-build__toast {
+  position: absolute;
+  left: 50%;
+  top: calc(var(--bar-h) + 1rem);
+  z-index: 6;
+  margin: 0;
+  padding: 0.7rem 1.4rem;
+  border-radius: 1.4rem;
+  background: rgb(255 252 246 / 96%);
+  box-shadow:
+    0 8px 18px rgb(92 58 24 / 20%),
+    0 0 0 3px rgb(185 163 227 / 80%);
+  color: #3b2a1a;
+  font-size: 1.25rem;
+  font-weight: 700;
+  translate: -50% 0;
+  pointer-events: none;
+  animation: shape-build-pop-in 0.3s ease-out;
+}
+
+@keyframes shape-build-pop-in {
+  from {
+    opacity: 0;
+    scale: 0.85;
+  }
+}
+
+/* ── Рука-подсказка: кончик пальца в точке (0,0) ── */
+.shape-build__hand {
+  position: absolute;
+  top: 0;
+  left: 0;
+  z-index: 8;
+  width: 4.6rem;
+  margin: -0.2rem 0 0 -0.45rem;
+  opacity: 0;
+  transform-origin: 0.45rem 0.2rem;
+  pointer-events: none;
+  filter: drop-shadow(0 6px 8px rgb(74 46 18 / 25%));
+}
+
+/* ── Удержание пальца: кружок заполняется — открывается меню ── */
+.shape-build__hold {
+  --hold-ms: 500ms;
+
+  position: absolute;
+  z-index: 7;
+  width: 5.6rem;
+  height: 5.6rem;
+  margin: -2.8rem 0 0 -2.8rem;
+  border: 4px solid rgb(255 255 255 / 90%);
+  border-radius: 50%;
+  box-shadow:
+    0 0 0 3px rgb(233 191 146 / 75%),
+    0 4px 12px rgb(74 46 18 / 22%);
+  opacity: 0;
+  pointer-events: none;
+  animation: sb-hold-in 120ms ease-out 90ms forwards;
+}
+
+.shape-build__hold::after {
+  content: '';
+  position: absolute;
+  inset: 5px;
+  border-radius: 50%;
+  background: rgb(255 210 100 / 60%);
+  transform: scale(0);
+  animation: sb-hold-fill calc(var(--hold-ms) - 90ms) linear 90ms forwards;
+}
+
+@keyframes sb-hold-in {
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes sb-hold-fill {
+  to {
+    transform: scale(1);
+  }
+}
+
+/* ── Деталь из шкафа под пальцем, призраки «домой», конфетти ── */
+.shape-build__fx {
+  position: absolute;
+  inset: 0;
+  z-index: 3;
+  overflow: hidden;
+  pointer-events: none;
+}
+
+.shape-build__carry {
+  position: absolute;
+  top: -3rem;
+  left: -3rem;
+  z-index: 8;
+  width: 6rem;
+  height: 6rem;
+  pointer-events: none;
+  filter: drop-shadow(0 8px 10px rgb(74 46 18 / 28%));
+}
+
+/* Мини-снимок после «Фото»: по центру, потом улетает в «Ещё» */
+.shape-build__snap {
+  position: absolute;
+  top: 0;
+  left: 0;
+  z-index: 8;
+  border-radius: 0.9rem;
+  box-shadow:
+    0 0 0 5px #fffdf8,
+    0 14px 28px rgb(74 46 18 / 30%);
+  transform-origin: center;
+  cursor: pointer;
+}
+
+.shape-build__ghost {
+  position: absolute;
+  top: 0;
+  left: 0;
+  transform-origin: center;
+}
+
+.shape-build__confetti {
+  position: absolute;
+  width: 0.7rem;
+  height: 0.45rem;
+  border-radius: 0.15rem;
+  background: var(--c);
+  animation: shape-build-confetti 1s cubic-bezier(0.2, 0.7, 0.4, 1) forwards;
+}
+
+@keyframes shape-build-confetti {
+  from {
+    opacity: 1;
+    translate: 0 0;
+    rotate: 0deg;
+  }
+
+  to {
+    opacity: 0;
+    translate: var(--dx) var(--dy);
+    rotate: var(--rot);
+  }
+}
+
+/* ── «Как играть» для взрослого ── */
+.shape-build__howto {
+  position: absolute;
+  inset: 0;
+  z-index: 9;
+  display: grid;
+  place-items: center;
+  padding: 1.25rem;
+  background: rgb(74 52 38 / 42%);
+  backdrop-filter: blur(3px);
+}
+
+/* Карточка как лист в шкафу: тёплая бумага, деревянная кайма, пастель бренда */
+.shape-build__howto-card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1rem;
+  width: min(60rem, 100%);
+  max-height: 100%;
+  padding: 1.3rem 1.5rem 1.4rem;
+  overflow: hidden;
+  box-sizing: border-box;
+  border-radius: 2rem;
+  background:
+    radial-gradient(circle at 12% 0%, rgb(247 201 92 / 18%), transparent 40%),
+    radial-gradient(circle at 92% 8%, rgb(140 200 238 / 18%), transparent 38%),
+    #fff8ec;
+  box-shadow:
+    0 0 0 4px #fffdf8,
+    0 0 0 9px #e9bf92,
+    0 22px 44px rgb(74 46 18 / 35%);
+  animation: shape-build-pop-in 0.3s ease-out;
+}
+
+.shape-build__howto-head {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.25rem;
+  text-align: center;
+}
+
+.shape-build__howto-title {
+  margin: 0;
+  color: #3b2a1a;
+  font-size: 1.75rem;
+  font-weight: 700;
+  letter-spacing: 0.01em;
+}
+
+.shape-build__howto-lead {
+  margin: 0;
+  color: #8a6a4e;
+  font-size: 1rem;
+}
+
+.shape-build__howto-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 0.85rem;
+  width: 100%;
+}
+
+.shape-build__howto-item,
+.shape-build__trick,
+.shape-build__law {
+  --accent: #e9bf92;
+
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.45rem;
+  padding: 0.75rem 0.85rem 0.9rem;
+  border-radius: 1.4rem;
+  background: #fff;
+  box-shadow:
+    inset 0 5px 0 var(--accent),
+    0 0 0 2px color-mix(in srgb, var(--accent) 45%, #fff),
+    0 6px 14px rgb(92 58 24 / 10%);
+  text-align: center;
+}
+
+.shape-build__howto-pics {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.3rem;
+  width: 100%;
+  min-height: 4.4rem;
+  padding: 0.4rem 0.5rem;
+  box-sizing: border-box;
+  border-radius: 1.1rem;
+  background: color-mix(in srgb, var(--accent) 20%, #fffaf2);
+}
+
+.shape-build__howto-pic {
+  width: 3.4rem;
+  height: 3.4rem;
+  object-fit: contain;
+  filter: drop-shadow(0 3px 3px rgb(74 46 18 / 14%));
+}
+
+.shape-build__howto-name {
+  margin: 0.15rem 0 0;
+  color: #3b2a1a;
+  font-size: 1.12rem;
+  font-weight: 700;
+}
+
+.shape-build__howto-text {
+  margin: 0;
+  color: #5a4232;
+  font-size: 0.95rem;
+  line-height: 1.4;
+}
+
+/* Вкладки «Кнопки / Детали и законы / Что собрать»: листается только содержимое */
+.shape-build__howto-tabs {
+  display: flex;
+  flex-shrink: 0;
+  gap: 0.5rem;
+}
+
+.shape-build__howto-tabs .touch-btn {
+  min-height: 3.5rem;
+  padding: 0 1.3rem;
+  border-radius: 1.75rem;
+  background: #f6ead8;
+  box-shadow: inset 0 -4px 0 rgb(92 58 24 / 14%);
+  color: #6b4524;
+  font-size: 1.05rem;
+  font-weight: 700;
+}
+
+.shape-build__howto-tabs .touch-btn.is-selected {
+  background: #f7c95c;
+  box-shadow:
+    inset 0 -4px 0 rgb(154 106 44 / 35%),
+    0 0 0 3px #fffdf8;
+  color: #3b2a1a;
+}
+
+.shape-build__howto-body {
+  flex: 1 1 auto;
+  width: 100%;
+  min-height: 0;
+  padding: 0.3rem 0.2rem 0.4rem;
+  overflow-y: auto;
+  box-sizing: border-box;
+  overscroll-behavior: contain;
+}
+
+.shape-build__howto-body > [hidden] {
   display: none;
 }
 
-.shape-build__pick {
-  flex: 0 0 auto;
-  display: block;
-  width: 100%;
-  padding: 0.2rem;
-  border-radius: 0.75rem;
-  background: rgb(255 255 255 / 72%);
-  box-shadow: 0 2px 8px rgb(26 42 51 / 10%);
-  min-width: unset;
+.shape-build__law-name {
+  margin: -0.2rem 0 0;
+  padding: 0.1rem 0.7rem;
+  border-radius: 0.8rem;
+  background: color-mix(in srgb, var(--accent) 30%, #fff);
+  color: #6b4524;
+  font-size: 0.85rem;
+  font-weight: 700;
 }
 
-.shape-build__pick.is-active {
-  outline: 3px solid var(--accent);
-  outline-offset: 2px;
-  background: #fff;
+.shape-build__law-tip {
+  align-self: stretch;
+  margin: 0;
+  padding: 0.35rem 0.6rem;
+  border-radius: 0.8rem;
+  background: color-mix(in srgb, var(--accent) 14%, #fffdf8);
+  color: #5a3d22;
+  font-size: 0.9rem;
+  line-height: 1.35;
+  text-align: left;
 }
 
-.shape-build__pick-preview {
-  display: block;
-  width: 100%;
-  aspect-ratio: 1;
-  border-radius: 0.5rem;
-  border: 1px solid rgb(255 255 255 / 90%);
-  box-shadow: inset 0 0 0 1px rgb(26 42 51 / 6%);
+.shape-build__law-tip[data-tip='try'] {
+  background: #f6f1e7;
 }
 
-.shape-build__work {
-  position: relative;
-  min-width: 0;
-  min-height: 0;
-  max-height: 100%;
-  display: grid;
-  grid-template-rows: minmax(0, 1fr) auto;
-  gap: clamp(0.25rem, 0.65vh, 0.4rem);
-  overflow: hidden;
-}
-
-.shape-build__float {
-  position: absolute;
-  inset: 0;
-  pointer-events: none;
-  z-index: 25;
-}
-
-.shape-build__float .shape-build__piece.is-dragging {
-  pointer-events: auto;
-  cursor: grabbing;
-  box-shadow: 0 12px 32px rgb(26 42 51 / 32%);
-}
-
-.shape-build__board-wrap {
-  min-height: 0;
-  min-width: 0;
+.shape-build__recipes {
   display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 0.05rem;
-  container-type: size;
+  flex-direction: column;
+  gap: 1.2rem;
 }
 
-.shape-build__board {
-  position: relative;
-  width: min(100%, 100cqh * 4 / 3);
-  height: min(100%, 100%);
-  max-height: min(72dvh, 100%);
-  aspect-ratio: 4 / 3;
-  border-radius: 1.25rem;
-  background:
-    radial-gradient(circle at 30% 20%, #fff8e8 0%, transparent 50%),
-    #eef3f8;
-  border: 2px dashed color-mix(in srgb, var(--accent) 40%, #1a2a33);
-  overflow: hidden;
-  transition: box-shadow 480ms ease;
+.shape-build__recipe-level-head {
+  display: flex;
+  align-items: baseline;
+  flex-wrap: wrap;
+  gap: 0.2rem 0.8rem;
+  margin: 0 0 0.6rem 0.2rem;
 }
 
-.shape-build__board.is-celebrating {
-  box-shadow:
-    0 0 0 3px color-mix(in srgb, var(--accent) 55%, #fff),
-    0 12px 40px color-mix(in srgb, var(--accent) 25%, transparent);
+.shape-build__recipe-level-title {
+  margin: 0;
+  color: #3b2a1a;
+  font-size: 1.35rem;
+  font-weight: 700;
 }
 
-.shape-build__slot {
-  position: absolute;
-  display: grid;
-  place-items: center;
-  width: clamp(4.5rem, 14cqw, 6.25rem);
-  height: clamp(4.5rem, 14cqw, 6.25rem);
-  transform: translate(-50%, -50%);
-  border-radius: 0.75rem;
-  border: 2px dashed rgb(26 42 51 / 25%);
-  background: rgb(255 255 255 / 45%);
-  cursor: pointer;
-  -webkit-tap-highlight-color: transparent;
+.shape-build__recipe-preview {
+  display: block;
+  width: 100%;
+  aspect-ratio: 2 / 1;
+  border-radius: 1.1rem;
+  background: linear-gradient(180deg, color-mix(in srgb, var(--accent) 16%, #fffaf2) 0%, #fffdf8 100%);
+  box-shadow: inset 0 0 0 2px color-mix(in srgb, var(--accent) 30%, #fff);
 }
 
-.shape-build__slot .ph {
-  opacity: 0.28;
-  pointer-events: none;
-  width: clamp(3.25rem, 10cqw, 4.5rem);
-  height: clamp(3.25rem, 10cqw, 4.5rem);
-}
-
-.shape-build__slot.is-filled {
-  border-style: solid;
-  background: rgb(255 255 255 / 70%);
-}
-
-.shape-build__slot.is-filled .ph {
-  opacity: 0.9;
-}
-
-.shape-build__slot.is-target-hint {
-  border-color: var(--accent);
-  border-style: solid;
-  background: color-mix(in srgb, var(--accent) 12%, #fff);
-  box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent) 35%, transparent);
-  animation: shape-target-pulse 1.4s ease-in-out infinite;
-}
-
-.shape-build__slot.is-target-hint .ph {
-  opacity: 0.45;
-}
-
-@keyframes shape-target-pulse {
-  0%,
-  100% {
-    transform: translate(-50%, -50%) scale(1);
-  }
-  50% {
-    transform: translate(-50%, -50%) scale(1.04);
-  }
-}
-
-.shape-build__slot.is-soft-highlight {
-  border-color: color-mix(in srgb, var(--accent) 70%, #1a2a33);
-  background: rgb(255 255 255 / 65%);
-}
-
-.shape-build__tray {
+/* Значки деталей: переносятся во второй ряд, а не налезают на соседние карточки */
+.shape-build__recipe-chips {
   display: flex;
   flex-wrap: wrap;
-  gap: clamp(0.5rem, 1.2vw, 0.85rem);
-  justify-content: center;
   align-content: flex-start;
-  min-height: clamp(5rem, 12vh, 7rem);
-  padding: clamp(0.5rem, 1vh, 0.75rem);
-  border-radius: 1.25rem;
-  background: #f3f0e8;
+  justify-content: center;
+  gap: 0.3rem;
+  width: 100%;
+  min-height: 5.6rem;
 }
 
-.shape-build__piece {
-  position: relative;
-  z-index: 2;
-  display: inline-flex;
+.shape-build__recipe-chips .shape-build__howto-pic {
+  width: 2.6rem;
+  height: 2.6rem;
+  padding: 0.15rem;
+  border-radius: 0.8rem;
+  background: color-mix(in srgb, var(--accent) 18%, #fffaf2);
+  filter: none;
+  box-sizing: content-box;
+}
+
+.shape-build__recipe-steps {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  width: 100%;
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+  color: #5a4232;
+  font-size: 0.92rem;
+  line-height: 1.35;
+  text-align: left;
+  list-style: none;
+  counter-reset: recipe-step;
+}
+
+.shape-build__recipe-steps li {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.5rem;
+  counter-increment: recipe-step;
+}
+
+.shape-build__recipe-steps li::before {
+  content: counter(recipe-step);
+  display: grid;
+  flex-shrink: 0;
+  place-items: center;
+  width: 1.5rem;
+  height: 1.5rem;
+  border-radius: 50%;
+  background: var(--accent);
+  color: #3b2a1a;
+  font-size: 0.85rem;
+  font-weight: 700;
+  line-height: 1;
+}
+
+.shape-build__recipe-law {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.45rem;
+  width: 100%;
+  margin: 0;
+  padding: 0.45rem 0.6rem;
+  box-sizing: border-box;
+  border-radius: 0.9rem;
+  background: color-mix(in srgb, var(--accent) 22%, #fffaf2);
+  color: #6b4524;
+  font-size: 0.85rem;
+  line-height: 1.3;
+  text-align: left;
+}
+
+.shape-build__recipe-law-label {
+  flex-shrink: 0;
+  padding: 0.1rem 0.55rem;
+  border-radius: 0.7rem;
+  background: #fff;
+  color: #8a5a2e;
+  font-size: 0.78rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+}
+
+.shape-build__recipe {
+  --accent: #e9bf92;
+
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.45rem;
+  padding: 0.75rem 0.85rem 0.9rem;
+  border-radius: 1.4rem;
+  background: #fff;
+  box-shadow:
+    inset 0 5px 0 var(--accent),
+    0 0 0 2px color-mix(in srgb, var(--accent) 45%, #fff),
+    0 6px 14px rgb(92 58 24 / 10%);
+  text-align: center;
+}
+
+.shape-build__recipe .shape-build__howto-text {
+  flex: 1;
+}
+
+.shape-build__recipe-build.touch-btn {
+  min-width: 10rem;
+  min-height: 3.5rem;
+  padding: 0 1.4rem;
+  border-radius: 1.75rem;
+  background: color-mix(in srgb, var(--accent) 55%, #fff);
+  box-shadow:
+    inset 0 -4px 0 rgb(92 58 24 / 18%),
+    0 4px 10px rgb(92 58 24 / 14%);
+  color: #3b2a1a;
+  font-size: 1.1rem;
+  font-weight: 700;
+}
+
+.shape-build__howto-close.touch-btn {
+  min-width: 12rem;
+  min-height: 3.6rem;
+  padding: 0 2rem;
+  border-radius: 1.8rem;
+  background: #8fd19e;
+  box-shadow:
+    inset 0 -4px 0 rgb(47 120 70 / 30%),
+    0 6px 14px rgb(47 120 70 / 22%);
+  color: #1f4a2c;
+  font-size: 1.2rem;
+  font-weight: 700;
+}
+
+/* ── Шкаф ── */
+.shape-build__cabinet {
+  position: absolute;
+  top: calc(var(--bar-h) + 0.4rem);
+  right: 0;
+  bottom: calc(var(--floor) - 0.3rem);
+  z-index: 4;
+  display: flex;
+  flex-direction: column;
+  width: var(--cab-w);
+  padding: 0.8rem 0.7rem 0.8rem 0.9rem;
+  box-sizing: border-box;
+  border-radius: 1.4rem 0 0 1.4rem;
+  background:
+    repeating-linear-gradient(90deg, rgb(150 96 52 / 7%) 0 2px, transparent 2px 22px),
+    linear-gradient(180deg, #e7b98a 0%, #d9a370 100%);
+  background-size: cover;
+  box-shadow:
+    inset 0 0 0 4px rgb(160 104 58 / 55%),
+    -8px 10px 24px rgb(92 58 24 / 26%);
+  transition: transform 0.38s cubic-bezier(0.3, 0.8, 0.3, 1);
+}
+
+/* Рамка шкафа владельца — 9 частей: углы и карниз не тянутся при любой высоте экрана. */
+.shape-build__cabinet.has-art {
+  padding: 1.9rem 1.25rem 2rem 1.35rem;
+  border-radius: 0;
+  background: none;
+  border-image-slice: 130 100 140 100 fill;
+  border-image-width: 1.7rem 1.15rem 1.8rem 1.15rem;
+  border-image-repeat: stretch;
+  box-shadow: none;
+  filter: drop-shadow(-6px 8px 14px rgb(92 58 24 / 24%));
+}
+
+.shape-build[data-cabinet='closed'] .shape-build__cabinet {
+  transform: translateX(100%);
+}
+
+/* Несут деталь обратно — шкаф светится; деталь вернулась — шкаф «глотает» */
+.shape-build__cabinet.is-target {
+  box-shadow:
+    inset 0 0 0 4px rgb(160 104 58 / 55%),
+    0 0 0 5px #fffdf8,
+    0 0 0 10px #8cc8ee;
+}
+
+.shape-build__cabinet.is-gulp {
+  animation: shape-build-gulp 0.4s ease 0.4s;
+}
+
+@keyframes shape-build-gulp {
+  40% {
+    scale: 1.03 0.98;
+  }
+}
+
+.shape-build__handle.touch-btn {
+  position: absolute;
+  top: 50%;
+  left: -3.6rem;
+  width: 3.6rem;
+  min-width: 3.6rem;
+  height: 6.4rem;
+  min-height: 6.4rem;
+  padding: 0;
+  border: none;
+  border-radius: 1.3rem 0 0 1.3rem;
+  background: linear-gradient(90deg, #e9bf92, #dba674);
+  box-shadow:
+    inset 0 0 0 3px rgb(160 104 58 / 55%),
+    -4px 6px 12px rgb(92 58 24 / 22%);
+  translate: 0 -50%;
+}
+
+.shape-build__handle::after {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 1.15rem;
+  height: 2.6rem;
+  border-radius: 0.6rem;
+  background: #fff3df;
+  box-shadow: 0 0 0 3px rgb(160 104 58 / 70%);
+  translate: -50% -50%;
+}
+
+/* Вкладки шкафа: картинка + подпись, одна строка */
+.shape-build__tabs {
+  display: grid;
+  grid-auto-columns: minmax(0, 1fr);
+  grid-auto-flow: column;
+  gap: 0.3rem;
+  margin-bottom: 0.5rem;
+  container-type: inline-size;
+}
+
+.shape-build__tabs[hidden] {
+  display: none;
+}
+
+.shape-build__tab.touch-btn {
+  display: flex;
+  flex-direction: column;
   align-items: center;
   justify-content: center;
-  min-width: clamp(4.75rem, 12vw, 6.5rem);
-  min-height: clamp(4.75rem, 12vw, 6.5rem);
+  gap: 0.1rem;
+  min-width: 0;
+  min-height: 3.6rem;
+  padding: 0.25rem 0;
   border: none;
-  background: transparent;
-  padding: 0.2rem;
+  border-radius: 0.9rem;
+  background: rgb(255 246 230 / 40%);
+  box-shadow: inset 0 -3px 0 rgb(160 104 58 / 25%);
+  color: #6b4524;
+  transition: background-color 0.2s ease, transform 0.15s ease;
+}
+
+.shape-build__tab.is-selected {
+  background: #fffdf8;
+  box-shadow:
+    inset 0 -3px 0 rgb(160 104 58 / 30%),
+    0 0 0 3px #f7c95c;
+}
+
+.shape-build__tab-icon {
+  display: block;
+  width: 2.1rem;
+  height: 2.1rem;
+  pointer-events: none;
+}
+
+.shape-build__tab-label {
+  overflow: hidden;
+  max-width: 100%;
+  font-size: clamp(0.56rem, 3.9cqw, 0.78rem);
+  letter-spacing: -0.01em;
+  font-weight: 700;
+  line-height: 1.1;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.shape-build__shelves {
+  display: grid;
+  flex: 1;
+  grid-template-columns: repeat(var(--cols, 3), minmax(0, 1fr));
+  grid-template-rows: repeat(var(--rows, 4), minmax(0, 1fr));
+  gap: 0.45rem;
+  min-height: 0;
+  transition: opacity 0.3s ease;
+}
+
+.shape-build__shelf-item[hidden] {
+  display: none;
+}
+
+.shape-build__shelf-item {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.1rem;
+  min-width: 3.5rem;
+  min-height: 3.5rem;
+  overflow: hidden;
+  padding: 0.25rem 0.2rem 0.3rem;
+  border: none;
+  border-radius: 0.9rem;
+  background: rgb(255 246 230 / 55%);
+  box-shadow:
+    inset 0 -4px 0 rgb(160 104 58 / 30%),
+    0 0 0 2px rgb(160 104 58 / 25%);
   cursor: grab;
   touch-action: none;
-  -webkit-tap-highlight-color: transparent;
+  transition: transform 0.15s ease, opacity 0.2s ease;
 }
 
-.shape-build__piece .ph {
-  width: clamp(4.25rem, 11vw, 5.75rem);
-  height: clamp(4.25rem, 11vw, 5.75rem);
+.shape-build__shelf-item:active {
+  transform: scale(0.94);
+}
+
+.shape-build__shelf-icon {
+  display: block;
+  flex: 1 1 0;
+  width: 100%;
+  min-height: 0;
+  max-height: 6.5rem;
+  object-fit: contain;
   pointer-events: none;
 }
 
-.shape-build__piece.is-selected .ph {
-  filter: drop-shadow(0 4px 10px rgb(26 42 51 / 22%));
+/* Картинки деталей ещё грузятся: мягкий кружок вместо старого рисунка */
+.shape-build__shelf-icon--wait {
+  align-self: center;
+  width: 55%;
+  max-width: 3.5rem;
+  aspect-ratio: 1;
+  flex: 0 0 auto;
+  border-radius: 50%;
+  background: rgb(232 196 150 / 45%);
+  animation: shape-build-wait 1.2s ease-in-out infinite;
 }
 
-.shape-build__piece:active,
-.shape-build__piece.is-dragging {
-  cursor: grabbing;
-  z-index: 5;
+@keyframes shape-build-wait {
+  50% {
+    opacity: 0.45;
+  }
 }
 
-.shape-build__piece.is-placed {
+.shape-build__shelf-label {
+  overflow: hidden;
+  max-width: 100%;
+  color: #6b4524;
+  font-size: 0.74rem;
+  font-weight: 700;
+  line-height: 1.15;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  pointer-events: none;
+}
+
+.shape-build__shelf-item.is-maxed {
+  opacity: 0.4;
+  filter: grayscale(0.6);
+}
+
+.shape-build__cabinet.is-full .shape-build__shelves {
+  opacity: 0.4;
+  filter: grayscale(0.5);
+}
+
+.shape-build__lock {
   position: absolute;
-  z-index: 3;
-  cursor: default;
+  top: 50%;
+  left: 50%;
+  display: none;
+  width: 3.6rem;
+  height: 3rem;
+  border-radius: 0.8rem;
+  background: #f7c95c;
+  box-shadow: 0 0 0 4px #9a6a2c, 0 8px 16px rgb(92 58 24 / 30%);
+  translate: -50% -10%;
   pointer-events: none;
-  transform: translate(-50%, -50%);
-  min-width: unset;
-  min-height: unset;
-  width: clamp(4.5rem, 14cqw, 6.25rem);
-  height: clamp(4.5rem, 14cqw, 6.25rem);
 }
 
-.shape-build__piece.is-placed .ph {
-  width: clamp(3.25rem, 10cqw, 4.5rem);
-  height: clamp(3.25rem, 10cqw, 4.5rem);
+.shape-build__lock::before {
+  content: '';
+  position: absolute;
+  left: 50%;
+  bottom: 100%;
+  width: 2.1rem;
+  height: 1.7rem;
+  border: 0.5rem solid #9a6a2c;
+  border-bottom: none;
+  border-radius: 1.2rem 1.2rem 0 0;
+  translate: -50% 0;
+  box-sizing: border-box;
 }
 
-.shape-build__piece.is-returning {
-  animation: shape-return 360ms ease-out;
+.shape-build__cabinet.is-full .shape-build__lock {
+  display: block;
 }
 
-@keyframes shape-return {
-  0% {
-    transform: translate(0, -6px);
-  }
-  100% {
-    transform: translate(0, 0);
-  }
+/* ── Галерея фото построек ── */
+.shape-build__gallery {
+  position: absolute;
+  inset: var(--bar-h) var(--side-r) var(--bottom) var(--side);
+  z-index: 7;
+  display: flex;
+  flex-direction: column;
+  gap: 0.9rem;
+  padding: 1rem;
+  box-sizing: border-box;
+  border-radius: 1.6rem;
+  background: rgb(255 248 236 / 96%);
+  box-shadow:
+    0 14px 28px rgb(92 58 24 / 22%),
+    0 0 0 3px rgb(232 196 150 / 90%);
+}
+
+.shape-build__gallery-grid {
+  display: grid;
+  flex: 1;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  align-content: start;
+  gap: 0.9rem;
+  min-height: 0;
+  overflow-y: auto;
+}
+
+.shape-build__gallery-empty {
+  margin: auto;
+  color: #6b5442;
+  font-size: 1.3rem;
+  font-weight: 600;
+  text-align: center;
+}
+
+.shape-build__gallery-foot {
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0.8rem;
+}
+
+.shape-build__gallery-foot .select-actions {
+  margin-right: auto;
+}
+
+.shape-build__photo {
+  position: relative;
+  aspect-ratio: 4 / 3;
+  padding: 0;
+  overflow: hidden;
+  border: none;
+  border-radius: 1rem;
+  background: #f3e3cc;
+  box-shadow:
+    0 0 0 3px rgb(232 196 150 / 95%),
+    0 6px 12px rgb(74 46 18 / 18%);
+}
+
+.shape-build__photo > img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.shape-build__photo.is-selected {
+  box-shadow:
+    0 0 0 4px #5cba6a,
+    0 6px 12px rgb(74 46 18 / 18%);
+}
+
+.shape-build__photo {
+  -webkit-touch-callout: none;
+  user-select: none;
+}
+
+.shape-build__photo-date {
+  position: absolute;
+  left: 0.5rem;
+  bottom: 0.5rem;
+  padding: 0.15rem 0.55rem;
+  border-radius: 0.7rem;
+  background: rgb(255 253 248 / 88%);
+  color: #6b4524;
+  font-size: 0.8rem;
+  font-weight: 700;
+  pointer-events: none;
+}
+
+.shape-build__viewer-actions {
+  display: flex;
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: 0.9rem;
+}
+
+.shape-build__viewer {
+  position: absolute;
+  inset: 0;
+  z-index: 8;
+  display: grid;
+  grid-template-rows: minmax(0, 1fr) auto;
+  justify-items: center;
+  align-items: center;
+  gap: 1rem;
+  padding: 1.2rem 1.2rem max(1rem, env(safe-area-inset-bottom));
+  box-sizing: border-box;
+  background: rgb(43 39 36 / 62%);
+}
+
+.shape-build__viewer > img {
+  max-width: 100%;
+  max-height: 100%;
+  min-height: 0;
+  border-radius: 1.2rem;
+  box-shadow: 0 0 0 6px #fffdf8, 0 16px 32px rgb(0 0 0 / 30%);
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .shape-build__piece.is-returning,
-  .shape-build__slot.is-target-hint {
-    animation: none;
+  .shape-build__cabinet,
+  .shape-build__overlay::before,
+  .shape-build__shelf-item {
+    transition: none;
+  }
+
+  .shape-build[data-frozen='1'] .shape-build__spark,
+  .shape-build[data-gravity='off'] .shape-build__spark,
+  .shape-build[data-frozen='1'] .shape-build__bar-tools [data-role='wand'],
+  .shape-build__cabinet.is-gulp,
+  .shape-build__toast,
+  .shape-build__howto-card,
+  .shape-build__piece-btn,
+  .shape-build__shelf-icon--wait,
+  .shape-build__flash.is-on {
+    animation: none !important;
+  }
+
+  .shape-build__confetti,
+  .shape-build__heart {
+    animation-duration: 0.01s;
   }
 }
+

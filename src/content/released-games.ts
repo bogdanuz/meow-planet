@@ -1,10 +1,18 @@
 import { GAME_IDS, type GameId } from './catalog'
 
-/** Игры с контентом для первого релиза. Остальные открывают заглушку. */
+/**
+ * Игры с контентом для первого релиза. Остальные открывают заглушку.
+ * «В гости» (`meow-home`) на доработке — снова заглушка (решение владельца 03.10.2026, BACKLOG).
+ */
 export const RELEASED_GAME_IDS = [
   'balloon-pop',
   'sound-world',
   'drawing',
+  'sort-colors',
+  'puzzle',
+  'shape-build',
+  'hide-seek',
+  'counting',
 ] as const satisfies readonly GameId[]
 
 export function isGameReleased(id: GameId): boolean {

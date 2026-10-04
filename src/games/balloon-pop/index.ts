@@ -26,7 +26,7 @@ import {
 } from './logic'
 import {
   FREE_MODE_VISUAL_SCALE,
-  layoutBalloonsForField,
+  fitBalloonsToField,
   type BalloonPlacement,
 } from './layout'
 import {
@@ -169,13 +169,15 @@ export const balloonPopGame: GameModule = {
       }
     }
 
-    function bindPlacements(nextBalloons: BalloonSpec[], forTask: BalloonTask): void {
+    /** Раскладывает поле; лишние шарики убираются, если крупные не помещаются. */
+    function bindPlacements(nextBalloons: BalloonSpec[], forTask: BalloonTask): BalloonSpec[] {
       placementById.clear()
       const isFree = forTask.type === 'none'
       const modeScale = isFree ? 1 : 1.25
-      const plan = layoutBalloonsForField(nextBalloons, Math.random, {
+      const { plan, kept } = fitBalloonsToField(nextBalloons, Math.random, {
         modeScale,
         fieldProfile: isFree ? 'free' : 'task',
+        isRequired: (balloon) => !isFree && balloonMatchesTask(balloon, forTask),
       })
       field.style.setProperty('--balloon-layout-scale', String(plan.layoutScale))
       field.style.setProperty('--balloon-task-scale', String(modeScale))
@@ -186,12 +188,14 @@ export const balloonPopGame: GameModule = {
       for (const [id, place] of plan.placementsById) {
         placementById.set(id, place)
       }
+      return kept
     }
 
     function loadField(forTask: BalloonTask): void {
-      balloons =
-        forTask.type === 'none' ? createFreeField() : createFieldForTask(forTask)
-      bindPlacements(balloons, forTask)
+      balloons = bindPlacements(
+        forTask.type === 'none' ? createFreeField() : createFieldForTask(forTask),
+        forTask,
+      )
       task = forTask
       refreshTargets()
       syncModeDataset()
@@ -447,6 +451,8 @@ export const balloonPopGame: GameModule = {
 
     function popBalloon(balloon: BalloonSpec, btn: HTMLButtonElement): void {
       const beforeTargets = targetsRemaining
+      // Задание уже выполнено: идёт похвала, следующее задание вот-вот придёт.
+      if (task.type !== 'none' && beforeTargets === 0) return
       const result = evaluatePop(balloon, task, beforeTargets)
 
       if (!result.matchedTask && task.type !== 'none') {
@@ -505,7 +511,7 @@ export const balloonPopGame: GameModule = {
       root.classList.add('balloon-pop--quiet')
     }
     container.replaceChildren(root)
-    bindPlacements(balloons, task)
+    balloons = bindPlacements(balloons, task)
     refreshTargets()
     syncModeDataset()
     syncModeButtons()
@@ -518,6 +524,7 @@ export const balloonPopGame: GameModule = {
     cleanup = () => {
       cancelHeldRespawn()
       audio.stopVoice()
+      audio.dispose?.()
       for (const timer of timers) clearTimeout(timer)
       timers.clear()
       context.onTaskVisual?.(null)

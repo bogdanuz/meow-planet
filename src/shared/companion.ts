@@ -31,9 +31,8 @@ export function presenterPoseUrl(companion: CompanionId, pose: PresenterPose): s
 export const PRESENTER_GAME_IDS = [
   'balloon-pop',
   'sort-colors',
-  'puzzle',
-  'shape-build',
   'hide-seek',
+  'counting',
 ] as const
 
 export type PresenterGameId = (typeof PRESENTER_GAME_IDS)[number]

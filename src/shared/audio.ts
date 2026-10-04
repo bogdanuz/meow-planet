@@ -1,4 +1,17 @@
 import type { AppSettings } from './storage'
+import {
+  createVoicePool,
+  getAudioMaster,
+  getReadyBuffer,
+  isMusicDucked,
+  loadBuffer,
+  onMusicDuck,
+  preloadBuffers,
+  resumeAudioMaster,
+  setMusicDucked,
+  startBufferVoice,
+  type EngineVoice,
+} from './audio-engine'
 
 export type AudioChannel = 'sfx' | 'voice' | 'music'
 
@@ -35,6 +48,8 @@ export type AudioManager = {
       fadeOutSec?: number
       /** false — не обрывать предыдущий sfx (глиссандо пианино/гитары). */
       stopPrevious?: boolean
+      /** Скорость/высота воспроизведения (ксилофон из колокольчика). */
+      playbackRate?: number
     },
   ) => Promise<boolean>
   stopMusic: () => void
@@ -52,10 +67,21 @@ export type AudioManager = {
   stopSfx: () => void
   /** Обрывает текущую голосовую фразу. */
   stopVoice: () => void
+  /** Заранее скачать и декодировать звуки, чтобы касание звучало мгновенно. */
+  preload: (urls: readonly string[]) => Promise<void>
+  /** Увести фоновую музыку приложения в тишину (музыка продолжает идти). */
+  duckMusic: (ms?: number) => void
+  /** Вернуть фоновую музыку после duckMusic. */
+  restoreMusic: (ms?: number) => void
   /** В тихом режиме яркие анимации-реакции приглушены (В2.1 = Б). */
   allowBrightMotion: () => boolean
   updateSettings: (settings: AudioSettingsSnapshot) => void
+  /** Игра уходит: заглушить свои звуки и отписаться от общих событий. */
+  dispose?: () => void
 }
+
+/** Сколько sfx-голосов звучит одновременно; больше — треск от суммирования. */
+const MAX_SFX_VOICES = 8
 
 // На iPad разные игры могут создавать свои AudioManager-инстансы.
 // Фоновые обработчики должны останавливать ВСЕ активные инстансы,
@@ -71,6 +97,10 @@ function stopAllBackgroundSounds(): void {
       // ignore
     }
   }
+}
+
+export function backgroundAudioManagersForTests(): number {
+  return backgroundStopAllSet.size
 }
 
 function ensureBackgroundPauseListeners(): void {
@@ -129,39 +159,19 @@ export function createAudioManager(
   ensureBackgroundPauseListeners()
   let unlocked = false
   let musicSession = 0
-  let ctx: AudioContext | null = null
   let musicAudio: HTMLAudioElement | null = null
   let musicFade = 0
+  let settleMusicFade: (() => void) | null = null
+  const musicGains = new WeakMap<HTMLAudioElement, GainNode>()
+  const musicLevels = new WeakMap<HTMLAudioElement, number>()
+  let duckSubscribed = false
+  let unsubscribeDuck: (() => void) | null = null
   let sfxElement: HTMLAudioElement | null = null
   let voiceElement: HTMLAudioElement | null = null
   let voiceToken = 0
   let voiceEnded: Promise<void> = Promise.resolve()
   let settleVoiceEnded: (() => void) | null = null
-  let sfxSource: AudioBufferSourceNode | null = null
-  let sfxGain: GainNode | null = null
-  const sfxLayers: { source: AudioBufferSourceNode; gain: GainNode }[] = []
-  const sfxBuffers = new Map<string, AudioBuffer>()
-  const MAX_SFX_LAYERS = 14
-
-  function detachLayer(entry: { source: AudioBufferSourceNode; gain: GainNode }): void {
-    const idx = sfxLayers.indexOf(entry)
-    if (idx >= 0) sfxLayers.splice(idx, 1)
-    try {
-      entry.source.stop()
-    } catch {
-      // already stopped
-    }
-    try {
-      entry.source.disconnect()
-    } catch {
-      // ignore
-    }
-    try {
-      entry.gain.disconnect()
-    } catch {
-      // ignore
-    }
-  }
+  const sfxPool = createVoicePool(MAX_SFX_VOICES)
 
   function finishVoiceWait(): void {
     const settle = settleVoiceEnded
@@ -203,59 +213,71 @@ export function createAudioManager(
       sfxElement.load()
       sfxElement = null
     }
-    if (sfxSource) {
-      try {
-        sfxSource.stop()
-      } catch {
-        // уже остановлен
-      }
-      try {
-        sfxSource.disconnect()
-      } catch {
-        // ignore
-      }
-      sfxSource = null
-    }
-    if (sfxGain) {
-      try {
-        sfxGain.disconnect()
-      } catch {
-        // ignore
-      }
-      sfxGain = null
-    }
-    while (sfxLayers.length > 0) {
-      detachLayer(sfxLayers[0]!)
-    }
-  }
-
-  async function ensureContext(): Promise<AudioContext | null> {
-    if (typeof window === 'undefined') return null
-    const AC =
-      window.AudioContext ||
-      (window as unknown as { webkitAudioContext?: typeof AudioContext })
-        .webkitAudioContext
-    if (!AC) return null
-    if (!ctx) ctx = new AC()
-    if (ctx.state === 'suspended') {
-      await ctx.resume()
-    }
-    return ctx
+    sfxPool.stopAll()
   }
 
   async function unlock(): Promise<void> {
-    const audioCtx = await ensureContext()
-    if (!audioCtx) {
+    const master = await resumeAudioMaster()
+    if (!master) {
       unlocked = true
       return
     }
     // Тихий буфер — «разблокировка» политики autoplay
-    const buffer = audioCtx.createBuffer(1, 1, 22050)
-    const source = audioCtx.createBufferSource()
-    source.buffer = buffer
-    source.connect(audioCtx.destination)
-    source.start(0)
+    try {
+      const buffer = master.ctx.createBuffer(1, 1, 22050)
+      const source = master.ctx.createBufferSource()
+      source.buffer = buffer
+      source.connect(master.ctx.destination)
+      source.start(0)
+    } catch {
+      // ignore
+    }
     unlocked = true
+  }
+
+  function startPooledVoice(
+    buffer: AudioBuffer,
+    options: Parameters<typeof startBufferVoice>[2],
+  ): boolean {
+    const master = getAudioMaster()
+    if (!master) return false
+    let voice: EngineVoice | null = null
+    voice = startBufferVoice(master, buffer, {
+      ...options,
+      onEnded: () => {
+        if (voice) sfxPool.remove(voice)
+      },
+    })
+    sfxPool.add(voice)
+    return true
+  }
+
+  async function playSfxBuffer(
+    url: string,
+    volume: number,
+    startSec = 0,
+  ): Promise<boolean> {
+    const master = await resumeAudioMaster()
+    if (!master) return false
+    const buffer = getReadyBuffer(url) ?? (await loadBuffer(url))
+    if (!buffer) return false
+    return startPooledVoice(buffer, {
+      volume,
+      startSec,
+      fadeOutSec: 0.16,
+    })
+  }
+
+  /** Резервный путь без Web Audio: не трогает другие звуки. */
+  async function playHtmlOneShot(url: string, volume: number): Promise<boolean> {
+    try {
+      const el = new Audio(url)
+      el.volume = volume
+      await el.play()
+      return true
+    } catch {
+      return false
+    }
   }
 
   async function playBeep(channel: AudioChannel = 'sfx'): Promise<void> {
@@ -278,8 +300,9 @@ export function createAudioManager(
     const channel = options.channel ?? 'sfx'
     if (!channelAllowed(channel, settings)) return
     if (!unlocked) await unlock()
-    const audioCtx = await ensureContext()
-    if (!audioCtx) return
+    const master = await resumeAudioMaster()
+    if (!master) return
+    const audioCtx = master.ctx
 
     const duration = options.durationSec ?? 0.14
     const peakGain = options.gain ?? 0.06
@@ -293,7 +316,7 @@ export function createAudioManager(
     gain.gain.linearRampToValueAtTime(peakGain, t0 + 0.01)
     gain.gain.exponentialRampToValueAtTime(0.0001, t0 + duration)
     osc.connect(gain)
-    gain.connect(audioCtx.destination)
+    gain.connect(master.output)
     osc.start(t0)
     osc.stop(t0 + duration + 0.02)
   }
@@ -308,104 +331,32 @@ export function createAudioManager(
       repeat?: number
       fadeOutSec?: number
       stopPrevious?: boolean
+      playbackRate?: number
     } = {},
   ): Promise<boolean> {
     if (!channelAllowed(channel, settings)) return false
     if (!unlocked) await unlock()
     const stopPrevious = options.stopPrevious !== false
     if (channel === 'sfx' && stopPrevious) stopSfx()
-    const audioCtx = await ensureContext()
-    if (!audioCtx) {
-      return playUrl(channel, url)
-    }
-
     const peak = options.volume ?? 0.7
-    const times = Math.max(1, Math.floor(options.repeat ?? 1))
-    try {
-      const res = await fetch(url)
-      if (!res.ok) return false
-      const data = await res.arrayBuffer()
-      const buffer = await audioCtx.decodeAudioData(data.slice(0))
-      const start = Math.max(0, Math.min(startSec, buffer.duration))
-      const maxDur = Math.max(0.05, buffer.duration - start)
-      const dur = Math.min(Math.max(0.05, durationSec), maxDur)
+    const fallback = (): Promise<boolean> =>
+      stopPrevious ? playUrl(channel, url) : playHtmlOneShot(url, peak)
+    const master = await resumeAudioMaster()
+    if (!master) return fallback()
+    const buffer = getReadyBuffer(url) ?? (await loadBuffer(url))
+    if (!buffer) return fallback()
 
-      const source = audioCtx.createBufferSource()
-      const gain = audioCtx.createGain()
-      source.buffer = buffer
-      source.connect(gain)
-      gain.connect(audioCtx.destination)
-      if (times > 1) {
-        source.loop = true
-        source.loopStart = start
-        source.loopEnd = start + dur
-      }
-      const playDur = dur * times
-      const fadeSec = Math.min(options.fadeOutSec ?? (channel === 'sfx' ? 0.16 : 0), playDur * 0.4)
-      const t0 = audioCtx.currentTime
-      gain.gain.setValueAtTime(peak, t0)
-      if (fadeSec > 0.02) {
-        gain.gain.setValueAtTime(peak, t0 + Math.max(0, playDur - fadeSec))
-        gain.gain.linearRampToValueAtTime(0.0001, t0 + playDur)
-      }
-      if (channel === 'sfx') {
-        const layer = { source, gain }
-        if (stopPrevious) {
-          sfxSource = source
-          sfxGain = gain
-          source.onended = () => {
-            if (sfxSource === source) {
-              sfxSource = null
-              sfxGain = null
-            }
-          }
-        } else {
-          while (sfxLayers.length >= MAX_SFX_LAYERS) {
-            detachLayer(sfxLayers[0]!)
-          }
-          sfxLayers.push(layer)
-          source.onended = () => detachLayer(layer)
-        }
-      }
-      source.start(0, start, times > 1 ? undefined : dur)
-      if (times > 1) {
-        source.stop(audioCtx.currentTime + playDur)
-      }
-      return true
-    } catch {
-      return playUrl(channel, url)
+    const voiceOptions = {
+      volume: peak,
+      startSec,
+      durationSec,
+      loopTimes: options.repeat,
+      playbackRate: options.playbackRate,
+      fadeOutSec: options.fadeOutSec ?? (channel === 'sfx' ? 0.16 : 0),
     }
-  }
-
-  async function playSfxWithoutStealingVoice(url: string, volume: number): Promise<boolean> {
-    const audioCtx = await ensureContext()
-    if (!audioCtx) return false
-    try {
-      let buffer = sfxBuffers.get(url)
-      if (!buffer) {
-        const res = await fetch(url)
-        if (!res.ok) return false
-        const data = await res.arrayBuffer()
-        buffer = await audioCtx.decodeAudioData(data.slice(0))
-        sfxBuffers.set(url, buffer)
-      }
-      const source = audioCtx.createBufferSource()
-      const gain = audioCtx.createGain()
-      source.buffer = buffer
-      source.connect(gain)
-      gain.connect(audioCtx.destination)
-      gain.gain.setValueAtTime(volume, audioCtx.currentTime)
-      const layer = { source, gain }
-      while (sfxLayers.length >= MAX_SFX_LAYERS) {
-        detachLayer(sfxLayers[0]!)
-      }
-      sfxLayers.push(layer)
-      source.onended = () => detachLayer(layer)
-      source.start(0)
-      return true
-    } catch {
-      return false
-    }
+    if (channel === 'sfx') return startPooledVoice(buffer, voiceOptions)
+    startBufferVoice(master, buffer, voiceOptions)
+    return true
   }
 
   function clipAtEnd(el: HTMLAudioElement): boolean {
@@ -473,12 +424,12 @@ export function createAudioManager(
       const nextSrc = new URL(url, window.location.href).href
       if (musicAudio && !musicAudio.paused && musicAudio.src === nextSrc) return true
       stopMusic()
-      musicAudio = new Audio(url)
-      musicAudio.loop = true
+      const track = createMusicTrack(url)
+      musicAudio = track
       const peak = options.volume ?? 0.28
-      musicAudio.volume = settings.quietMode ? 0 : peak
+      void setMusicLevel(track, settings.quietMode ? 0 : peak, 0)
       try {
-        await musicAudio.play()
+        await track.play()
         return true
       } catch {
         return false
@@ -491,12 +442,10 @@ export function createAudioManager(
         voiceElement = null
         silenceVoiceElement(previous)
       }
-    } else if (voiceElement && !voiceElement.ended) {
-      stopSfx()
-      const keptVoice = await playSfxWithoutStealingVoice(url, options.volume ?? 0.7)
-      if (keptVoice) return true
     } else {
       stopSfx()
+      // Web Audio не отнимает у голоса аудиосессию и звучит без задержки на повторах.
+      if (await playSfxBuffer(url, options.volume ?? 0.7, options.startSec ?? 0)) return true
     }
     const audio = new Audio(url)
     const peak = options.volume ?? 0.7
@@ -555,14 +504,88 @@ export function createAudioManager(
       cancelAnimationFrame(musicFade)
       musicFade = 0
     }
+    const settle = settleMusicFade
+    settleMusicFade = null
+    settle?.()
   }
 
   function stopMusic(): void {
     cancelMusicFade()
     if (musicAudio) {
-      musicAudio.pause()
+      const track = musicAudio
       musicAudio = null
+      track.pause()
+      try {
+        musicGains.get(track)?.disconnect()
+      } catch {
+        // ignore
+      }
     }
+  }
+
+  function subscribeMusicDuck(): void {
+    if (duckSubscribed) return
+    duckSubscribed = true
+    unsubscribeDuck = onMusicDuck((ducked, ms) => {
+      const track = musicAudio
+      if (track) void rampMusic(track, ducked ? 0 : musicLevel(track), ms)
+    })
+  }
+
+  /**
+   * Музыка идёт через GainNode общего контекста: на iOS у `<audio>.volume` нет эффекта,
+   * поэтому затухание через volume там не работало.
+   */
+  function createMusicTrack(url: string): HTMLAudioElement {
+    const track = new Audio(url)
+    track.loop = true
+    musicLevels.set(track, 0)
+    subscribeMusicDuck()
+    const master = getAudioMaster()
+    if (master && typeof master.ctx.createMediaElementSource === 'function') {
+      try {
+        const source = master.ctx.createMediaElementSource(track)
+        const gain = master.ctx.createGain()
+        gain.gain.value = 0
+        source.connect(gain)
+        gain.connect(master.output)
+        musicGains.set(track, gain)
+        track.volume = 1
+        return track
+      } catch {
+        // старый WebKit: остаётся затухание через volume
+      }
+    }
+    track.volume = 0
+    return track
+  }
+
+  function musicLevel(track: HTMLAudioElement): number {
+    return musicLevels.get(track) ?? track.volume
+  }
+
+  function rampMusic(track: HTMLAudioElement, to: number, ms: number): Promise<void> {
+    const gain = musicGains.get(track)
+    if (!gain) return fadeVolumeAsync(track, track.volume, to, ms)
+    cancelMusicFade()
+    const now = gain.context.currentTime
+    const current = gain.gain.value
+    gain.gain.cancelScheduledValues(now)
+    gain.gain.setValueAtTime(current, now)
+    gain.gain.linearRampToValueAtTime(Math.max(0, to), now + Math.max(0.01, ms / 1000))
+    if (ms <= 0) return Promise.resolve()
+    return new Promise((resolve) => {
+      settleMusicFade = resolve
+      window.setTimeout(() => {
+        if (settleMusicFade === resolve) settleMusicFade = null
+        resolve()
+      }, ms)
+    })
+  }
+
+  function setMusicLevel(track: HTMLAudioElement, level: number, ms: number): Promise<void> {
+    musicLevels.set(track, level)
+    return rampMusic(track, isMusicDucked() ? 0 : level, ms)
   }
 
   function musicSrcHref(url: string): string {
@@ -578,6 +601,7 @@ export function createAudioManager(
   ): Promise<void> {
     return new Promise((resolve) => {
       cancelMusicFade()
+      settleMusicFade = resolve
       if (ms <= 0) {
         try {
           audioEl.volume = Math.min(1, Math.max(0, to))
@@ -627,11 +651,11 @@ export function createAudioManager(
 
   function fadeOutMusicAsync(ms = 280): Promise<void> {
     const audioEl = musicAudio
-    if (!audioEl || audioEl.volume <= 0.001) {
+    if (!audioEl || musicLevel(audioEl) <= 0.001 || isMusicDucked()) {
       stopMusic()
       return Promise.resolve()
     }
-    return fadeVolumeAsync(audioEl, audioEl.volume, 0, ms).then(() => {
+    return setMusicLevel(audioEl, 0, ms).then(() => {
       if (musicAudio === audioEl) stopMusic()
     })
   }
@@ -670,7 +694,7 @@ export function createAudioManager(
         stopMusic()
         return false
       }
-      await fadeVolumeAsync(current, current.volume, peak, inMs)
+      await setMusicLevel(current, peak, inMs)
       return channelAllowed('music', settings)
     }
 
@@ -689,16 +713,16 @@ export function createAudioManager(
     const inMs = options.fadeInMs ?? 280
     const peak = settings.quietMode ? 0 : peakVolume
 
-    if (current && current.volume > 0.001) {
+    if (current && musicLevel(current) > 0.001 && !isMusicDucked()) {
       await fadeOutMusicAsync(outMs)
     } else if (current) {
       stopMusic()
     }
+    // Новый трек оболочки (переход в меню/другую игру) всегда снимает duck инструмента.
+    setMusicDucked(false, 0)
     if (stale()) return false
 
-    const next = new Audio(url)
-    next.loop = true
-    next.volume = 0
+    const next = createMusicTrack(url)
     musicAudio = next
     try {
       await next.play()
@@ -710,7 +734,7 @@ export function createAudioManager(
       if (musicAudio === next) stopMusic()
       return false
     }
-    await fadeVolumeAsync(next, 0, peak, inMs)
+    await setMusicLevel(next, peak, inMs)
     if (stale()) {
       stopMusic()
       return false
@@ -741,6 +765,9 @@ export function createAudioManager(
     switchMusic,
     stopSfx,
     stopVoice,
+    preload: (urls) => preloadBuffers(urls),
+    duckMusic: (ms = 400) => setMusicDucked(true, ms),
+    restoreMusic: (ms = 400) => setMusicDucked(false, ms),
     allowBrightMotion: () => !settings.quietMode,
     updateSettings: (next) => {
       settings = { ...next }
@@ -749,6 +776,16 @@ export function createAudioManager(
         stopMusic()
       }
       if (!channelAllowed('voice', settings)) stopVoice()
+    },
+    dispose: () => {
+      // Короткий sfx (тап по «Назад») доигрывает сам; голос и музыка ушедшей игры — нет.
+      musicSession += 1
+      stopVoice()
+      stopMusic()
+      backgroundStopAllSet.delete(stopAllSounds)
+      unsubscribeDuck?.()
+      unsubscribeDuck = null
+      duckSubscribed = false
     },
   }
 }

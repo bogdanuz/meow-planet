@@ -10,13 +10,30 @@ export type GameMountContext = {
     musicEnabled: boolean
     quietMode: boolean
     hideEnglishAlphabet: boolean
-    countingLimit: 3 | 10
+    countingLimit: 3 | 5 | 10
+    countingTasks?: readonly string[]
+    countingAutoHints?: boolean
     balloonTasksEnabled: boolean
     companion: 'meow' | 'olli'
+    puzzlePieceCount?: 4 | 6 | 9
+    puzzleTargetHint?: boolean
+    sandboxRealPhysics?: boolean
+    sandboxMaxPieces?: 20 | 40 | 60
+    sandboxAutoStraight?: boolean
+    sandboxHiddenKinds?: readonly string[]
+    sandboxSticky?: boolean
+    sandboxPieceSize?: 'big' | 'small' | 'tiny'
+    hideSeekLevel?: 'easy' | 'medium' | 'hard'
+    hideSeekMirror?: boolean
+    hideSeekAutoHints?: boolean
+    meowHomePotty?: boolean
+    meowHomeWishes?: boolean
+    meowHomeRealTime?: boolean
+    meowHomeSeasonByDate?: boolean
   }>
   /** Сообщить оболочке мягкую подсказку (текст для Мяу). */
   onSoftHint?: (message: string) => void
-  /** Иконка задания у Мяu в chrome (без текста на поляне). */
+  /** Иконка задания у Мяу в chrome (без текста на поляне). */
   onTaskVisual?: (cue: GameTaskVisual | null) => void
   /** Навигация хаба (игры без app chrome). */
   hubNavigation?: {
@@ -25,8 +42,6 @@ export type GameMountContext = {
     goSettings?: () => void
     onSoundToggle?: (on: boolean) => void
   }
-  /** Правая часть chrome (кнопки игры рядом с «Назад»). */
-  chromeGameActions?: HTMLElement
   /** Подпись сцены/локации в header (прятки — справа). */
   onChromeSceneLabel?: (label: string) => void
 }

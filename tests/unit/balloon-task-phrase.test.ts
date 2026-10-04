@@ -112,4 +112,39 @@ describe('balloon-pop task phrase', () => {
     await vi.advanceTimersByTimeAsync(2400)
     expect(speech?.textContent).not.toContain('Всё получилось')
   })
+
+  it('тап по другому шарику во время похвалы не отменяет следующее задание', async () => {
+    vi.useFakeTimers()
+    vi.spyOn(Math, 'random').mockReturnValue(0)
+    vi.stubGlobal(
+      'Audio',
+      vi.fn(function Audio(url?: string) {
+        return new FakeVoice(url)
+      }),
+    )
+
+    const container = document.createElement('div')
+    document.body.append(container)
+    balloonPopGame.mount(container, createContext())
+    await vi.advanceTimersByTimeAsync(0)
+
+    container
+      .querySelector<HTMLButtonElement>(
+        'button[aria-label="Задание — режим с подсказкой Мяу"]',
+      )
+      ?.click()
+    await vi.advanceTimersByTimeAsync(0)
+
+    container.querySelector<HTMLButtonElement>('.balloon-pop__balloon[data-color="red"]')!.click()
+    await vi.advanceTimersByTimeAsync(500)
+
+    const other = container.querySelector<HTMLButtonElement>(
+      '.balloon-pop__balloon:not([data-color="red"])',
+    )
+    expect(other).not.toBeNull()
+    other!.click()
+    await vi.advanceTimersByTimeAsync(5000)
+
+    expect(other!.isConnected).toBe(false)
+  })
 })

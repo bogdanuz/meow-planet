@@ -1,173 +1,188 @@
-import type { PlaceholderColor, PlaceholderShape } from '../../shared/placeholders'
-import { FIELD_COLORS } from '../../shared/field-colors'
-import { resolveMatchDrop } from '../../shared/placement'
-import type { SoftCheckResult } from '../../shared/soft-error'
-import { shuffleCopy, type Rng } from '../../shared/random'
+import { pickOne, randomInt, shuffleCopy, type Rng } from '../../shared/random'
+import { SORT_COLORS, SORT_KINDS, type SortColor, type SortKind } from './catalog'
 
-/** 5 цветов как на поле «Лопни шарик» (без синего/indigo). */
-export const SORT_COLORS = FIELD_COLORS
+export type SortToy = { id: string; kind: SortKind; color: SortColor }
 
-export type SortColor = (typeof SORT_COLORS)[number]
+export type SortTaskTone = 'direct' | 'together'
 
-/** Простые формы для 2–3 лет (placeholder → PNG S16). */
-export const SORT_TOY_SHAPES = [
-  'circle',
-  'square',
-  'triangle',
-  'heart',
-  'star',
-] as const satisfies readonly PlaceholderShape[]
+export type SortTask =
+  | { type: 'one'; kind: SortKind; tone: SortTaskTone }
+  | { type: 'all'; kind: SortKind; tone: SortTaskTone }
+  | { type: 'color'; kind: SortKind; color: SortColor }
+  | { type: 'allColor'; kind: SortKind; color: SortColor }
 
-export type SortToyShape = (typeof SORT_TOY_SHAPES)[number]
+export type SortTaskType = SortTask['type']
 
-/** У каждой формы свой единственный цвет — не путаем ребёнка. */
-export const BASKET_ICON_SHAPE: Record<SortColor, SortToyShape> = {
-  red: 'circle',
-  orange: 'square',
-  yellow: 'triangle',
-  green: 'heart',
-  violet: 'star',
+/** Рост сложности: по 2 успеха на ступень, потом вперемешку. */
+export const TASK_LEVELS: readonly SortTaskType[] = ['one', 'all', 'color', 'allColor']
+export const SUCCESSES_PER_LEVEL = 2
+
+export const FREE_KIND_COUNT = 4
+export const FREE_PER_KIND = 3
+
+export type SortRound = {
+  kinds: SortKind[]
+  toys: SortToy[]
+  task: SortTask | null
 }
 
-export const SHAPE_TO_COLOR: Record<SortToyShape, SortColor> = {
-  circle: 'red',
-  square: 'orange',
-  triangle: 'yellow',
-  heart: 'green',
-  star: 'violet',
-}
+export type SortRoundState = SortRound & { placed: Set<string> }
 
-export type SortBead = {
-  id: string
-  color: SortColor
-  shape: SortToyShape
-  /** SORT-01…10 по манифесту */
-  assetId: string
-}
-
-export type SortBasket = {
-  id: string
-  color: SortColor
-  shape: SortToyShape
-}
-
-const COLOR_ADJ_M: Record<SortColor, string> = {
-  red: 'красный',
-  orange: 'оранжевый',
-  yellow: 'жёлтый',
-  green: 'зелёный',
-  violet: 'фиолетовый',
-}
-
-const COLOR_ADJ_F: Record<SortColor, string> = {
-  red: 'красная',
-  orange: 'оранжевая',
-  yellow: 'жёлтая',
-  green: 'зелёная',
-  violet: 'фиолетовая',
-}
-
-const COLOR_ADJ_N: Record<SortColor, string> = {
-  red: 'красное',
-  orange: 'оранжевое',
-  yellow: 'жёлтое',
-  green: 'зелёное',
-  violet: 'фиолетовое',
-}
-
-/** Подписи корзинок и игрушек (викторина 24.09.2026: набор Б + сердечко). */
-const SHAPE_NOUN_RU: Record<SortToyShape, string> = {
-  circle: 'мячик',
-  square: 'кубик',
-  triangle: 'пирамидка',
-  heart: 'сердечко',
-  star: 'звёздочка',
-}
-
-const SHAPE_GENDER: Record<SortToyShape, 'm' | 'f' | 'n'> = {
-  circle: 'm',
-  square: 'm',
-  triangle: 'f',
-  heart: 'n',
-  star: 'f',
-}
-
-function colorAdjForToy(color: SortColor, shape: SortToyShape): string {
-  const g = SHAPE_GENDER[shape]
-  if (g === 'f') return COLOR_ADJ_F[color]
-  if (g === 'n') return COLOR_ADJ_N[color]
-  return COLOR_ADJ_M[color]
-}
-
-export function sortShapeLabelRu(shape: SortToyShape): string {
-  return SHAPE_NOUN_RU[shape]
-}
-
-export function sortToyLabelRu(color: SortColor, shape: SortToyShape): string {
-  return `${colorAdjForToy(color, shape)} ${SHAPE_NOUN_RU[shape]}`
-}
-
-/** Подпись корзинки — название фигуры (не цвет). */
-export function sortBasketLabelRu(shape: SortToyShape): string {
-  const word = SHAPE_NOUN_RU[shape]
-  return word.charAt(0).toUpperCase() + word.slice(1)
-}
-
-export function isCanonicalToy(color: SortColor, shape: SortToyShape): boolean {
-  return BASKET_ICON_SHAPE[color] === shape && SHAPE_TO_COLOR[shape] === color
-}
-
-export function createBaskets(): SortBasket[] {
-  return SORT_COLORS.map((color) => ({
-    id: `basket-${color}`,
-    color,
-    shape: BASKET_ICON_SHAPE[color],
-  }))
-}
-
-/** 10 игрушек: по 2 одинаковые (форма+цвет) на каждый тип. */
-export function createBeads(rng: Rng = Math.random): SortBead[] {
-  const beads: SortBead[] = []
-  let n = 0
-  for (const color of SORT_COLORS) {
-    const shape = BASKET_ICON_SHAPE[color]
-    for (let copy = 1; copy <= 2; copy += 1) {
-      n += 1
-      beads.push({
-        id: `bead-${shape}-${copy}`,
-        color,
-        shape,
-        assetId: `SORT-${String(n).padStart(2, '0')}`,
-      })
+export type DropResult =
+  | { type: 'ignored' }
+  | { type: 'wrong'; kind: SortKind }
+  | {
+      type: 'placed'
+      toyId: string
+      kind: SortKind
+      matchedTask: boolean
+      taskDone: boolean
+      roundDone: boolean
     }
+
+let toySeq = 0
+
+function nextToyId(): string {
+  toySeq += 1
+  return `toy-${toySeq}`
+}
+
+function makeToys(kind: SortKind, colors: readonly SortColor[]): SortToy[] {
+  return colors.map((color) => ({ id: nextToyId(), kind, color }))
+}
+
+function sameSet(a: readonly SortKind[], b: readonly SortKind[]): boolean {
+  return a.length === b.length && a.every((k) => b.includes(k))
+}
+
+/** Свободная куча: 4 вида × 3, у вида один цвет, цвета видов разные; набор видов меняется. */
+export function createFreeRound(rng: Rng = Math.random, previousKinds: readonly SortKind[] = []): SortRound {
+  const kinds = shuffleCopy(SORT_KINDS, rng).slice(0, FREE_KIND_COUNT)
+  if (previousKinds.length > 0 && sameSet(kinds, previousKinds)) {
+    const fresh = SORT_KINDS.filter((k) => !previousKinds.includes(k))
+    const swap = pickOne(fresh, rng)
+    if (swap) kinds[randomInt(0, kinds.length - 1, rng)] = swap
   }
-  return shuffleCopy(beads, rng)
+  const colors = shuffleCopy(SORT_COLORS, rng)
+  const toys = kinds.flatMap((kind, i) => makeToys(kind, Array(FREE_PER_KIND).fill(colors[i]!)))
+  return { kinds, toys: shuffleCopy(toys, rng), task: null }
 }
 
-export function softHintForShape(shape: SortToyShape): string {
-  return `Ищи корзинку с ${SHAPE_NOUN_RU[shape]}.`
+function otherColors(color: SortColor, count: number, rng: Rng): SortColor[] {
+  return shuffleCopy(
+    SORT_COLORS.filter((c) => c !== color),
+    rng,
+  ).slice(0, count)
 }
 
-/** Совпадение по форме (цвет связан 1:1 с формой). */
-export function evaluateSortDrop(
-  beadShape: SortToyShape,
-  basketShape: SortToyShape,
-): SoftCheckResult {
-  return resolveMatchDrop(
-    beadShape,
-    basketShape,
-    softHintForShape(beadShape),
-  )
+/** Отвлекающие виды: 1–2 вида, у каждого ≥1 игрушка, один цвет на вид, не цвет цели. */
+function distractors(
+  target: SortKind,
+  targetColor: SortColor,
+  count: number,
+  rng: Rng,
+): { kinds: SortKind[]; toys: SortToy[] } {
+  const kindCount = count >= 2 ? randomInt(1, 2, rng) : 1
+  const kinds = shuffleCopy(
+    SORT_KINDS.filter((k) => k !== target),
+    rng,
+  ).slice(0, kindCount)
+  const counts = kinds.map(() => 1)
+  for (let left = count - kinds.length; left > 0; left -= 1) {
+    counts[randomInt(0, counts.length - 1, rng)]! += 1
+  }
+  const palette = otherColors(targetColor, SORT_COLORS.length - 1, rng)
+  const toys = kinds.flatMap((kind, i) => makeToys(kind, Array(counts[i]!).fill(palette[i % palette.length]!)))
+  return { kinds, toys }
 }
 
-export function isSortColor(value: string): value is SortColor {
-  return (SORT_COLORS as readonly string[]).includes(value)
+/** Маленькая куча задания: 5–6 игрушек из 2–3 видов, цель всегда есть. */
+export function createTaskRound(type: SortTaskType, rng: Rng = Math.random, tone: SortTaskTone = 'direct'): SortRound {
+  const kind = pickOne(SORT_KINDS, rng)!
+  const color = pickOne(SORT_COLORS, rng)!
+  let task: SortTask
+  let targetColors: SortColor[]
+  let total: number
+  switch (type) {
+    case 'one':
+      task = { type, kind, tone }
+      targetColors = Array(randomInt(1, 2, rng)).fill(color)
+      total = 5
+      break
+    case 'all':
+      task = { type, kind, tone }
+      targetColors = Array(randomInt(2, 3, rng)).fill(color)
+      total = randomInt(5, 6, rng)
+      break
+    case 'color':
+      task = { type, kind, color }
+      targetColors = [color, ...otherColors(color, randomInt(1, 2, rng), rng)]
+      total = randomInt(5, 6, rng)
+      break
+    case 'allColor':
+      task = { type, kind, color }
+      targetColors = [color, color, ...otherColors(color, randomInt(1, 2, rng), rng)]
+      total = 6
+      break
+  }
+  const rest = distractors(kind, color, total - targetColors.length, rng)
+  const toys = [...makeToys(kind, targetColors), ...rest.toys]
+  return { kinds: shuffleCopy([kind, ...rest.kinds], rng), toys: shuffleCopy(toys, rng), task }
 }
 
-export function isSortToyShape(value: string): value is SortToyShape {
-  return (SORT_TOY_SHAPES as readonly string[]).includes(value)
+export function createRoundState(round: SortRound): SortRoundState {
+  return { ...round, placed: new Set() }
 }
 
-export function asPlaceholderColor(color: SortColor): PlaceholderColor {
-  return color
+export function toyMatchesTask(toy: SortToy, task: SortTask): boolean {
+  if (toy.kind !== task.kind) return false
+  return task.type === 'one' || task.type === 'all' || toy.color === task.color
+}
+
+/** Сколько ещё целей до конца задания; без задания — 0. */
+export function taskTargetsLeft(state: SortRoundState): number {
+  const task = state.task
+  if (!task) return 0
+  const targets = state.toys.filter((t) => toyMatchesTask(t, task))
+  const left = targets.filter((t) => !state.placed.has(t.id)).length
+  if (task.type === 'one' || task.type === 'color') return left < targets.length ? 0 : 1
+  return left
+}
+
+export function isRoundComplete(state: SortRoundState): boolean {
+  return state.toys.every((t) => state.placed.has(t.id))
+}
+
+export function evaluateDrop(state: SortRoundState, toyId: string, binKind: SortKind): DropResult {
+  const toy = state.toys.find((t) => t.id === toyId)
+  if (!toy || state.placed.has(toyId)) return { type: 'ignored' }
+  if (toy.kind !== binKind) return { type: 'wrong', kind: toy.kind }
+  const wasOpen = state.task !== null && taskTargetsLeft(state) > 0
+  state.placed.add(toyId)
+  const matchedTask = state.task !== null && wasOpen && toyMatchesTask(toy, state.task)
+  return {
+    type: 'placed',
+    toyId,
+    kind: toy.kind,
+    matchedTask,
+    taskDone: matchedTask && taskTargetsLeft(state) === 0,
+    roundDone: isRoundComplete(state),
+  }
+}
+
+export type TaskProgress = { level: number; successes: number }
+
+export function createTaskProgress(): TaskProgress {
+  return { level: 0, successes: 0 }
+}
+
+export function advanceTaskProgress(p: TaskProgress): TaskProgress {
+  if (p.level >= TASK_LEVELS.length) return p
+  const successes = p.successes + 1
+  if (successes >= SUCCESSES_PER_LEVEL) return { level: p.level + 1, successes: 0 }
+  return { level: p.level, successes }
+}
+
+export function taskTypeForProgress(p: TaskProgress, rng: Rng = Math.random): SortTaskType {
+  return TASK_LEVELS[p.level] ?? pickOne(TASK_LEVELS, rng)!
 }

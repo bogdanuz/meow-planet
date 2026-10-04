@@ -32,15 +32,15 @@
 
 ## 2. Сутки и «режим дня» (meow-home + общий слой)
 
-Игра **«В гостях у Мяu»** и частично **seasons** — привязка к **утро / день / вечер / ночь / сон**.
+Игра **«В гостях у Мяу»** и частично **seasons** — привязка к **утро / день / вечер / ночь / сон**.
 
 | ID | Период | Файл | Где используется | Поиск (бесплатно) |
 |----|--------|------|------------------|-------------------|
 | BGM-daypart-morning | **Утро** 06–11 | `music-daypart-morning.mp3` | meow-home «утро», опц. counting старт | gentle wake, birds soft |
 | BGM-daypart-day | **День** 11–17 | `music-daypart-day.mp3` | meow-home комната, default game bed | sunny playful calm |
-| BGM-daypart-evening | **Вечер** 17–21 | `music-daypart-evening.mp3` | meow-home вечер, уход за Мяu | warm acoustic, slow |
+| BGM-daypart-evening | **Вечер** 17–21 | `music-daypart-evening.mp3` | meow-home вечер, уход за Мяу | warm acoustic, slow |
 | BGM-daypart-night | **Ночь** 21–06 | `music-daypart-night.mp3` | meow-home ночь (не сон) | quiet moon, music box |
-| BGM-sleep | **Сон / укладывание** | `music-sleep.mp3` | meow-home: Мяu в кровати, одеяло; **родитель может оставить** | lullaby, 60–90 BPM, **no vocals** |
+| BGM-sleep | **Сон / укладывание** | `music-sleep.mp3` | meow-home: Мяу в кровати, одеяло; **родитель может оставить** | lullaby, 60–90 BPM, **no vocals** |
 | BGM-sleep-deep | **Глубокий сон** (опц.) | `music-sleep-deep.mp3` | тот же экран, crossfade после 2–3 мин | ambient sleep |
 
 **Рекомендация:** `music-meow-home.mp3` в старых таблицах **заменить** на daypart-набор + sleep; в коде — выбор по `period` + сцене.
@@ -67,7 +67,7 @@
 | sound-world | **нет** / pad −24 dB | — | приоритет sfx и инструментов |
 | sort-colors | да | `music-sort-colors.mp3` | спокойный ритм |
 | puzzle | да | `music-puzzle.mp3` | focus, без напряжения |
-| shape-build | да | `music-shape-build.mp3` | конструктор |
+| shape-build | да | `music-shape-build.mp3` | песочница «Собери что угодно!»: тихо, звуки ударов деталей главнее |
 | hide-seek | да | `music-hide-seek.mp3` | curiosity |
 | seasons | **4 сезона** + daypart опц. | `music-seasons-*.mp3` | см. §5 |
 | counting | да | `music-counting.mp3` | простой pulse; без отвлечения |
@@ -98,7 +98,7 @@ Crossfade между сезоном и погодой: 1–2 с.
 |----|---------|------|
 | STING-complete | Пазл / фигурка / раунд | `sting-complete.mp3` |
 | STING-celebrate | Шарики / praise | `sting-celebrate.mp3` |
-| STING-meow-yawn | Мяu зевает / сон | `sting-yawn.mp3` |
+| STING-meow-yawn | Мяу зевает / сон | `sting-yawn.mp3` |
 
 ---
 

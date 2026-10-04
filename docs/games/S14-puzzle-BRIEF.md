@@ -2,6 +2,8 @@
 
 **Дата:** 24.09.2026 · **Статус:** **S14 ЗАВЕРШЕНО** (код **0.15.8**)
 
+> **История.** С 0.16.6 экран и решения — **`S16-puzzle-BRIEF.md`**. Здесь остаётся описание механики S14 (сетка, швы, мягкие ошибки); chrome, тосты, ⚙/капча и демо-картинка ниже устарели.
+
 SSOT арта: **`docs/assets/puzzle-ART.md`** · polish-история: **`S14-puzzle-GAME-POLISH.md`** · устаревшие решения 0.15.6: **`archive/docs/S14-puzzle-superseded-0.15.6.md`**
 
 ## User story
@@ -29,7 +31,7 @@ SSOT арта: **`docs/assets/puzzle-ART.md`** · polish-история: **`S14-
 | Похвала | `praise.ts` |
 | Headbreaker | **`data-headbreaker=deferred`** — interlock jigsaw **не MVP** |
 | Peek 👁 | **Снято** (подсказка = силуэт + target-hint) |
-| Chrome | `app-shell--puzzle`: без Мяu; **+ / ⚙** в `chrome__game-actions`; тост `chrome__hint` |
+| Chrome | `app-shell--puzzle`: без Мяу; **+ / ⚙** в `chrome__game-actions`; тост `chrome__hint` |
 | Scroll | `100dvh`, overflow hidden |
 | Тесты | `tests/e2e/puzzle.spec.ts`, unit: grid, magnet, seams, settings, crop |
 
@@ -48,7 +50,7 @@ SSOT арта: **`docs/assets/puzzle-ART.md`** · polish-история: **`S14-
 - **Part–whole:** видимая цель (силуэт + собранная картинка), крупные части — норма для 2–3 лет.
 - **Щедрый snap**, без таймера и штрафов — soft-error chain.
 - **Eye–hand:** drag и тап→тап; подсказка «куда» снижает фрустрацию без «подсмотреть всё».
-- Не медицинские claims — опора на паттерны toddler puzzle apps и Montessorи «целое–часть».
+- Не медицинские claims — опора на паттерны toddler puzzle apps и Montessori «целое–часть».
 
 ## Ассеты S16
 
@@ -61,7 +63,7 @@ SSOT арта: **`docs/assets/puzzle-ART.md`** · polish-история: **`S14-
 | p0_layout | Крупная stage, галерея слева, без scroll страницы |
 | p0_mechanic | **Рама** (B), не headbreaker MVP |
 | p1_gallery | Превью-кнопки, aria-label |
-| p1_chrome | Без Мяu, тост; **+ / ⚙** в chrome игры |
+| p1_chrome | Без Мяу, тост; **+ / ⚙** в chrome игры |
 | p1_photo | Фото и crop **в игре**; родительский центр — без пазл-фото |
 | p2_tap | Тап→тап ✅ |
 | p2_pieces | 4 / 6 / 9 (капча) ✅ |

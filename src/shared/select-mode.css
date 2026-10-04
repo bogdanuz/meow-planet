@@ -1,0 +1,92 @@
+/*
+ * Режим «Выбрать → Удалить» во всех галереях (механика «Рисовалки»).
+ * Контейнер ставит data-selecting="1"; карточка — .is-selected; в карточке — .select-check.
+ */
+
+.select-check {
+  position: absolute;
+  z-index: 2;
+  top: 0.65rem;
+  right: 0.65rem;
+  display: none;
+  width: 2.4rem;
+  height: 2.4rem;
+  border-radius: 50%;
+  background: rgb(255 253 248 / 92%);
+  box-shadow:
+    0 0 0 3px rgb(43 39 36 / 45%),
+    0 3px 6px rgb(43 39 36 / 25%);
+  pointer-events: none;
+}
+
+[data-selecting='1'] .select-check {
+  display: block;
+}
+
+.is-selected > .select-check {
+  background: #5cba6a;
+  box-shadow:
+    0 0 0 3px #fffdf8,
+    0 3px 6px rgb(43 39 36 / 30%);
+}
+
+.is-selected > .select-check::after {
+  content: '';
+  position: absolute;
+  left: 0.78rem;
+  top: 0.42rem;
+  width: 0.62rem;
+  height: 1.1rem;
+  border: solid #fffdf8;
+  border-width: 0 0.28rem 0.28rem 0;
+  transform: rotate(45deg);
+}
+
+.select-actions {
+  display: flex;
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: 0.8rem;
+}
+
+.select-actions[hidden] {
+  display: none;
+}
+
+.select-action.touch-btn {
+  min-height: 3.6rem;
+  padding: 0.4rem 1.3rem;
+  border: none;
+  border-radius: 1.2rem;
+  background: rgb(255 252 246 / 96%);
+  box-shadow:
+    0 0 0 3px rgb(232 196 150 / 95%),
+    0 6px 12px rgb(74 46 18 / 22%);
+  color: #3b2a1a;
+  font-size: 1.1rem;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.select-action.is-selected {
+  box-shadow:
+    0 0 0 4px #2b2724,
+    0 6px 12px rgb(74 46 18 / 22%);
+}
+
+.select-action:disabled {
+  opacity: 0.45;
+  box-shadow: none;
+}
+
+.select-action[hidden] {
+  display: none;
+}
+
+.select-action--danger.touch-btn {
+  background: #fbe3df;
+  box-shadow:
+    0 0 0 3px rgb(228 83 74 / 55%),
+    0 6px 12px rgb(74 46 18 / 18%);
+  color: #9e2f2a;
+}

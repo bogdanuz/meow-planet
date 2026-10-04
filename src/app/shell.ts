@@ -53,6 +53,7 @@ function hintForRoute(route: Route): string {
       return route.gameId === 'sound-world' ||
         route.gameId === 'sort-colors' ||
         route.gameId === 'puzzle' ||
+        route.gameId === 'shape-build' ||
         route.gameId === 'drawing'
         ? ''
         : 'Играй спокойно. Ошибки не страшны.'
@@ -155,15 +156,11 @@ export function renderShell(root: HTMLElement): () => void {
   title.className = 'chrome__title'
   title.textContent = 'Планета Мяу и друзья'
 
-  const gameActions = document.createElement('div')
-  gameActions.className = 'chrome__game-actions'
-  gameActions.hidden = true
-
   const sceneLabel = document.createElement('span')
   sceneLabel.className = 'chrome__scene-label screen__lead--adult'
   sceneLabel.hidden = true
 
-  chrome.append(nav, title, sceneLabel, gameActions)
+  chrome.append(nav, title, sceneLabel)
 
   const mascotRow = document.createElement('div')
   mascotRow.className = 'chrome__mascot'
@@ -207,11 +204,38 @@ export function renderShell(root: HTMLElement): () => void {
     taskCue.append(renderGameTaskVisualCue(cue))
   }
 
+  /** Какая музыка звучит на экране: хаб, общий фон игр или тишина. */
+  function syncMusic(route: Route): void {
+    const hubScreen =
+      route.screen === 'welcome' ||
+      route.screen === 'menu' ||
+      route.screen === 'parent' ||
+      (route.screen === 'game' && !isGameReleased(route.gameId))
+    if (hubScreen) playHubMusic(audio)
+    else if (route.screen === 'game' && gameUsesSharedMusic(route.gameId))
+      playGameMusic(audio, route.gameId)
+    else audio.fadeOutMusic(280)
+  }
+
+  // При уходе в фон музыка останавливается; iOS заводит её снова только от касания.
+  const resumeMusic = (): void => {
+    window.removeEventListener('pointerdown', resumeMusic, true)
+    if (settings.musicEnabled) syncMusic(router.getRoute())
+  }
+  const onPageVisible = (): void => {
+    if (document.hidden) return
+    window.addEventListener('pointerdown', resumeMusic, { once: true, capture: true })
+  }
+  document.addEventListener('visibilitychange', onPageVisible)
+  window.addEventListener('pageshow', onPageVisible)
+
   function applySettings(next: AppSettings): void {
+    const musicWasOn = settings.musicEnabled && !settings.quietMode
     settings = next
     saveSettings(next)
     audio.updateSettings(next)
     root.classList.toggle('app-shell--quiet', next.quietMode)
+    if (!musicWasOn && next.musicEnabled && !next.quietMode) syncMusic(router.getRoute())
   }
 
   function patchSettings(patch: Partial<AppSettings>): void {
@@ -249,10 +273,7 @@ export function renderShell(root: HTMLElement): () => void {
     const onParent = route.screen === 'parent'
     const onComingSoon =
       route.screen === 'game' && !isGameReleased(route.gameId)
-    if (onWelcome || onMenu || onParent || onComingSoon) playHubMusic(audio)
-    else if (route.screen === 'game' && gameUsesSharedMusic(route.gameId))
-      playGameMusic(audio, route.gameId)
-    else audio.fadeOutMusic(280)
+    syncMusic(route)
     const onBalloonGame =
       route.screen === 'game' && route.gameId === 'balloon-pop'
     const onSoundWorldGame =
@@ -279,6 +300,12 @@ export function renderShell(root: HTMLElement): () => void {
       onComingSoon ||
       onBalloonGame ||
       onSoundWorldGame ||
+      onSortColorsGame ||
+      onPuzzleGame ||
+      onShapeBuildGame ||
+      onHideSeekGame ||
+      onCountingGame ||
+      onMeowHomeGame ||
       onDrawingGame
     mascotRow.hidden =
       onWelcome ||
@@ -291,6 +318,8 @@ export function renderShell(root: HTMLElement): () => void {
       onPuzzleGame ||
       onShapeBuildGame ||
       onHideSeekGame ||
+      onCountingGame ||
+      onMeowHomeGame ||
       onDrawingGame
     root.classList.toggle('app-shell--balloon-game', onBalloonGame)
     root.classList.toggle('app-shell--sound-world', onSoundWorldGame)
@@ -303,8 +332,6 @@ export function renderShell(root: HTMLElement): () => void {
     root.classList.toggle('app-shell--drawing', onDrawingGame)
     root.classList.toggle('app-shell--parent', onParent)
     root.classList.toggle('app-shell--coming-soon', onComingSoon)
-    gameActions.hidden = !onPuzzleGame
-    if (!onPuzzleGame) gameActions.replaceChildren()
     backBtn.hidden = onWelcome || onMenu
     homeBtn.hidden = onWelcome || onMenu
     title.hidden = onMenu
@@ -357,7 +384,6 @@ export function renderShell(root: HTMLElement): () => void {
               }
             },
           },
-          onPuzzleGame ? gameActions : undefined,
           onHideSeekGame ? setChromeSceneLabel : undefined,
         )
         break
@@ -394,6 +420,9 @@ export function renderShell(root: HTMLElement): () => void {
 
   return () => {
     window.removeEventListener('pointerdown', unlockOnce)
+    window.removeEventListener('pointerdown', resumeMusic, true)
+    document.removeEventListener('visibilitychange', onPageVisible)
+    window.removeEventListener('pageshow', onPageVisible)
     stopSmallGate()
     stopOrientation()
     unmountActiveGame()

@@ -61,9 +61,7 @@ describe('mountBootLoader', () => {
       doneCount: 57,
       totalCount: 100,
     })
-    loader.setError(
-      'Пылесос сломался. Нажмите «Повторить», чтобы продолжить подготовку игр',
-    )
+    loader.setError('Связь прервалась.')
 
     expect(layer?.style.getPropertyValue('--boot-leaf-clear')).toBe('57%')
     expect(layer?.style.getPropertyValue('--boot-leaf-fade-start')).toBe('53%')
@@ -72,12 +70,10 @@ describe('mountBootLoader', () => {
     expect(root.querySelector('.boot-loader__progress')?.textContent).toBe(
       '57 из 100 файлов • 57%',
     )
-    expect(root.querySelector('.boot-loader__message')?.textContent).toBe(
-      'Пылесос сломался. Нажмите «Повторить», чтобы продолжить подготовку игр',
-    )
-    expect(
-      (root.querySelector('.boot-loader__retry') as HTMLButtonElement).hidden,
-    ).toBe(false)
+    expect(root.querySelector('.boot-loader__message')?.textContent).toBe('Связь прервалась.')
+    const retry = root.querySelector('.boot-loader__retry') as HTMLButtonElement
+    expect(retry.hidden).toBe(false)
+    expect(retry.textContent).toBe('Продолжить загрузку')
     expect(layer?.classList.contains('boot-loader--error')).toBe(true)
 
     loader.setProgress({
@@ -91,6 +87,30 @@ describe('mountBootLoader', () => {
     expect(root.querySelector('.boot-loader__progress')?.textContent).toBe(
       '57 из 100 файлов • 57%',
     )
+    expect(layer?.classList.contains('boot-loader--error')).toBe(true)
+
+    loader.setProgress({
+      percent: 58,
+      message: 'Подготавливаем игру',
+      doneCount: 58,
+      totalCount: 100,
+    })
     expect(layer?.classList.contains('boot-loader--error')).toBe(false)
+    expect(retry.hidden).toBe(true)
+  })
+
+  it('кнопка «Продолжить загрузку» сразу убирает ошибку и пишет, что продолжаем', () => {
+    const root = document.createElement('div')
+    const loader = mountBootLoader(root)
+    let retried = 0
+    loader.setRetryHandler(() => {
+      retried += 1
+    })
+    loader.setError('Связь прервалась.')
+    ;(root.querySelector('.boot-loader__retry') as HTMLButtonElement).click()
+
+    expect(retried).toBe(1)
+    expect(root.querySelector('.boot-loader--error')).toBeNull()
+    expect(root.querySelector('.boot-loader__message')?.textContent).toBe('Продолжаем загрузку…')
   })
 })

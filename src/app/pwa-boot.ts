@@ -7,7 +7,13 @@ export type BootProgress = {
 
 export type BootResult =
   | { ok: true }
-  | { ok: false; errorMessage: string; failedAssets?: string[] }
+  | { ok: false; errorMessage: string; reason: 'stalled' | 'failed' }
+
+export const BOOT_STALL_MESSAGE =
+  'Связь прервалась. Скачанное сохранено — загрузка продолжится сама, когда вернётся интернет'
+
+/** Сколько ждать без единого нового файла в кэше, прежде чем показать ошибку. */
+export const BOOT_STALL_MS = 30_000
 
 /**
  * Шкала 0–100 по фактической загрузке картинок и звуков готовых игр.
@@ -33,7 +39,14 @@ export type BootDependencies = {
   waitForServiceWorkerReady?: () => Promise<boolean>
   readWorkboxCachedUrls?: () => Promise<Set<string>>
   waitForNextCachePoll?: () => Promise<void>
+  now?: () => number
 }
+
+const failed = (): BootResult => ({
+  ok: false,
+  errorMessage: BOOT_STALL_MESSAGE,
+  reason: 'failed',
+})
 
 function hasServiceWorkerSupport(): boolean {
   if (typeof navigator === 'undefined') return false
@@ -170,12 +183,13 @@ async function trackWorkboxPrecacheProgress(
   readiness: Promise<boolean>,
   report: (progress: BootProgress) => void,
   dependencies: Required<BootDependencies>,
-): Promise<boolean> {
+): Promise<BootResult> {
   const expectedUrls = urlsAbs.map(normalizePrecacheUrl)
   const totalCount = expectedUrls.length
   let readinessState: boolean | undefined
   let previousCount = -1
   let finalizationPolls = 0
+  let lastProgressAt = dependencies.now()
 
   void readiness.then(
     (ready) => {
@@ -191,7 +205,7 @@ async function trackWorkboxPrecacheProgress(
     try {
       cachedUrls = await dependencies.readWorkboxCachedUrls()
     } catch {
-      return false
+      return failed()
     }
     const doneCount = expectedUrls.reduce(
       (count, url) => count + (cachedUrls.has(url) ? 1 : 0),
@@ -200,6 +214,7 @@ async function trackWorkboxPrecacheProgress(
 
     if (doneCount !== previousCount) {
       previousCount = doneCount
+      lastProgressAt = dependencies.now()
       report({
         percent: Math.min(99, Math.round((doneCount / totalCount) * 100)),
         message: 'Подготавливаем игру',
@@ -215,13 +230,15 @@ async function trackWorkboxPrecacheProgress(
         doneCount: totalCount,
         totalCount,
       })
-      return true
+      return { ok: true }
     }
 
-    if (readinessState === false) return false
+    if (readinessState === false) return failed()
     if (readinessState === true) {
       finalizationPolls += 1
-      if (finalizationPolls >= CACHE_FINALIZATION_MAX_POLLS) return false
+      if (finalizationPolls >= CACHE_FINALIZATION_MAX_POLLS) return failed()
+    } else if (dependencies.now() - lastProgressAt >= BOOT_STALL_MS) {
+      return { ok: false, errorMessage: BOOT_STALL_MESSAGE, reason: 'stalled' }
     }
     await dependencies.waitForNextCachePoll()
   }
@@ -236,45 +253,28 @@ async function runBootSequenceOnce(
     const swReady = await waitForServiceWorkerFinalization(
       dependencies.waitForServiceWorkerReady(),
     )
-    if (!swReady) {
-      return {
-        ok: false,
-        errorMessage:
-          'Пылесос сломался. Нажмите «Повторить», чтобы продолжить подготовку игр',
-      }
-    }
+    if (!swReady) return failed()
     report({ percent: 100, message: 'Готово!' })
     return { ok: true }
   }
 
   // Manifest задаёт ожидаемый набор, а промежуточный счёт берётся только из
   // фактических записей Workbox Cache Storage. Второй download-pass не нужен.
-  const swReadyPromise = waitForServiceWorkerFinalization(
-    dependencies.waitForServiceWorkerReady(),
-  )
+  // Общего таймаута нет: долгую загрузку прерывает только застой (BOOT_STALL_MS).
+  const swReadyPromise = dependencies.waitForServiceWorkerReady()
   let urlsAbs: string[]
   try {
     urlsAbs = await loadPrecacheUrls()
   } catch {
-    return {
-      ok: false,
-      errorMessage:
-        'Пылесос сломался. Нажмите «Повторить», чтобы продолжить подготовку игр',
-    }
+    return failed()
   }
 
   // vite-plugin-pwa выключен на dev-server, поэтому Cache Storage там не
   // создаётся. Это только локальный UI-путь; production всегда идёт ниже через
   // наблюдение реального workbox-precache и отдельный preview e2e.
   if (dependencies.isDevelopment) {
-    const swReadyOk = await swReadyPromise
-    if (!swReadyOk) {
-      return {
-        ok: false,
-        errorMessage:
-          'Пылесос сломался. Нажмите «Повторить», чтобы продолжить подготовку игр',
-      }
-    }
+    const swReadyOk = await waitForServiceWorkerFinalization(swReadyPromise)
+    if (!swReadyOk) return failed()
     report({
       percent: 100,
       message: 'Все файлы готовы',
@@ -284,21 +284,7 @@ async function runBootSequenceOnce(
     return { ok: true }
   }
 
-  const swReadyOk = await trackWorkboxPrecacheProgress(
-    urlsAbs,
-    swReadyPromise,
-    report,
-    dependencies,
-  )
-  if (!swReadyOk) {
-    return {
-      ok: false,
-      errorMessage:
-        'Пылесос сломался. Нажмите «Повторить», чтобы продолжить подготовку игр',
-    }
-  }
-
-  return { ok: true }
+  return trackWorkboxPrecacheProgress(urlsAbs, swReadyPromise, report, dependencies)
 }
 
 export async function runBootSequence(
@@ -313,6 +299,7 @@ export async function runBootSequence(
       dependencies.readWorkboxCachedUrls ?? readWorkboxCachedUrls,
     waitForNextCachePoll:
       dependencies.waitForNextCachePoll ?? waitForNextCachePoll,
+    now: dependencies.now ?? (() => Date.now()),
   }
   let maxPercentSeen = 0
   const trackedReport = (progress: BootProgress): void => {
@@ -324,7 +311,9 @@ export async function runBootSequence(
     trackedReport,
     resolvedDependencies,
   )
-  if (firstAttempt.ok || maxPercentSeen > 0) return firstAttempt
+  if (firstAttempt.ok || firstAttempt.reason === 'stalled' || maxPercentSeen > 0) {
+    return firstAttempt
+  }
 
   // Тихий повтор нужен только для cold-start сетевых сбоев до любого реального прогресса.
   // Если загрузка уже дошла до 100, повтор не делаем: это уже не transient bootstrap failure.

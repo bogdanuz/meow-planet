@@ -11,6 +11,8 @@ alwaysApply: true
 4. Викторины владельца — **AskQuestion** + «Свой вариант» → `.cursor/rules/interactive-quizzes.mdc`. S14 игры — skill **`s14-game-review`** + `docs/quality/S14-GAME-REVIEW-PLAYBOOK.md`. Polish экрана игры — **`/game-polish`** → skill **`game-screen-polish`** (двухэтапно).
 5. Коммиты — только владелец через **GitHub Desktop** → skill `git-workflow-github-desktop`.
 6. UI/экраны — skill **`ux-ui-kids-hub`**. Код — TDD строгий → skill **`testing-and-verification`**.
-   Универсальные кнопки (назад, звук, домой, настройки) одни на все игры: REF-04 и `docs/games/S16-GAME-SCREEN-PATTERN.md`. Не рисовать их заново.
+ Объём проверок — точечный (`targeted-testing.mdc`): полный прогон только по слову владельца.
+   Универсальные кнопки (назад, звук, домой, настройки, «Галерея», «Своё фото») одни на все игры:
+   `game-chrome-universal.mdc`, `src/shared/game-chrome.ts`, `docs/games/S16-GAME-SCREEN-PATTERN.md`. Не рисовать их заново.
 7. Любой runtime-файл/ассет обязан автоматически попасть в полный offline precache →
    `pwa-precache-integrity.mdc`.

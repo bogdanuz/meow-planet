@@ -1,4 +1,4 @@
-import { GAMES, type GameId } from '../../content/catalog'
+import { GAMES, MENU_TILE_IDS, type GameId } from '../../content/catalog'
 import type { RouterController } from '../router-controller'
 import { createVisualTile } from '../tile'
 import {
@@ -12,23 +12,11 @@ import {
   menuVisitBedPngUrl,
   menuVisitTreePngUrl,
 } from '../menu-cards'
+import { fitMenuToast, menuToastHeight, menuVisitScale } from '../menu-toast-fit'
 import { loadSettings } from '../../shared/storage'
 import { createUiIconImg, uiIconUrl } from '../../shared/ui-icon'
 
-/**
- * Плитки меню: 8 игр по 2 в ряд.
- * «В гостях у Мяу» — отдельная кнопка у персонажа справа (не плитка).
- */
-export const MENU_TILE_IDS = [
-  'balloon-pop',
-  'sound-world',
-  'drawing',
-  'sort-colors',
-  'puzzle',
-  'shape-build',
-  'hide-seek',
-  'counting',
-] as const satisfies readonly GameId[]
+export { MENU_TILE_IDS }
 
 /** Левый край (px): свайп вправо отсюда → приветствие (P15-03: шире для iPad). */
 const SWIPE_EDGE_PX = 88
@@ -167,7 +155,7 @@ export function renderMenuScreen(
       options?.onTransition?.()
       options?.onEnterGame?.(game.id)
       window.setTimeout(() => {
-        router.navigate({ screen: 'game', gameId: game.id })
+        if (router.getRoute().screen === 'menu') router.navigate({ screen: 'game', gameId: game.id })
       }, 460)
     })
     attachMenuCardArt(btn, id)
@@ -238,7 +226,7 @@ export function renderMenuScreen(
       options?.onTransition?.()
       options?.onEnterGame?.('meow-home')
       window.setTimeout(() => {
-        router.navigate({ screen: 'game', gameId: 'meow-home' })
+        if (router.getRoute().screen === 'menu') router.navigate({ screen: 'game', gameId: 'meow-home' })
       }, 460)
     })
   }
@@ -294,4 +282,54 @@ export function renderMenuScreen(
 
   container.replaceChildren(section)
   startPet?.()
+
+  const anchor = section.querySelector<HTMLElement>('.menu-visit-cat__anchor')
+  const toast = section.querySelector<HTMLElement>('.menu-visit-bed__toast')
+  if (anchor && toast && visitStack) {
+    const stack = visitStack
+    const setToast = (fit: { fontPx: number; gapPx: number }): void => {
+      toast.style.setProperty('--toast-font', `${fit.fontPx}px`)
+      toast.style.setProperty('--toast-gap', `${fit.gapPx}px`)
+    }
+    // Кнопки звука и настроек мешают, только если стоят над облачком по горизонтали.
+    const fitToast = (): void => {
+      stack.style.removeProperty('--visit-scale')
+      let char = anchor.getBoundingClientRect()
+      if (char.width < 10) return
+      const ideal = fitMenuToast({ charWidth: char.width, spaceAbove: Number.POSITIVE_INFINITY })
+      setToast(ideal)
+      const t = toast.getBoundingClientRect()
+      const ceiling = Math.max(
+        presenter.getBoundingClientRect().top,
+        ...[soundBtn, parentBtn]
+          .map((b) => b.getBoundingClientRect())
+          .filter((b) => b.right + 6 > t.left && b.left - 6 < t.right)
+          .map((b) => b.bottom),
+      )
+      const scale = menuVisitScale({
+        figureTop: char.top,
+        figureBottom: stack.getBoundingClientRect().bottom,
+        ceiling,
+        need: menuToastHeight(ideal.fontPx) + 2 * ideal.gapPx,
+      })
+      if (scale < 1) {
+        stack.style.setProperty('--visit-scale', String(scale))
+        char = anchor.getBoundingClientRect()
+      }
+      setToast(fitMenuToast({ charWidth: char.width, spaceAbove: char.top - ceiling }))
+    }
+    fitToast()
+    window.requestAnimationFrame(fitToast)
+    // Пока меню «въезжает» (scale), размеры искажены — финальная подгонка после анимации.
+    section.addEventListener('animationend', (event) => {
+      if (event.target === section) fitToast()
+    })
+    section.querySelector('.menu-visit-bed__meow')?.addEventListener('load', fitToast)
+    section.querySelector('.menu-visit-bed__art')?.addEventListener('load', fitToast)
+    void document.fonts?.ready.then(fitToast)
+    if (typeof ResizeObserver === 'function') {
+      const watch = new ResizeObserver(fitToast)
+      for (const el of [section, stack, anchor, toast]) watch.observe(el)
+    }
+  }
 }

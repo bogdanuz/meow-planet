@@ -11,7 +11,7 @@ import {
   planNewDrawingSheet,
   sanitizeCaption,
   type CreativeWork,
-} from '../../src/shared/creative-works'
+} from '../../src/games/drawing/creative-works'
 
 function work(partial: Partial<CreativeWork> & Pick<CreativeWork, 'id'>): CreativeWork {
   return {
@@ -47,6 +47,23 @@ describe('creative works', () => {
     expect(planNewDrawingSheet(withBlanks, 'd-0')).toBe('save-then-reset')
     expect(continueDrawingDraft([current])?.id).toBe('current')
     expect(continueDrawingDraft([work({ id: 'blank' })])).toBeNull()
+  })
+
+  it('свой цвет штриха (#rrggbb) читается, мусор — нет', () => {
+    const base = { id: 'x', kind: 'drawing', createdAt: 1, updatedAt: 2 }
+    const stroke = { tool: 'brush', size: 'thick', points: [{ x: 0.1, y: 0.1 }] }
+    expect(parseCreativeWork({ ...base, strokes: [{ ...stroke, color: '#12ab9f' }] })?.strokes[0]?.color).toBe('#12ab9f')
+    expect(parseCreativeWork({ ...base, strokes: [{ ...stroke, color: 'teal' }] })?.strokes[0]?.color).toBe('teal')
+    expect(parseCreativeWork({ ...base, strokes: [{ ...stroke, color: 'url(x)' }] })?.strokes).toEqual([])
+  })
+
+  it('seed акварели сохраняется, битый seed отбрасывается', () => {
+    const base = { id: 'x', kind: 'drawing', createdAt: 1, updatedAt: 2 }
+    const stroke = { tool: 'watercolor', color: 'blue', size: 'thick', points: [{ x: 0.1, y: 0.1 }] }
+    expect(parseCreativeWork({ ...base, strokes: [{ ...stroke, seed: 42 }] })?.strokes[0]?.seed).toBe(42)
+    const broken = parseCreativeWork({ ...base, strokes: [{ ...stroke, seed: 'x' }] })?.strokes[0]
+    expect(broken).toBeDefined()
+    expect(broken && 'seed' in broken).toBe(false)
   })
 
   it('галерея показывает только рисунки со штрихами, свежие первыми', () => {

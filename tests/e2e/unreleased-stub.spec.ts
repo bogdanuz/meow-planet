@@ -1,14 +1,8 @@
 import { test } from '@playwright/test'
 import { expectComingSoon, openGame } from './helpers'
 
-const UNRELEASED = [
-  'sort-colors',
-  'puzzle',
-  'shape-build',
-  'hide-seek',
-  'meow-home',
-  'counting',
-] as const
+/** «В гости» на доработке (решение владельца 03.10.2026): кнопка у Мяу открывает заглушку. */
+const UNRELEASED = ['meow-home'] as const
 
 test.describe('заглушка невыпущенных игр', () => {
   for (const id of UNRELEASED) {

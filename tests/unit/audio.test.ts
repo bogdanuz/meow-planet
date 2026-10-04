@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from 'vitest'
-import { createAudioManager } from '../../src/shared/audio'
+import { backgroundAudioManagersForTests, createAudioManager } from '../../src/shared/audio'
 
 describe('audio manager', () => {
   it('тихий режим глушит яркое движение и музыку', () => {
@@ -364,6 +364,39 @@ describe('audio manager', () => {
     vi.unstubAllGlobals()
   })
 
+  it('duckMusic из игры уводит в тишину музыку оболочки, restoreMusic возвращает', async () => {
+    const tracks: { volume: number; paused: boolean }[] = []
+    vi.stubGlobal(
+      'Audio',
+      vi.fn(function Audio(url?: string) {
+        const track = {
+          src: url ? new URL(url, window.location.href).href : '',
+          paused: true,
+          volume: 1,
+          loop: false,
+          play: vi.fn(async () => {
+            track.paused = false
+          }),
+          pause: vi.fn(),
+        }
+        tracks.push(track)
+        return track
+      }),
+    )
+    const shellAudio = createAudioManager({ soundEnabled: true, musicEnabled: true, quietMode: false })
+    const gameAudio = createAudioManager({ soundEnabled: true, musicEnabled: true, quietMode: false })
+    await shellAudio.switchMusic('game-music.mp3', 0.3, { fadeInMs: 0, fadeOutMs: 0 })
+    expect(tracks[0]?.volume).toBeCloseTo(0.3)
+
+    gameAudio.duckMusic(0)
+    await vi.waitFor(() => expect(tracks[0]?.volume).toBe(0))
+    expect(tracks[0]?.paused).toBe(false)
+
+    gameAudio.restoreMusic(0)
+    await vi.waitFor(() => expect(tracks[0]?.volume).toBeCloseTo(0.3))
+    vi.unstubAllGlobals()
+  })
+
   it('unlock помечает менеджер разблокированным', async () => {
     class FakeCtx {
       state = 'running'
@@ -392,5 +425,15 @@ describe('audio manager', () => {
     await audio.unlock()
     expect(audio.isUnlocked()).toBe(true)
     vi.unstubAllGlobals()
+  })
+})
+
+describe('audio manager dispose', () => {
+  it('ушедшая игра отписывает свой менеджер от фоновых событий', () => {
+    const before = backgroundAudioManagersForTests()
+    const audio = createAudioManager()
+    expect(backgroundAudioManagersForTests()).toBe(before + 1)
+    audio.dispose?.()
+    expect(backgroundAudioManagersForTests()).toBe(before)
   })
 })

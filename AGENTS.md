@@ -9,7 +9,7 @@
 3. Ограничения MVP: `docs/product/PRODUCT_CONSTRAINTS.md`
 4. Архитектура: `docs/architecture/ARCHITECTURE.md`
 
-**Спринт / версия** — только в `HANDOFF.md` и `docs/05-CURRENT-STATE.md` (сейчас: **S16** — welcome/menu ✅, balloon-pop ✅, игра **sound-world**; код **0.16.3**). В хабе есть post-MVP «Рисовалка» (раскраска — один из её фонов), она не закрывает заглушки S16. «Времена года» — улица внутри «В гости» (`src/games/meow-home/`). Экран игр: `docs/games/S16-GAME-SCREEN-PATTERN.md`.
+**Спринт / версия** — только в `HANDOFF.md` и `docs/05-CURRENT-STATE.md` (сейчас: **S16** — welcome/menu ✅, balloon-pop ✅, sound-world ✅, sort-colors ✅ (арт + голос), **puzzle** ✅ (арт владельца, 17 картинок), **shape-build** ✅ («Собери что угодно!» 2.1 — песочница с физикой planck.js и онбордингом, арт владельца, переработанные механизмы, большая комната, 35 готовых машин, тап/удержание, живые Мяу и Олли, ракетный рюкзак и парашют; ждём проверку на iPad), **hide-seek** ✅ («Прятки» — 6 сцен, случайные укрытия, уровни видимости, озвучка владельца; ждём проверку на iPad), **counting** ✅ («Учимся считать» — ящик, коврик с игрушками «Куда положить?», цифры, «Свободно» / «Задание»; озвучка владельца, ждём проверку на iPad), **meow-home** ⏸ («В гости» — код и арт 0.21.0 есть, но в меню снова заглушка до доработки, см. `BACKLOG.md`); код **0.22.1**). В хабе есть post-MVP «Рисовалка» (раскраска — один из её фонов). «Времена года» — двор внутри «В гости» (`src/games/meow-home/yard.ts`). Экран игр: `docs/games/S16-GAME-SCREEN-PATTERN.md`.
 
 Ассеты: **`docs/assets/ASSET-PRODUCTION-PLAYBOOK.md`**, промпты **`GENERATION-GUIDE.md`**, реестр **`ASSET-MANIFEST.md`**, стиль **`BRANDBOOK.md`**. Старый мегафайл — в `archive/docs/assets-pre-consolidation/`, не SSOT.  
 Offline/precache: **`docs/quality/PWA-OFFLINE-GUARDRAILS.md`** + ADR-0001.
@@ -26,6 +26,8 @@ Offline/precache: **`docs/quality/PWA-OFFLINE-GUARDRAILS.md`** + ADR-0001.
 | `toddler-interaction.mdc` | Soft-error, touch, без наказаний |
 | `privacy-and-local-data.mdc` | localStorage, XSS, privacy |
 | `pwa-precache-integrity.mdc` | Всегда: любой runtime-файл → полный precache + production boot QA |
+| `game-chrome-universal.mdc` | Всегда: одинаковые кнопки игр (назад, звук, шестерёнка справа, «Галерея», «Своё фото»), настройки по разделам |
+| `targeted-testing.mdc` | Всегда: тестировать только изменённое и пересекающееся; полный прогон — только по слову владельца («проверь всё», «все игры») |
 
 ## Skills (`.cursor/skills/`)
 
@@ -69,7 +71,9 @@ npm run test:e2e:boot
 
 ## После задачи
 
-Тесты по skill `testing-and-verification`; любой runtime-файл/ассет обязан пройти
+Тесты по skill `testing-and-verification` — **точечно** (только сделанное и то, что
+с ним пересекается, `targeted-testing.mdc`); полный `npm run test` / `npm run test:e2e` —
+только когда владелец просит проверить всё; любой runtime-файл/ассет обязан пройти
 `npm run build` и `npm run test:e2e:boot`; docs по `docs-sync`; владельцу —
 простым языком + сообщение для GitHub Desktop.
 

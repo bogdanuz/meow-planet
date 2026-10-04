@@ -17,8 +17,13 @@ if (!appRoot) {
 }
 const root: HTMLDivElement = appRoot
 
+const AUTO_RESUME_INTERVAL_MS = 15_000
+
 async function boot(): Promise<void> {
   let loader: BootLoaderHandle | null = null
+  let running = false
+  let failed = false
+  let autoResumeTimer: number | undefined
   let attempt: () => Promise<void>
 
   const ensureLoader = (): BootLoaderHandle => {
@@ -28,15 +33,34 @@ async function boot(): Promise<void> {
     return loader
   }
 
+  const onOnline = (): void => {
+    if (failed) void attempt()
+  }
+
   attempt = async (): Promise<void> => {
-    const res = await runBootSequence((progress) => loader?.setProgress(progress))
-    if (res.ok) {
-      loader?.unmount()
-      renderShell(root)
-    } else {
-      ensureLoader().setError(res.errorMessage)
+    if (running) return
+    running = true
+    try {
+      const res = await runBootSequence((progress) => loader?.setProgress(progress))
+      if (res.ok) {
+        failed = false
+        window.removeEventListener('online', onOnline)
+        window.clearInterval(autoResumeTimer)
+        loader?.unmount()
+        renderShell(root)
+      } else {
+        failed = true
+        ensureLoader().setError(res.errorMessage)
+        if (autoResumeTimer == null) {
+          autoResumeTimer = window.setInterval(onOnline, AUTO_RESUME_INTERVAL_MS)
+        }
+      }
+    } finally {
+      running = false
     }
   }
+
+  window.addEventListener('online', onOnline)
 
   // При активном controller всё уже локально: не показываем фальшивую уборку на секунду.
   if (!hasActiveServiceWorkerController()) ensureLoader()

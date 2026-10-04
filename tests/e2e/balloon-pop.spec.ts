@@ -14,7 +14,10 @@ test.describe('Лопни шарик (S04)', () => {
     await expect(page.locator('.balloon-pop__sky-art')).toBeVisible()
     await expect(page.locator('.balloon-pop__title')).toHaveCount(0)
     await expect(page.locator('.balloon-pop h2')).toHaveCount(0)
-    await expect(page.locator('.balloon-pop__balloon-art')).toHaveCount(8)
+    // Крупные шарики: если не помещаются все 8, на небе остаётся меньше (не меньше 5).
+    const artCount = await page.locator('.balloon-pop__balloon-art').count()
+    expect(artCount).toBeGreaterThanOrEqual(5)
+    expect(artCount).toBeLessThanOrEqual(8)
     await expect(page.locator('.balloon-pop__meow:not(.is-pose-under)')).toBeVisible()
     await expect(
       page.getByRole('button', { name: 'Назад в меню' }).locator('img.ui-icon'),
@@ -33,6 +36,7 @@ test.describe('Лопни шарик (S04)', () => {
     await openBalloonPop(page)
     await expect(page.locator('.balloon-pop')).toHaveAttribute('data-mode', 'free')
 
+    const before = await page.locator('.balloon-pop__balloon').count()
     // Последний в DOM — сверху по z-order; .first() часто под перекрытием крупного шара
     const target = page.locator('.balloon-pop__balloon').last()
     const id = await target.getAttribute('data-balloon-id')
@@ -46,7 +50,7 @@ test.describe('Лопни шарик (S04)', () => {
     await expect(
       page.locator(`.balloon-pop__balloon[data-balloon-id="${id}"]`),
     ).toHaveCount(0, { timeout: 5000 })
-    await expect(page.locator('.balloon-pop__balloon')).toHaveCount(7)
+    await expect(page.locator('.balloon-pop__balloon')).toHaveCount(before - 1)
   })
 
   test('режим задания: неверный цвет — подсказка, шарик остаётся', async ({
@@ -104,10 +108,11 @@ test.describe('Лопни шарик (S04)', () => {
       const wrongBalloons = page.locator(
         `.balloon-pop__balloon:not([data-color="${want}"])`,
       )
-      await expect(wrongBalloons).toHaveCount(4)
-      await wrongBalloons.nth(0).click({ force: true })
-      await wrongBalloons.nth(1).click({ force: true })
-      await wrongBalloons.nth(2).click({ force: true })
+      const wrongCount = await wrongBalloons.count()
+      expect(wrongCount).toBeGreaterThanOrEqual(2)
+      for (let tap = 0; tap < 3; tap += 1) {
+        await wrongBalloons.nth(tap % wrongCount).click({ force: true })
+      }
       const highlighted = page.locator(
         '.balloon-pop__balloon.is-soft-highlight',
       ).first()

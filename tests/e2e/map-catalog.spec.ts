@@ -3,13 +3,13 @@ import { openMenu } from './helpers'
 
 const TILE_GAMES = [
   'balloon-pop',
-  'sound-world',
-  'drawing',
   'sort-colors',
+  'drawing',
   'puzzle',
-  'shape-build',
-  'hide-seek',
   'counting',
+  'sound-world',
+  'hide-seek',
+  'shape-build',
 ] as const
 
 test.describe('меню плиток (S13 / M3.5)', () => {
@@ -116,6 +116,10 @@ test.describe('меню плиток (S13 / M3.5)', () => {
     for (const gameId of TILE_GAMES) {
       await expect(page.locator(`.game-tile[data-game-id="${gameId}"]`)).toBeVisible()
     }
+    const order = await page
+      .locator('.menu-grid .game-tile')
+      .evaluateAll((tiles) => tiles.map((tile) => (tile as HTMLElement).dataset.gameId))
+    expect(order).toEqual([...TILE_GAMES])
     await expect(page.locator('.menu-visit-bed[data-game-id="meow-home"]')).toBeVisible()
 
     const menu = page.locator('.screen--menu')
@@ -129,10 +133,11 @@ test.describe('меню плиток (S13 / M3.5)', () => {
     await expect(page.locator('.screen--welcome')).toBeVisible()
   })
 
-  test('В гостях у Мяу пока заглушка', async ({ page }) => {
+  test('«В гости» пока заглушка (игра на доработке), назад — в меню', async ({ page }) => {
     await openMenu(page)
     await page.getByRole('button', { name: 'В гости' }).click()
     await expect(page.locator('.coming-soon')).toBeVisible()
+    await expect(page.locator('.meow-home')).toHaveCount(0)
     await page.getByRole('button', { name: 'Назад в меню' }).click()
     await expect(page.locator('.menu-grid')).toBeVisible()
   })

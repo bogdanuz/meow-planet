@@ -138,7 +138,7 @@ meow-planet/
 8. `meow-home` — В гостях у Мяу  
 9. `counting` — Считаем с Мяу  
 
-**Меню:** 8 плиток (`MENU_TILE_IDS` в `src/app/screens/menu.ts`); **`meow-home`** — отдельная CTA «В гости» у Мяу справа, не плитка.
+**Меню (0.22.0):** 8 плиток (`MENU_TILE_IDS` в `src/app/screens/menu.ts`) — balloon-pop, sort-colors, drawing, puzzle, counting, sound-world, hide-seek, shape-build. **`meow-home`** («В гости») — табличка у ведущего справа, не плитка; до доработки открывает заглушку «скоро».
 
 ### 2.3 `src/shared/` — файлы и фактическое использование
 
@@ -173,11 +173,10 @@ meow-planet/
 | Путь | Назначение |
 |------|------------|
 | `favicon.svg` | favicon + единственная иконка PWA manifest (K-002) |
-| `assets/ui/icons/*.svg` | back, home, sound on/off, settings (P15-04) |
-| `assets/ui/LICENSE-kenney-game-icons.txt` | лицензия иконок |
+| `assets/ui/icons/icon-*.png` | back, home, sound, settings (`src/shared/ui-icon.ts`) |
 | `assets/games/sound-world/sfx/inventory.json` | список id с bootstrapped MP3 (см. §4 sound-world) |
-| `assets/_candidates/ui-sounds/LICENSE-kenney-interface-sounds.txt` | кандидаты, не обязательно в UI |
-| `assets/_dev-placeholders/bank/LICENSE-kenney-animal-pack-redux.txt` | dev placeholder license |
+
+Старые SVG-иконки, Kenney-иконки, UI-звуки-кандидаты и `_dev-placeholders` с 0.22.1 — в `archive/public-assets/` (в игре не используются).
 
 **Отсутствуют в repo, но referenced в коде:** `public/assets/games/puzzle/scenes/puzzle-*.png`, большинство game art из ASSET-MANIFEST / MEGAFILE (S16).
 
@@ -265,7 +264,7 @@ meow-planet/
 | Экран | Поведение | Файл |
 |-------|-----------|------|
 | Welcome | «Добро пожаловать», CTA «Играть», звук и ⚙ снизу по центру; без emoji-маскота на экране | `screens/welcome.ts` |
-| Menu | 8 плиток 2×N scroll; Мяу справа + «В гости к Мяu»; ⚙ родители **верхний правый**; назад — **свайп** с левого края 88px | `screens/menu.ts` |
+| Menu | 8 плиток 2×N scroll; Мяу справа + «В гости к Мяу»; ⚙ родители **верхний правый**; назад — **свайп** с левого края 88px | `screens/menu.ts` |
 | Первый заход | shell может показать welcome до menu (флаг `bootedWelcome` в `shell.ts`) | `shell.ts` |
 
 ### 3.12 Orientation gate
@@ -310,7 +309,7 @@ meow-planet/
 
 ### Изучаем звуки с Мяу (`sound-world`)
 
-**Процесс:** вкладки (животные, транспорт, инструменты, буквы RU/EN); карточки с placeholder; tap → SFX если есть в inventory. **Инструменты:** tap открывает `instrument-view.ts` (барабан 4 зоны, пiano 7, guitar 6, maracas×2, tambourine/bell, xylophone 5) + «← К инструментам». EN скрывается `hideEnglishAlphabet`. **Каталог:** 34× `item({…})` в `catalog.ts`; **фильтр UI:** `enabled-ids.ts`. **SFX:** `inventory.json` (~90 id); bootstrap `scripts/bootstrap-sound-world-sfx.ps1`.
+**Процесс:** вкладки (животные, транспорт, инструменты, буквы RU/EN); карточки с placeholder; tap → SFX если есть в inventory. **Инструменты:** tap открывает `instrument-view.ts` (барабан 4 зоны, piano 7, guitar 6, maracas×2, tambourine/bell, xylophone 5) + «← К инструментам». EN скрывается `hideEnglishAlphabet`. **Каталог:** 34× `item({…})` в `catalog.ts`; **фильтр UI:** `enabled-ids.ts`. **SFX:** `inventory.json` (~90 id); bootstrap `scripts/bootstrap-sound-world-sfx.ps1`.
 
 **Ошибки:** нет soft-error chain; отсутствующий файл sfx — graceful (inventory + url map).
 
@@ -406,13 +405,15 @@ meow-planet/
 
 ### В гостях у Мяу (`meow-home`)
 
-**Процесс:** периоды суток от системных часов (`periodFromHour`); сцены bathroom / room / night; уход утро/вечер (`careActionsFor`); день — props tap; ночь — звёзды, одеяло; статус-баннер; **без Tamagotchi** (нет hunger/death). Praise/sfx локальные.
+> **С 0.22.0** игра снова за заглушкой «скоро» (код ниже на месте, доработка — `BACKLOG.md`). **С 0.21.0 (03.10.2026)** — экран S16 заново: прихожая, ванная, кухня, спальня, двор (бывшие «Времена года»); желания, одежда, погода слоями. Описание ниже и раздел «Времена года» выше — история S14. Актуально — `docs/games/S16-meow-home-BRIEF.md` (раздел «Как устроено в коде»).
 
-**Файлы:** `index.ts`, `logic.ts`, `praise.ts`, `meow-home-sfx.ts`, `meow-home.css`.
+**Процесс (S14, история):** периоды суток от системных часов (`periodFromHour`); сцены bathroom / room / night; уход утро/вечер (`careActionsFor`); день — props tap; ночь — звёзды, одеяло; статус-баннер; **без Tamagotchi** (нет hunger/death). Praise/sfx локальные.
 
-**Тесты:** unit meow-home*, meow-home-logic; e2e `meow-home.spec.ts`.
+**Файлы (0.21.0):** `index.ts`, `wishes.ts`, `weather.ts`, `scene.ts`, `hero.ts`, `yard.ts`, `phrases.ts`, `sfx.ts`, `sprites.ts`, `art.ts`, `art-aspect.ts`, `meow-home.css`.
 
-**Docs:** `S14-meow-home-BRIEF.md`, `docs/assets/meow-home-ART.md`.
+**Тесты (0.21.0):** `src/games/meow-home/{mount,phrases}.test.ts`, unit `meow-home-weather`, `meow-home-wishes`, `settings-meow-home`; e2e `meow-home.spec.ts`.
+
+**Docs:** `S16-meow-home-BRIEF.md`, `docs/assets/meow-home-ART.md`, `docs/assets/meow-home-VOICE-SCRIPT.md`.
 
 ---
 
@@ -687,7 +688,7 @@ meow-planet/
 |------|--------------------------------|
 | `counting.spec.ts` — «Дай Мяу» | **Код:** кнопка **`Дай сколько`** (`counting/index.ts`); e2e ищет «Дай Мяу» |
 | `games-s09-s12` — счёт «Дай Мяу» | то же рассинхроние label |
-| `games-s09-s12` — домик «Умыть» + `chrome__hint` | `onSoftHint` → `chrome__hint` (`shell.ts`); падение может быть из-за текста praise vs matcher `/сияет|Мяu/i` (`meow-home/praise.ts`) |
+| `games-s09-s12` — домик «Умыть» + `chrome__hint` | `onSoftHint` → `chrome__hint` (`shell.ts`); падение может быть из-за текста praise vs matcher `/сияет|Мяу/i` (`meow-home/praise.ts`) |
 | `shape-build.spec.ts` — клик «Дом» | Playwright: `#app.app-shell--shape-build` intercepts pointer events |
 
 → **Расхождение тест↔код** по counting зафиксировано в §8.3. CI на чистой Ubuntu может вести себя иначе по shape-build.

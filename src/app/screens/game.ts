@@ -8,6 +8,15 @@ import { gameUsesPresenter } from '../../shared/companion'
 import { isGameReleased } from '../../content/released-games'
 import { renderComingSoonScreen } from './coming-soon'
 
+/** Эти игры сами ставят ведущего с позами и голосом; общий не добавляем. */
+const GAMES_WITH_OWN_PRESENTER: ReadonlySet<string> = new Set([
+  'balloon-pop',
+  'sort-colors',
+  'hide-seek',
+  'counting',
+  'meow-home',
+])
+
 export type ActiveGameHandle = {
   unmount: () => void
 }
@@ -22,7 +31,6 @@ export function renderGameScreen(
   onSoftHint: (message: string) => void,
   onTaskVisual?: (cue: GameTaskVisual | null) => void,
   hubNavigation?: GameMountContext['hubNavigation'],
-  chromeGameActions?: HTMLElement,
   onChromeSceneLabel?: (label: string) => void,
 ): ActiveGameHandle | null {
   const game: GameModule | undefined = getGameById(gameId)
@@ -43,10 +51,8 @@ export function renderGameScreen(
   container.replaceChildren(host)
 
   const settings = loadSettings()
-  const presenter =
-    gameUsesPresenter(gameId) && gameId !== 'balloon-pop'
-      ? createGamePresenter(settings.companion)
-      : null
+  const sharedPresenter = gameUsesPresenter(gameId) && !GAMES_WITH_OWN_PRESENTER.has(gameId)
+  const presenter = sharedPresenter ? createGamePresenter(settings.companion) : null
   game.mount(host, {
     settings: {
       childName: settings.childName,
@@ -55,18 +61,34 @@ export function renderGameScreen(
       quietMode: settings.quietMode,
       hideEnglishAlphabet: settings.hideEnglishAlphabet,
       countingLimit: settings.countingLimit,
+      countingTasks: settings.countingTasks,
+      countingAutoHints: settings.countingAutoHints,
       balloonTasksEnabled: settings.balloonTasksEnabled,
       companion: settings.companion,
+      puzzlePieceCount: settings.puzzlePieceCount,
+      puzzleTargetHint: settings.puzzleTargetHint,
+      sandboxRealPhysics: settings.sandboxRealPhysics,
+      sandboxMaxPieces: settings.sandboxMaxPieces,
+      sandboxAutoStraight: settings.sandboxAutoStraight,
+      sandboxHiddenKinds: settings.sandboxHiddenKinds,
+      sandboxSticky: settings.sandboxSticky,
+      sandboxPieceSize: settings.sandboxPieceSize,
+      hideSeekLevel: settings.hideSeekLevel,
+      hideSeekMirror: settings.hideSeekMirror,
+      hideSeekAutoHints: settings.hideSeekAutoHints,
+      meowHomePotty: settings.meowHomePotty,
+      meowHomeWishes: settings.meowHomeWishes,
+      meowHomeRealTime: settings.meowHomeRealTime,
+      meowHomeSeasonByDate: settings.meowHomeSeasonByDate,
     },
     onSoftHint: (message: string) => {
       onSoftHint(message)
-      if (gameUsesPresenter(gameId) && gameId !== 'balloon-pop') {
+      if (sharedPresenter) {
         presenter?.setLine(message, message ? 'happy' : 'idle')
       }
     },
     onTaskVisual,
     hubNavigation,
-    chromeGameActions,
     onChromeSceneLabel,
   })
   if (presenter) host.append(presenter.element)

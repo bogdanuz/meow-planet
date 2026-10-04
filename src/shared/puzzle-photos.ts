@@ -1,23 +1,39 @@
 /**
  * Локальные фото для пазла (IndexedDB). Без камеры и облака.
- * Кадрирование: альбом **4:3** (960×720 JPEG).
+ * Кадр 4:3 готовит общий редактор `photo-crop-editor`.
  */
-
-import {
-  initialCoverPan,
-  PUZZLE_LANDSCAPE_HEIGHT,
-  PUZZLE_LANDSCAPE_WIDTH,
-  sourceRectFromPan,
-  type CoverPan,
-} from './puzzle-crop-math'
 
 const DB_NAME = 'meow-planet-puzzles'
 const STORE = 'photos'
 const DB_VERSION = 1
 
+export const PUZZLE_PHOTO_TITLE_MAX = 24
+const DEFAULT_TITLE = 'Моё фото'
+
 export type PuzzlePhotoMeta = {
   id: string
   createdAt: number
+  title: string
+}
+
+type PuzzlePhotoRow = { id: string; createdAt: number; title?: string; blob?: Blob }
+
+/** Подпись взрослого: одна строка, без служебных символов, не длиннее предела. */
+export function sanitizePhotoTitle(raw: string): string {
+  return raw
+    .replace(/[\u0000-\u001f\u007f]/g, ' ')
+    .replace(/\s+/g, ' ')
+    .trim()
+    .slice(0, PUZZLE_PHOTO_TITLE_MAX)
+    .trim()
+}
+
+/** «Моё фото N» с первым свободным номером. */
+export function defaultPhotoTitle(existing: readonly string[]): string {
+  const taken = new Set(existing)
+  let n = 1
+  while (taken.has(`${DEFAULT_TITLE} ${n}`)) n += 1
+  return `${DEFAULT_TITLE} ${n}`
 }
 
 function openDb(): Promise<IDBDatabase> {
@@ -41,90 +57,41 @@ function idbReq<T>(request: IDBRequest<T>): Promise<T> {
   })
 }
 
-export async function cropBitmapToLandscape4x3(
-  bitmap: ImageBitmap,
-  pan: CoverPan,
-): Promise<Blob> {
-  const { sx, sy, sw, sh } = sourceRectFromPan(pan, bitmap.width, bitmap.height)
-  const canvas = document.createElement('canvas')
-  canvas.width = PUZZLE_LANDSCAPE_WIDTH
-  canvas.height = PUZZLE_LANDSCAPE_HEIGHT
-  const ctx = canvas.getContext('2d')
-  if (!ctx) {
-    throw new Error('Canvas 2D недоступен')
-  }
-  ctx.drawImage(
-    bitmap,
-    sx,
-    sy,
-    sw,
-    sh,
-    0,
-    0,
-    PUZZLE_LANDSCAPE_WIDTH,
-    PUZZLE_LANDSCAPE_HEIGHT,
-  )
-
-  return new Promise<Blob>((resolve, reject) => {
-    canvas.toBlob(
-      (result) => {
-        if (result) resolve(result)
-        else reject(new Error('toBlob failed'))
-      },
-      'image/jpeg',
-      0.9,
-    )
+function txDone(tx: IDBTransaction): Promise<void> {
+  return new Promise((resolve, reject) => {
+    tx.oncomplete = () => resolve()
+    tx.onerror = () => reject(tx.error ?? new Error('IDB transaction failed'))
+    tx.onabort = () => reject(tx.error ?? new Error('IDB transaction aborted'))
   })
 }
 
-/** Центр-cover → 4:3 (для тестов и быстрого пути). */
-export async function cropImageFileToLandscape4x3(file: File): Promise<Blob> {
-  const bitmap = await createImageBitmap(file)
-  const pan = initialCoverPan(bitmap.width, bitmap.height, 400, 300)
-  try {
-    return await cropBitmapToLandscape4x3(bitmap, pan)
-  } finally {
-    bitmap.close()
-  }
-}
-
-export async function savePuzzlePhotoFromBitmap(
-  bitmap: ImageBitmap,
-  pan: CoverPan,
-): Promise<PuzzlePhotoMeta> {
-  const blob = await cropBitmapToLandscape4x3(bitmap, pan)
-  bitmap.close()
-  return savePuzzlePhotoBlob(blob)
-}
-
-export async function savePuzzlePhoto(file: File): Promise<PuzzlePhotoMeta> {
-  const blob = await cropImageFileToLandscape4x3(file)
-  return savePuzzlePhotoBlob(blob)
-}
-
-export async function savePuzzlePhotoBlob(blob: Blob): Promise<PuzzlePhotoMeta> {
-  const meta: PuzzlePhotoMeta & { blob: Blob } = {
+export async function savePuzzlePhotoBlob(blob: Blob, title = ''): Promise<PuzzlePhotoMeta> {
+  const row: PuzzlePhotoRow & PuzzlePhotoMeta = {
     id: `puzzle-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
     createdAt: Date.now(),
+    title: sanitizePhotoTitle(title),
     blob,
   }
   const db = await openDb()
   try {
-    await idbReq(db.transaction(STORE, 'readwrite').objectStore(STORE).put(meta))
+    const tx = db.transaction(STORE, 'readwrite')
+    tx.objectStore(STORE).put(row)
+    await txDone(tx)
   } finally {
     db.close()
   }
-  return { id: meta.id, createdAt: meta.createdAt }
+  return { id: row.id, createdAt: row.createdAt, title: row.title }
 }
 
+/** Свои фото, новые первыми. */
 export async function listPuzzlePhotos(): Promise<PuzzlePhotoMeta[]> {
   const db = await openDb()
   try {
     const rows = await idbReq(
       db.transaction(STORE, 'readonly').objectStore(STORE).getAll(),
     )
-    return (rows as Array<PuzzlePhotoMeta>)
-      .map((row) => ({ id: row.id, createdAt: row.createdAt }))
+    return (rows as PuzzlePhotoRow[])
+      .map((row) => ({ id: row.id, createdAt: row.createdAt, title: sanitizePhotoTitle(row.title ?? '') }))
       .sort((a, b) => b.createdAt - a.createdAt)
   } finally {
     db.close()
@@ -136,17 +103,33 @@ export async function getPuzzlePhotoBlob(id: string): Promise<Blob | null> {
   try {
     const row = (await idbReq(
       db.transaction(STORE, 'readonly').objectStore(STORE).get(id),
-    )) as { blob?: Blob } | undefined
+    )) as PuzzlePhotoRow | undefined
     return row?.blob ?? null
   } finally {
     db.close()
   }
 }
 
-export async function deletePuzzlePhoto(id: string): Promise<void> {
+/** Удалить выбранные фото (галерея пазла: «Выбрать» → «Удалить»). */
+export async function deletePuzzlePhotos(ids: readonly string[]): Promise<void> {
+  if (ids.length === 0) return
   const db = await openDb()
   try {
-    await idbReq(db.transaction(STORE, 'readwrite').objectStore(STORE).delete(id))
+    const tx = db.transaction(STORE, 'readwrite')
+    const store = tx.objectStore(STORE)
+    for (const id of ids) store.delete(id)
+    await txDone(tx)
+  } finally {
+    db.close()
+  }
+}
+
+export async function clearPuzzlePhotos(): Promise<void> {
+  const db = await openDb()
+  try {
+    const tx = db.transaction(STORE, 'readwrite')
+    tx.objectStore(STORE).clear()
+    await txDone(tx)
   } finally {
     db.close()
   }

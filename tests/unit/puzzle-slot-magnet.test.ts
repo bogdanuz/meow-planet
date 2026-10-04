@@ -31,4 +31,29 @@ describe('puzzle slot magnet', () => {
     }
     expect(findSlotHitForPieceRect(piece, [slot0])).toBeNull()
   })
+
+  describe('в руке кусочек размером с клетку', () => {
+    const big = { id: 1, rect: { left: 0, top: 0, right: 300, bottom: 225, width: 300, height: 225 } }
+    const pieceAt = (left: number, top: number) => ({
+      left,
+      top,
+      right: left + 300,
+      bottom: top + 225,
+      width: 300,
+      height: 225,
+    })
+
+    it('положил обратно на стол рядом с доской — не прыгает в клетку', () => {
+      expect(findSlotHitForPieceRect(pieceAt(360, 0), [big])).toBeNull()
+      expect(findSlotHitForPieceRect(pieceAt(0, -290), [big])).toBeNull()
+    })
+
+    it('чуть не дотянул до клетки — всё равно встаёт', () => {
+      expect(findSlotHitForPieceRect(pieceAt(318, 0), [big])?.slotId).toBe(1)
+    })
+
+    it('задел клетку краем — встаёт', () => {
+      expect(findSlotHitForPieceRect(pieceAt(250, 150), [big])?.slotId).toBe(1)
+    })
+  })
 })

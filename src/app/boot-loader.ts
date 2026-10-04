@@ -82,7 +82,7 @@ export function mountBootLoader(container: HTMLElement): BootLoaderHandle {
   const retry = document.createElement('button')
   retry.type = 'button'
   retry.className = 'boot-loader__retry'
-  retry.textContent = 'Повторить'
+  retry.textContent = 'Продолжить загрузку'
   retry.hidden = true
 
   panel.append(progress, message, retry)
@@ -91,11 +91,25 @@ export function mountBootLoader(container: HTMLElement): BootLoaderHandle {
 
   let onRetry: (() => void) | null = null
   let displayedPercent = 0
-  retry.addEventListener('click', () => onRetry?.())
+  let maxDone = -1
+  const clearError = (): void => {
+    layer.classList.remove('boot-loader--error')
+    retry.hidden = true
+  }
+  retry.addEventListener('click', () => {
+    clearError()
+    message.textContent = 'Продолжаем загрузку…'
+    onRetry?.()
+  })
 
   return {
     setProgress({ percent: pct, message: msg, doneCount, totalCount }) {
       const clamped = Math.max(0, Math.min(100, Math.round(pct)))
+      const advanced =
+        doneCount != null ? doneCount > maxDone : clamped > displayedPercent
+      if (doneCount != null) maxDone = Math.max(maxDone, doneCount)
+      // Пока ошибка на экране, её снимает только реальный рост числа файлов.
+      if (layer.classList.contains('boot-loader--error') && !advanced) return
       if (clamped >= displayedPercent) {
         displayedPercent = clamped
         const fadeStart = clamped === 100 ? 100 : Math.max(0, clamped - 4)
@@ -111,8 +125,7 @@ export function mountBootLoader(container: HTMLElement): BootLoaderHandle {
             : `${clamped}%`
       }
       message.textContent = msg
-      layer.classList.remove('boot-loader--error')
-      retry.hidden = true
+      clearError()
     },
     setError(msg: string) {
       // Ошибка сохраняет честно достигнутую позицию: ничего не откатываем к нулю.

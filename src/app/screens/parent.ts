@@ -55,6 +55,7 @@ export function renderParentScreen(
   const tabRow = document.createElement('div')
   tabRow.className = 'parent-hub__tabs'
   tabRow.setAttribute('role', 'tablist')
+  bar.append(tabRow)
 
   const settingsPanel = document.createElement('div')
   settingsPanel.className = 'parent-settings'
@@ -65,13 +66,14 @@ export function renderParentScreen(
   aboutPanel.hidden = true
   aboutPanel.setAttribute('role', 'tabpanel')
 
-  hub.append(tabRow, settingsPanel, aboutPanel)
+  hub.append(settingsPanel, aboutPanel)
 
   function mountSettingsForm(): void {
     disposeForm?.()
     disposeForm = renderSettingsForm(settingsPanel, {
       audio: options.audio,
       appVersion: options.appVersion,
+      initialSection: options.returnTo,
       onSaved: (settings) => {
         options.onSettingsSaved(settings)
       },

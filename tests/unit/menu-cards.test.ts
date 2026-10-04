@@ -9,13 +9,17 @@ describe('menu card assets', () => {
     for (const id of MENU_TILE_IDS) {
       expect(menuCardPngUrl(id)).toContain(`card-${id}.png`)
     }
-    expect(MENU_TILE_IDS.slice(0, 4)).toEqual([
+    // Порядок плиток по два в ряд — решение владельца 03.10.2026.
+    expect(MENU_TILE_IDS).toEqual([
       'balloon-pop',
-      'sound-world',
-      'drawing',
       'sort-colors',
+      'drawing',
+      'puzzle',
+      'counting',
+      'sound-world',
+      'hide-seek',
+      'shape-build',
     ])
-    expect(MENU_TILE_IDS).toHaveLength(8)
     expect(MENU_TILE_IDS).not.toContain('coloring' as never)
     expect(MENU_TILE_IDS).not.toContain('seasons' as never)
     expect(menuVisitBedPngUrl()).toContain('menu-visit-bed.png')

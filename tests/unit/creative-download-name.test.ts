@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { creativeDownloadName } from '../../src/shared/creative-download-name'
+import { creativeDownloadName } from '../../src/games/drawing/creative-download-name'
 
 describe('имя скачанной картинки', () => {
   it('ставит дату и время, чтобы файлы не затирали друг друга', () => {

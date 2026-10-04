@@ -1,7 +1,7 @@
 /* Оболочка: chrome + touch-targets ≥ 56px (дети 2–3) + меню плиток */
 
 .app-shell {
-  min-height: 100dvh;
+  min-height: 100%;
   display: grid;
   grid-template-rows: auto auto 1fr;
   gap: 0.75rem;
@@ -13,7 +13,8 @@
 }
 
 .app-shell--welcome {
-  grid-template-rows: 1fr;
+  grid-template-rows: minmax(0, 1fr);
+  height: 100%;
   padding: 0;
   background: #e6d3ae;
 }
@@ -26,8 +27,8 @@
 .app-shell--menu {
   position: relative;
   grid-template-rows: 1fr;
-  height: 100dvh;
-  max-height: 100dvh;
+  height: 100%;
+  max-height: 100%;
   overflow: hidden;
   padding: 0;
   background: #f4efe6;
@@ -65,13 +66,6 @@
 .chrome__nav {
   display: flex;
   gap: 0.5rem;
-}
-
-.chrome__game-actions {
-  display: flex;
-  gap: 0.5rem;
-  margin-left: auto;
-  flex: 0 0 auto;
 }
 
 .chrome__title {
@@ -159,296 +153,11 @@
   pointer-events: none !important;
 }
 
-.app-shell--sound-world .chrome__main,
-.app-shell--sort-colors .chrome__main {
+.app-shell--sound-world .chrome__main {
   display: flex;
   flex-direction: column;
   min-height: 0;
   overflow: hidden;
-}
-
-.app-shell--sort-colors .screen--game {
-  min-height: 0;
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-  overflow: hidden;
-}
-
-/* «Куда положить?» — без Мяu сверхu, только строка тостов (chrome__hint) */
-.app-shell--sort-colors .chrome__mascot .mascot-ph,
-.app-shell--sort-colors .chrome__task-cue {
-  display: none !important;
-}
-
-.app-shell--sort-colors .chrome__mascot {
-  justify-content: center;
-  padding: 0.15rem 0.5rem 0.25rem;
-}
-
-.app-shell--sort-colors .chrome__hint {
-  flex: 1 1 auto;
-  text-align: center;
-  font-size: clamp(0.95rem, 2.2vh, 1.1rem);
-  font-weight: 600;
-}
-
-.app-shell--sort-colors {
-  grid-template-rows: auto auto 1fr;
-  gap: 0.25rem;
-}
-
-.app-shell--sort-colors .chrome {
-  padding-bottom: 0.1rem;
-}
-
-.app-shell--sort-colors .chrome__main {
-  height: 100%;
-  padding-top: 0.1rem;
-}
-
-/* «Прятки» — компактный chrome; задание в игре (mission), не task-cue */
-.app-shell--hide-seek {
-  grid-template-rows: auto auto minmax(0, 1fr);
-  gap: 0.08rem;
-  height: 100dvh;
-  max-height: 100dvh;
-  overflow: hidden;
-  padding: max(0.35rem, env(safe-area-inset-top))
-    max(0.5rem, env(safe-area-inset-right))
-    max(0.35rem, env(safe-area-inset-bottom))
-    max(0.5rem, env(safe-area-inset-left));
-}
-
-.app-shell--hide-seek .chrome {
-  gap: 0.35rem;
-  padding-bottom: 0;
-}
-
-.app-shell--hide-seek .chrome__nav {
-  gap: 0.35rem;
-}
-
-.app-shell--hide-seek .chrome__nav .touch-btn {
-  min-width: 52px;
-  min-height: 52px;
-  padding: 0.35rem;
-}
-
-.app-shell--hide-seek .chrome__title {
-  font-size: clamp(1rem, 2.4vw, 1.35rem);
-  flex: 1 1 auto;
-  text-align: left;
-}
-
-.app-shell--hide-seek .chrome__scene-label {
-  margin-left: auto;
-  font-size: clamp(0.95rem, 2.2vw, 1.2rem);
-  font-weight: 700;
-  opacity: 0.95;
-  padding-right: 0.15rem;
-}
-
-.app-shell--hide-seek .chrome__mascot .mascot-ph,
-.app-shell--hide-seek .chrome__task-cue {
-  display: none !important;
-}
-
-.app-shell--hide-seek .chrome__mascot {
-  justify-content: center;
-  padding: 0.05rem 0.35rem 0.08rem;
-  min-height: 0;
-}
-
-.app-shell--hide-seek .chrome__hint {
-  flex: 1 1 auto;
-  text-align: center;
-  font-weight: 600;
-  font-size: clamp(0.88rem, 2vh, 1.02rem);
-  line-height: 1.25;
-  opacity: 0.92;
-}
-
-.app-shell--hide-seek .chrome__main,
-.app-shell--hide-seek .screen--game {
-  min-height: 0;
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-  overflow: hidden;
-}
-
-.app-shell--hide-seek .chrome__main {
-  height: 100%;
-}
-
-/* «В гостях у Мяu» */
-.app-shell--meow-home {
-  grid-template-rows: auto auto minmax(0, 1fr);
-  gap: 0.12rem;
-  height: 100dvh;
-  max-height: 100dvh;
-  overflow: hidden;
-}
-
-.app-shell--meow-home .chrome__mascot .mascot-ph,
-.app-shell--meow-home .chrome__task-cue {
-  display: none !important;
-}
-
-.app-shell--meow-home .chrome__mascot {
-  justify-content: center;
-  padding: 0.08rem 0.45rem 0.12rem;
-  min-height: 0;
-}
-
-.app-shell--meow-home .chrome__hint {
-  flex: 1 1 auto;
-  text-align: center;
-  font-weight: 600;
-  font-size: clamp(0.88rem, 2vh, 1.05rem);
-}
-
-.app-shell--meow-home .chrome__main,
-.app-shell--meow-home .screen--game {
-  min-height: 0;
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-  overflow: hidden;
-}
-
-.app-shell--meow-home .chrome__main {
-  height: 100%;
-}
-
-/* «Считаем с Мяu» */
-.app-shell--counting {
-  grid-template-rows: auto auto minmax(0, 1fr);
-  gap: 0.12rem;
-  height: 100dvh;
-  max-height: 100dvh;
-  overflow: hidden;
-}
-
-.app-shell--counting .chrome__mascot .mascot-ph,
-.app-shell--counting .chrome__task-cue {
-  display: none !important;
-}
-
-.app-shell--counting .chrome__mascot {
-  justify-content: center;
-  padding: 0.08rem 0.45rem 0.12rem;
-  min-height: 0;
-}
-
-.app-shell--counting .chrome__hint {
-  flex: 1 1 auto;
-  text-align: center;
-  font-weight: 600;
-  font-size: clamp(0.88rem, 2vh, 1.05rem);
-}
-
-.app-shell--counting .chrome__main,
-.app-shell--counting .screen--game {
-  min-height: 0;
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-  overflow: hidden;
-}
-
-.app-shell--counting .chrome__main {
-  height: 100%;
-}
-
-/* «Собери фигurку» — без Мяu, тост */
-.app-shell--shape-build .chrome__mascot .mascot-ph,
-.app-shell--shape-build .chrome__task-cue {
-  display: none !important;
-}
-
-.app-shell--shape-build .chrome__mascot {
-  justify-content: center;
-  padding: 0.1rem 0.5rem 0.2rem;
-}
-
-.app-shell--shape-build .chrome__hint {
-  flex: 1 1 auto;
-  text-align: center;
-  font-weight: 600;
-}
-
-.app-shell--shape-build {
-  grid-template-rows: auto auto minmax(0, 1fr);
-  gap: 0.15rem;
-  height: 100dvh;
-  max-height: 100dvh;
-  overflow: hidden;
-}
-
-.app-shell--shape-build .chrome__main,
-.app-shell--shape-build .screen--game {
-  min-height: 0;
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-  overflow: hidden;
-}
-
-.app-shell--shape-build .chrome__main {
-  height: 100%;
-}
-
-/* «Собери пазл» — без Мяu, тост-подсказки */
-.app-shell--puzzle .chrome__mascot .mascot-ph,
-.app-shell--puzzle .chrome__task-cue {
-  display: none !important;
-}
-
-.app-shell--puzzle .chrome__mascot {
-  justify-content: center;
-  padding: 0.05rem 0.5rem 0.1rem;
-  min-height: 0;
-}
-
-.app-shell--puzzle .chrome__hint {
-  flex: 1 1 auto;
-  text-align: center;
-  font-weight: 600;
-}
-
-.app-shell--puzzle {
-  grid-template-rows: auto auto minmax(0, 1fr);
-  gap: 0.15rem;
-  height: 100dvh;
-  max-height: 100dvh;
-  overflow: hidden;
-}
-
-.app-shell--puzzle .chrome {
-  flex-wrap: nowrap;
-  align-items: center;
-}
-
-.app-shell--puzzle .chrome__title {
-  flex: 1 1 auto;
-  min-width: 0;
-  text-align: center;
-  font-size: clamp(1.05rem, 2.8vw, 1.55rem);
-}
-
-.app-shell--puzzle .chrome__main,
-.app-shell--puzzle .screen--game {
-  min-height: 0;
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-  overflow: hidden;
-}
-
-.app-shell--puzzle .chrome__main {
-  height: 100%;
 }
 
 .touch-btn {
@@ -562,7 +271,7 @@
   position: relative;
   display: grid;
   place-items: center;
-  min-height: calc(100dvh + env(safe-area-inset-bottom));
+  height: 100%;
   margin: 0;
   padding: max(0.75rem, env(safe-area-inset-top)) 1.5rem
     max(1rem, env(safe-area-inset-bottom));
@@ -651,11 +360,13 @@
 }
 
 .welcome__meow-slot {
+  --welcome-play-w: calc(var(--stage-unit) * 19);
   grid-area: meow;
   position: relative;
-  width: min(46vw, 26.5rem);
+  /* PNG совы 1629×1783: ширина 36,5% высоты сцены даёт сову ≈40% высоты экрана. */
+  width: calc(var(--stage-unit) * 36.5);
   /* Кнопка справа от лапы — сдвиг, чтобы кот и Play вместе были по центру заголовка */
-  margin-left: calc(min(18.5vw, 10rem) * -0.78);
+  margin-left: calc(var(--welcome-play-w) * -0.78);
 }
 
 .welcome__meow-mover {
@@ -763,7 +474,7 @@
 
 .welcome__title {
   display: block;
-  width: min(84vw, 50rem);
+  width: min(84vw, calc(var(--stage-unit) * 85));
   height: auto;
   margin: 0;
 }
@@ -801,8 +512,8 @@
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  min-width: 9.25rem;
-  min-height: 9.25rem;
+  min-width: 56px;
+  min-height: 56px;
   padding: 0;
   border: 0;
   background: transparent;
@@ -823,7 +534,7 @@
 
 .welcome__play-art {
   display: block;
-  width: min(18.5vw, 10rem);
+  width: var(--welcome-play-w);
   height: auto;
   pointer-events: none;
   animation: welcome-play-live 2.6s ease-in-out infinite alternate;
@@ -1309,7 +1020,8 @@
   position: relative;
   flex: 0 1 auto;
   align-self: flex-end;
-  width: min(100%, 22.66rem, calc(46vh * 0.8446));
+  /* --visit-scale < 1, только если над головой не помещается «Погладь меня» (menu.ts). */
+  width: calc(min(100%, 22.66rem, calc(var(--stage-unit) * 46 * 0.8446)) * var(--visit-scale, 1));
   margin: 0 auto 0;
 }
 
@@ -1335,7 +1047,7 @@
   display: block;
   width: 100%;
   height: auto;
-  max-height: 47.38vh;
+  max-height: calc(var(--stage-unit) * 47.38);
   object-fit: contain;
   object-position: bottom center;
   pointer-events: none;
@@ -1433,15 +1145,16 @@
   filter: none;
 }
 
+/* Над головой по центру; шрифт и зазор ставит fitMenuToast (от персонажа и места над ним). */
 .menu-visit-bed__toast {
   position: absolute;
-  z-index: 1;
-  left: 55%;
-  top: 52%;
+  z-index: 4;
+  left: var(--toast-x, 50%);
+  bottom: calc(100% + var(--toast-gap, 10px));
   -webkit-tap-highlight-color: transparent;
-  transform: translateX(-50%) translateY(18px);
+  transform: translate(-50%, 0.6em);
   margin: 0;
-  padding: 0.61rem 1.16rem;
+  padding: 0.55em 1.1em;
   border-radius: 999px;
   border: 3px solid #6b4c78;
   background: #fff6ea;
@@ -1450,7 +1163,7 @@
     0 10px 16px rgb(90 60 80 / 16%);
   color: #e07a5f;
   font-family: var(--font-display);
-  font-size: clamp(1.27rem, 2.75vw, 1.71rem);
+  font-size: var(--toast-font, 1.4rem);
   font-weight: 700;
   line-height: 1.1;
   letter-spacing: 0.01em;
@@ -1459,22 +1172,19 @@
   cursor: pointer;
   opacity: 0;
   transition:
-    top 520ms ease,
     transform 520ms ease,
     opacity 420ms ease;
 }
 
 .menu-visit-bed__toast.is-on {
-  top: -10%;
-  transform: translateX(-50%) translateY(0);
+  transform: translate(-50%, 0);
   opacity: 1;
   pointer-events: auto;
 }
 
-.screen--menu[data-companion='olli'] .menu-visit-bed__toast.is-on {
-  top: -16%;
-  left: 52%;
-  z-index: 4;
+/* Голова совы чуть правее середины кадра (крыло машет слева). */
+.screen--menu[data-companion='olli'] .menu-visit-bed__toast {
+  --toast-x: 54%;
 }
 
 .menu-visit-bed__blink {
@@ -1889,7 +1599,7 @@ body.is-small-screen-blocked #app {
   --boot-leaf-fade-end: 0%;
   --boot-owl-left: 1%;
   position: fixed;
-  inset: 0 0 calc(-1 * env(safe-area-inset-bottom)) 0;
+  inset: 0;
   z-index: 9999;
   display: grid;
   grid-template-rows: auto minmax(12rem, 1fr) auto;
@@ -1943,7 +1653,7 @@ body.is-small-screen-blocked #app {
 .boot-loader__title {
   display: block;
   width: min(70vw, 49rem);
-  max-height: 18vh;
+  max-height: calc(var(--stage-unit) * 18);
   object-fit: contain;
   filter: drop-shadow(0 0.22rem 0.12rem rgb(83 47 49 / 22%));
 }
@@ -2010,7 +1720,7 @@ body.is-small-screen-blocked #app {
 
 .boot-loader__owl {
   bottom: 5%;
-  width: clamp(10.5rem, 22vw, 17rem);
+  width: calc(var(--stage-unit) * 30);
   aspect-ratio: 360 / 304;
   background-repeat: no-repeat;
   background-position: center;
@@ -2021,9 +1731,9 @@ body.is-small-screen-blocked #app {
 
 .boot-loader__owl-shadow {
   bottom: 4%;
-  width: clamp(7rem, 14vw, 11rem);
-  height: clamp(0.65rem, 1.5vw, 1.05rem);
-  margin-left: clamp(2rem, 4.2vw, 3.4rem);
+  width: calc(var(--stage-unit) * 19);
+  height: calc(var(--stage-unit) * 1.3);
+  margin-left: calc(var(--stage-unit) * 5.7);
   border-radius: 50%;
   background: rgb(76 47 27 / 24%);
   filter: blur(0.2rem);

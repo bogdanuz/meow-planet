@@ -13,8 +13,12 @@ export type SlotHit = {
   dist: number
 }
 
-/** Расширение зоны слота (доля меньшей стороны). */
-export const PUZZLE_SLOT_HIT_EXPAND_RATIO = 0.72
+/**
+ * Расширение зоны слота (доля меньшей стороны). В руке кусочек размером с клетку,
+ * поэтому достаточно узкой полосы: иначе кусочек, положенный обратно на стол, прыгает в доску.
+ */
+export const PUZZLE_SLOT_HIT_EXPAND_RATIO = 0.1
+const MIN_EXPAND_PX = 24
 
 function rectFromDom(r: DOMRect): SlotRect {
   return {
@@ -40,7 +44,7 @@ export function findSlotHitForPieceRect(
   let best: { slotId: number; overlap: number } | null = null
 
   for (const { id, rect } of slots) {
-    const expand = Math.max(40, Math.min(rect.width, rect.height) * expandRatio)
+    const expand = Math.max(MIN_EXPAND_PX, Math.min(rect.width, rect.height) * expandRatio)
     const magnetZone = expandRect(rect, expand)
     if (!rectsIntersect(piece, magnetZone)) continue
 

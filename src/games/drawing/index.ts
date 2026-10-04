@@ -1,9 +1,11 @@
 import type { GameModule } from '../../shared/game-module'
 import { askChoice } from '../../shared/ask-choice'
 import { createAudioManager } from '../../shared/audio'
-import { renderCreativeGallery } from '../../shared/creative-gallery'
-import { getCreativeRepository } from '../../shared/creative-repository'
-import { CREATIVE_COLORS, creativeColorHex, type CreativeColorId } from '../../shared/creative-palette'
+import { renderCreativeGallery, renderWorkViewer } from './creative-gallery'
+import { drawingsWord, shareOrDownload, uniqueFileNames } from './gallery-export'
+import { getCreativeRepository } from './creative-repository'
+import { CREATIVE_COLORS, isHexColor, strokeColorHex, type StrokeColor } from './creative-palette'
+import { customColorPosition, loadCustomColor, paintRainbow, pickerColorAt, saveCustomColor } from './custom-color'
 import {
   WHITE_BACKGROUND,
   continueDrawingDraft,
@@ -14,13 +16,12 @@ import {
   planNewDrawingSheet,
   type CreativeWork,
   type DrawingBackground,
-} from '../../shared/creative-works'
-import { creativeDownloadName } from '../../shared/creative-download-name'
-import { downloadBlob } from '../../shared/download-blob'
+} from './creative-works'
+import { creativeDownloadName } from './creative-download-name'
 import { bindLifecycleSave } from '../../shared/lifecycle-save'
-import { createCreativeToolButton, creativeToolIconUrl, type CreativeToolIcon } from '../../shared/creative-tool-icon'
+import { createCreativeToolButton, creativeToolIconUrl, type CreativeToolIcon } from './creative-tool-icon'
 import { createUiIconImg, uiIconUrl, type UiIconId } from '../../shared/ui-icon'
-import '../../shared/creative-dock.css'
+import './creative-dock.css'
 import {
   COLORING_PICKER_PAGES,
   coloringLineUrl,
@@ -30,7 +31,7 @@ import {
 import {
   DRAWING_BRUSHES,
   appendDrawingPoint,
-  isPalmTouch,
+  newStrokeSeed,
   shouldPlayStrokeSound,
   trimDrawingStrokes,
   type DrawingBrush,
@@ -39,12 +40,19 @@ import {
   type DrawingTool,
 } from './logic'
 import { createSheetRenderer, type SheetSources } from './paint'
-import '../../shared/creative-desk.css'
+import {
+  blobToImage,
+  openPhotoCropEditor,
+  shrinkPhoto,
+  type PhotoCropEditor,
+} from '../../shared/photo-crop-editor'
+import './creative-desk.css'
 import './drawing.css'
 
 const HISTORY_LIMIT = 40
+const THUMB_WIDTH = 480
 const BRUSH_LABEL: Record<DrawingBrush, string> = {
-  brush: 'Кисть',
+  brush: 'Круглая кисть',
   marker: 'Фломастер',
   crayon: 'Мелок',
   watercolor: 'Акварель',
@@ -55,7 +63,10 @@ const SIZE_LABEL: Record<DrawingSize, string> = {
 }
 
 type DrawingView = 'canvas' | 'gallery' | 'picker'
-type PopId = 'colors' | 'brushes' | 'sizes' | 'bg' | 'bg-colors'
+type PopId = 'colors' | 'custom-color' | 'brushes' | 'sizes' | 'bg' | 'bg-colors'
+
+const SVG_NS = 'http://www.w3.org/2000/svg'
+const DROP_PATH = 'M12 1.8C12 1.8 3.2 12.4 3.2 19.2a8.8 8.8 0 0 0 17.6 0C20.8 12.4 12 1.8 12 1.8Z'
 
 export const drawingGame: GameModule = {
   meta: {
@@ -79,7 +90,9 @@ export const drawingGame: GameModule = {
     let tool: DrawingTool = 'brush'
     let lastBrush: DrawingBrush = 'brush'
     let size: DrawingSize = 'thick'
-    let colorId: CreativeColorId = 'red'
+    let colorId: StrokeColor = 'red'
+    let customColor = loadCustomColor()
+    let customDraft = customColor ?? pickerColorAt(0.5, 0.35)
     let view: DrawingView = 'canvas'
     let openPop: PopId | null = null
     let pickerPage = 0
@@ -95,6 +108,9 @@ export const drawingGame: GameModule = {
     const photos = new Map<string, HTMLImageElement>()
     const lines = new Map<string, HTMLImageElement>()
     const thumbUrls = new Map<string, string>()
+    const exportBlobs = new Map<string, Blob>()
+    let viewerClose: (() => void) | null = null
+    let cropEditor: PhotoCropEditor | null = null
 
     root = document.createElement('section')
     root.className = 'drawing creative-desk'
@@ -141,7 +157,8 @@ export const drawingGame: GameModule = {
     const renderer = createSheetRenderer(canvas)
 
     const back = iconButton('Назад в меню', 'back', () => {
-      if (view !== 'canvas') showCanvas()
+      if (viewerClose) closeViewer()
+      else if (view !== 'canvas') showCanvas()
       else void persist().finally(() => context.hubNavigation?.goMenu())
     })
     back.dataset.role = 'back'
@@ -221,7 +238,7 @@ export const drawingGame: GameModule = {
     const colorDot = document.createElement('span')
     colorDot.className = 'drawing__color-dot'
     colorDot.setAttribute('aria-hidden', 'true')
-    colorsButton.append(colorDot)
+    colorsButton.querySelector('.creative-tool__icon')?.replaceWith(colorDot)
     const brushButton = createCreativeToolButton('Кисть', 'brush', () => {
       tool = lastBrush
       syncTools()
@@ -232,12 +249,14 @@ export const drawingGame: GameModule = {
       tool = 'bucket'
       closePops()
       syncTools()
+      playSelect()
     })
     bucketButton.dataset.tool = 'bucket'
     const eraserButton = createCreativeToolButton('Ластик', 'eraser', () => {
       tool = 'eraser'
       closePops()
       syncTools()
+      playSelect()
     })
     eraserButton.dataset.tool = 'eraser'
     const sizeButton = createCreativeToolButton('Размер', size, () => togglePop('sizes'))
@@ -246,16 +265,64 @@ export const drawingGame: GameModule = {
 
     const colorsPop = createPop('colors', 'drawing__pop--colors drawing__pop--swatches', 'Цвета')
     for (const color of CREATIVE_COLORS) {
-      const swatch = swatchButton(color.label, color.hex, () => {
-        colorId = color.id
-        if (tool === 'eraser') tool = lastBrush
-        closePops()
-        syncTools()
-      })
+      const swatch = swatchButton(color.label, color.hex, () => pickColor(color.id))
       swatch.classList.add('drawing__color')
       swatch.dataset.colorId = color.id
       colorsPop.append(swatch)
     }
+    const customCell = swatchButton('Свой цвет', '', () => openCustomColor())
+    customCell.classList.add('drawing__color', 'drawing__swatch--custom')
+    customCell.style.removeProperty('background')
+    customCell.dataset.colorId = 'custom'
+    customCell.dataset.pop = 'custom-color'
+    colorsPop.append(customCell)
+
+    const customPop = createPop('custom-color', 'drawing__pop--custom', 'Свой цвет')
+    const rainbow = document.createElement('div')
+    rainbow.className = 'drawing__rainbow'
+    const rainbowCanvas = document.createElement('canvas')
+    rainbowCanvas.className = 'drawing__rainbow-canvas'
+    rainbowCanvas.width = 180
+    rainbowCanvas.height = 120
+    paintRainbow(rainbowCanvas)
+    const rainbowMarker = document.createElement('span')
+    rainbowMarker.className = 'drawing__rainbow-marker'
+    rainbowMarker.setAttribute('aria-hidden', 'true')
+    rainbow.append(rainbowCanvas, rainbowMarker)
+    const customSide = document.createElement('div')
+    customSide.className = 'drawing__custom-side'
+    const customPreview = createDrop('drawing__custom-preview')
+    const customDone = document.createElement('button')
+    customDone.type = 'button'
+    customDone.className = 'touch-btn drawing__custom-done'
+    customDone.dataset.role = 'custom-done'
+    customDone.textContent = 'Готово'
+    customDone.addEventListener('click', () => {
+      customColor = customDraft
+      saveCustomColor(customDraft)
+      pickColor(customDraft as StrokeColor)
+    })
+    customSide.append(customPreview, customDone)
+    customPop.append(rainbow, customSide)
+    let rainbowPointer: number | null = null
+    rainbow.addEventListener('pointerdown', (event) => {
+      rainbowPointer = event.pointerId
+      try {
+        rainbow.setPointerCapture(event.pointerId)
+      } catch {
+        // Синтетические события без активного указателя.
+      }
+      pickOnRainbow(event)
+    })
+    rainbow.addEventListener('pointermove', (event) => {
+      if (event.pointerId === rainbowPointer) pickOnRainbow(event)
+    })
+    const releaseRainbow = (event: PointerEvent): void => {
+      if (event.pointerId === rainbowPointer) rainbowPointer = null
+    }
+    rainbow.addEventListener('pointerup', releaseRainbow)
+    rainbow.addEventListener('pointercancel', releaseRainbow)
+
     const brushesPop = createPop('brushes', 'drawing__pop--tools', 'Кисти')
     for (const brush of DRAWING_BRUSHES) {
       const button = createCreativeToolButton(BRUSH_LABEL[brush], brush, () => {
@@ -263,6 +330,7 @@ export const drawingGame: GameModule = {
         lastBrush = brush
         closePops()
         syncTools()
+        playSelect()
       })
       button.dataset.brush = brush
       brushesPop.append(button)
@@ -273,11 +341,12 @@ export const drawingGame: GameModule = {
         size = choice
         closePops()
         syncTools()
+        playSelect()
       })
       button.dataset.size = choice
       sizesPop.append(button)
     }
-    dock.append(colorsPop, brushesPop, sizesPop)
+    dock.append(colorsPop, customPop, brushesPop, sizesPop)
 
     const stopLifecycle = bindLifecycleSave(() => {
       void persist()
@@ -320,7 +389,8 @@ export const drawingGame: GameModule = {
         pop.inert = !open
       })
       root?.querySelectorAll<HTMLElement>('[data-pop]').forEach((button) => {
-        button.classList.toggle('is-open', button.dataset.pop === next || (next === 'bg-colors' && button.dataset.pop === 'bg'))
+        const parent = (next === 'bg-colors' && button.dataset.pop === 'bg') || (next === 'custom-color' && button.dataset.pop === 'colors')
+        button.classList.toggle('is-open', button.dataset.pop === next || parent)
       })
       bgColor.classList.toggle('is-selected', next === 'bg-colors')
       if (next) placePop(next)
@@ -345,7 +415,7 @@ export const drawingGame: GameModule = {
         return
       }
       const pop = root?.querySelector<HTMLElement>(`[data-pop-id="${id}"]`)
-      const trigger = island.querySelector<HTMLElement>(`[data-pop="${id}"]`)
+      const trigger = island.querySelector<HTMLElement>(`[data-pop="${id === 'custom-color' ? 'colors' : id}"]`)
       if (!pop || !trigger) return
       const dockRect = dock.getBoundingClientRect()
       const bodyRect = body.getBoundingClientRect()
@@ -357,16 +427,52 @@ export const drawingGame: GameModule = {
       pop.style.top = `${Math.round(top - dockRect.top)}px`
     }
 
+    function pickColor(next: StrokeColor): void {
+      colorId = next
+      if (tool === 'eraser') tool = lastBrush
+      closePops()
+      syncTools()
+      playSelect()
+    }
+
+    function openCustomColor(): void {
+      customDraft = customColor ?? customDraft
+      showCustomDraft()
+      togglePop('custom-color')
+    }
+
+    function pickOnRainbow(event: PointerEvent): void {
+      const rect = rainbow.getBoundingClientRect()
+      if (rect.width <= 0 || rect.height <= 0) return
+      customDraft = pickerColorAt((event.clientX - rect.left) / rect.width, (event.clientY - rect.top) / rect.height)
+      showCustomDraft()
+    }
+
+    function showCustomDraft(): void {
+      const position = customColorPosition(customDraft)
+      rainbowMarker.style.left = `${(position.x * 100).toFixed(2)}%`
+      rainbowMarker.style.top = `${(position.y * 100).toFixed(2)}%`
+      rainbowMarker.style.background = customDraft
+      setDropColor(customPreview, customDraft)
+    }
+
     function syncTools(): void {
-      colorDot.style.background = creativeColorHex(colorId)
+      const hex = strokeColorHex(colorId)
+      colorDot.style.setProperty('--dot-color', hex)
+      colorDot.dataset.color = hex
+      if (customColor) customCell.style.setProperty('--custom-color', customColor)
+      customCell.classList.toggle('has-color', customColor !== null)
       colorsPop.querySelectorAll<HTMLElement>('[data-color-id]').forEach((swatch) => {
-        swatch.classList.toggle('is-selected', swatch.dataset.colorId === colorId)
+        const custom = swatch.dataset.colorId === 'custom' && isHexColor(colorId)
+        swatch.classList.toggle('is-selected', swatch.dataset.colorId === colorId || custom)
       })
       const isBrush = (DRAWING_BRUSHES as readonly string[]).includes(tool)
       brushButton.classList.toggle('is-selected', isBrush)
       bucketButton.classList.toggle('is-selected', tool === 'bucket')
       eraserButton.classList.toggle('is-selected', tool === 'eraser')
       setToolIcon(brushButton, lastBrush)
+      const brushCaption = brushButton.querySelector('.creative-tool__label')
+      if (brushCaption) brushCaption.textContent = BRUSH_LABEL[lastBrush]
       setToolIcon(sizeButton, size)
       brushesPop.querySelectorAll<HTMLElement>('[data-brush]').forEach((button) => {
         button.classList.toggle('is-selected', button.dataset.brush === lastBrush)
@@ -374,7 +480,7 @@ export const drawingGame: GameModule = {
       sizesPop.querySelectorAll<HTMLElement>('[data-size]').forEach((button) => {
         button.classList.toggle('is-selected', button.dataset.size === size)
       })
-      root?.style.setProperty('--drawing-color', creativeColorHex(colorId))
+      root?.style.setProperty('--drawing-color', strokeColorHex(colorId))
     }
 
     function syncView(): void {
@@ -390,6 +496,7 @@ export const drawingGame: GameModule = {
     }
 
     function showCanvas(): void {
+      closeViewer()
       view = 'canvas'
       screenHost.replaceChildren()
       closePops()
@@ -539,12 +646,30 @@ export const drawingGame: GameModule = {
       await setBackground(next)
     }
 
-    /** Лист чистится только когда фото уже готово: битый файл не съедает рисунок. */
+    /**
+     * Сначала редактор кадра поверх листа; лист чистится только после «Готово»,
+     * битый файл или «Отмена» рисунок не трогают.
+     */
     async function applyPhoto(file: File): Promise<void> {
-      let blob: Blob
+      let source: HTMLImageElement
+      try {
+        source = await blobToImage(await shrinkPhoto(file, 2400))
+      } catch {
+        return
+      }
+      if (disposed) return
+      closePops()
+      cropEditor = openPhotoCropEditor({
+        image: source,
+        width: source.naturalWidth,
+        height: source.naturalHeight,
+        frame: () => canvas.getBoundingClientRect(),
+      })
+      const blob = await cropEditor.done
+      cropEditor = null
+      if (!blob || disposed) return
       let image: HTMLImageElement
       try {
-        blob = await shrinkPhoto(file)
         image = await blobToImage(blob)
       } catch {
         return
@@ -564,8 +689,7 @@ export const drawingGame: GameModule = {
       if (!sheet || !works.some((item) => item.id === sheet.id)) return
       const blank = work
       works = works.filter((item) => item.id !== blank.id)
-      await repo.remove(blank.id).catch(() => undefined)
-      await repo.removeBlob(`thumb-${blank.id}`).catch(() => undefined)
+      await removeWorkData(blank.id)
       const restored: CreativeWork = { ...(works.find((item) => item.id === sheet.id) ?? sheet), status: 'draft' }
       upsertWork(restored)
       await openWork(restored)
@@ -658,7 +782,6 @@ export const drawingGame: GameModule = {
     function onPointerDown(event: PointerEvent): void {
       if (!booted || busy || view !== 'canvas' || event.target !== canvas) return
       if (event.pointerType === 'mouse' && event.button !== 0) return
-      if (isPalmTouch({ width: event.width, height: event.height })) return
       closePops()
       const point = localPoint(event)
       if (!point) return
@@ -673,7 +796,9 @@ export const drawingGame: GameModule = {
         scheduleSave()
         return
       }
-      drafts.set(event.pointerId, { tool, color: colorId, size, points: [point] })
+      const draft: DrawingStroke = { tool, color: colorId, size, points: [point] }
+      if (tool === 'watercolor') draft.seed = newStrokeSeed()
+      drafts.set(event.pointerId, draft)
       try {
         canvas.setPointerCapture(event.pointerId)
       } catch {
@@ -777,53 +902,136 @@ export const drawingGame: GameModule = {
     }
 
     function drawGallery(): void {
+      closeViewer()
       renderCreativeGallery(screenHost, {
         works: galleryWorks(works),
         thumbUrl: (item) => thumbUrls.get(item.id) ?? null,
         onOpen: (item) => {
-          void showGalleryActions(item)
+          void showViewer(item)
+        },
+        onDownload: (items) => {
+          void downloadWorks(items)
+        },
+        onDelete: (items) => {
+          void confirmDelete(items)
+        },
+        onSelectionChange: (items) => {
+          void prepareExport(items)
         },
       })
     }
 
-    async function showGalleryActions(item: CreativeWork): Promise<void> {
-      if (!root) return
-      const answer = await askChoice(root, 'Что сделать с картинкой?', [
-        { id: 'save', label: 'Скачать' },
-        { id: 'delete', label: 'Удалить' },
-        { id: 'cancel', label: 'Назад' },
-      ])
-      if (answer === 'save') await exportWork(item)
-      if (answer === 'delete') await confirmDelete(item)
+    async function showViewer(item: CreativeWork): Promise<void> {
+      const blob = await exportBlob(item)
+      if (disposed || view !== 'gallery') return
+      closeViewer()
+      const url = blob ? URL.createObjectURL(blob) : null
+      const close = renderWorkViewer(screenHost, {
+        imageUrl: url,
+        updatedAt: item.updatedAt,
+        onContinue: () => {
+          void runSheetChange(() => continueWork(item))
+        },
+        onDownload: () => {
+          void downloadWorks([item])
+        },
+        onDelete: () => {
+          void confirmDelete([item])
+        },
+        onBack: () => closeViewer(),
+      })
+      viewerClose = () => {
+        close()
+        if (url) URL.revokeObjectURL(url)
+      }
     }
 
-    async function confirmDelete(item: CreativeWork): Promise<void> {
-      if (!root) return
-      const answer = await askChoice(root, 'Удалить эту работу?', [
+    function closeViewer(): void {
+      const close = viewerClose
+      viewerClose = null
+      close?.()
+    }
+
+    /** Рисунок из галереи становится текущим листом; прежний непустой лист уходит в галерею. */
+    async function continueWork(item: CreativeWork): Promise<void> {
+      const target = works.find((entry) => entry.id === item.id)
+      if (!target) return
+      if (target.id !== work.id) {
+        const current = snapshot()
+        if (current.strokes.length > 0) {
+          const saved: CreativeWork = { ...current, status: 'saved' }
+          upsertWork(saved)
+          await repo.put(saved).catch(() => undefined)
+        } else {
+          works = works.filter((entry) => entry.id !== current.id)
+          await removeWorkData(current.id)
+        }
+      }
+      previousSheet = null
+      const next: CreativeWork = { ...target, status: 'draft', updatedAt: Date.now() }
+      upsertWork(next)
+      await repo.put(next).catch(() => undefined)
+      await openWork(next)
+    }
+
+    async function removeWorkData(id: string): Promise<void> {
+      await repo.remove(id).catch(() => undefined)
+      await repo.removeBlob(`thumb-${id}`).catch(() => undefined)
+      await repo.removeBlob(`full-${id}`).catch(() => undefined)
+      exportBlobs.delete(id)
+    }
+
+    async function confirmDelete(items: readonly CreativeWork[]): Promise<void> {
+      if (!root || items.length === 0) return
+      const message = items.length === 1 ? 'Удалить этот рисунок?' : `Удалить ${items.length} ${drawingsWord(items.length)}?`
+      const answer = await askChoice(root, message, [
         { id: 'no', label: 'Нет' },
         { id: 'yes', label: 'Да' },
       ])
       if (answer !== 'yes') return
-      try {
-        await repo.remove(item.id)
-        await repo.removeBlob(`thumb-${item.id}`)
-      } catch {
-        // Карточка всё равно исчезает из списка.
+      for (const item of items) {
+        await removeWorkData(item.id)
+        works = works.filter((entry) => entry.id !== item.id)
+        if (previousSheet?.id === item.id) previousSheet = null
+        const url = thumbUrls.get(item.id)
+        if (url) URL.revokeObjectURL(url)
+        thumbUrls.delete(item.id)
+        if (work.id === item.id) {
+          work = createDrawingDraft()
+          strokes = []
+          history = []
+          background = { ...WHITE_BACKGROUND }
+          works = [...works, work]
+        }
       }
-      works = works.filter((entry) => entry.id !== item.id)
-      if (previousSheet?.id === item.id) previousSheet = null
-      const url = thumbUrls.get(item.id)
-      if (url) URL.revokeObjectURL(url)
-      thumbUrls.delete(item.id)
-      if (work.id === item.id) {
-        work = createDrawingDraft()
-        strokes = []
-        history = []
-        background = { ...WHITE_BACKGROUND }
-        works = [...works, work]
-      }
-      await dropPhotoIfUnused(item.background)
+      for (const item of items) await dropPhotoIfUnused(item.background)
       drawGallery()
+    }
+
+    /** Полная картинка для скачивания; у старых работ — только миниатюра. */
+    async function exportBlob(item: CreativeWork): Promise<Blob | null> {
+      const cached = exportBlobs.get(item.id)
+      if (cached) return cached
+      const full = await repo.getBlob(`full-${item.id}`).catch(() => null)
+      const blob = full ?? (await repo.getBlob(`thumb-${item.id}`).catch(() => null))
+      if (blob) exportBlobs.set(item.id, blob)
+      return blob
+    }
+
+    async function prepareExport(items: readonly CreativeWork[]): Promise<void> {
+      for (const item of items) await exportBlob(item)
+    }
+
+    async function downloadWorks(items: readonly CreativeWork[]): Promise<void> {
+      const ready = items.every((item) => exportBlobs.has(item.id))
+      if (!ready) await prepareExport(items)
+      const picked = items.filter((item) => exportBlobs.has(item.id))
+      const names = uniqueFileNames(picked.map((item) => creativeDownloadName(creativeDownloadKind(item), item.updatedAt)))
+      const files = picked.map((item, index) => {
+        const blob = exportBlobs.get(item.id)!
+        return new File([blob], names[index]!, { type: blob.type || 'image/png' })
+      })
+      await shareOrDownload(files)
     }
 
     function snapshot(): CreativeWork {
@@ -835,6 +1043,7 @@ export const drawingGame: GameModule = {
           color: stroke.color,
           size: stroke.size,
           points: stroke.points.map((point) => ({ ...point })),
+          ...(stroke.seed === undefined ? {} : { seed: stroke.seed }),
         })),
         background: { ...background },
       }
@@ -863,25 +1072,28 @@ export const drawingGame: GameModule = {
       try {
         await repo.put(saved)
         if (!withThumb) return
-        const blob = await canvasBlob()
-        if (blob) await repo.putBlob(`thumb-${saved.id}`, blob)
+        const full = await canvasBlob(canvas, 'image/png')
+        if (!full) return
+        await repo.putBlob(`full-${saved.id}`, full)
+        exportBlobs.set(saved.id, full)
+        const thumb = await thumbBlob()
+        if (thumb) await repo.putBlob(`thumb-${saved.id}`, thumb)
       } catch {
         // Картинка остаётся на холсте, даже если хранилище недоступно.
       }
     }
 
-    function canvasBlob(): Promise<Blob | null> {
-      return new Promise((resolve) => {
-        if (!canvas.getContext('2d')) {
-          resolve(null)
-          return
-        }
-        try {
-          canvas.toBlob((value) => resolve(value), 'image/png')
-        } catch {
-          resolve(null)
-        }
-      })
+    /** Миниатюра для доски: ~480 px по ширине, WebP (Safari без WebP-кодека отдаст PNG). */
+    function thumbBlob(): Promise<Blob | null> {
+      const scale = Math.min(1, THUMB_WIDTH / Math.max(1, canvas.width))
+      const small = document.createElement('canvas')
+      small.width = Math.max(1, Math.round(canvas.width * scale))
+      small.height = Math.max(1, Math.round(canvas.height * scale))
+      const ctx = small.getContext('2d')
+      if (!ctx) return Promise.resolve(null)
+      ctx.imageSmoothingQuality = 'high'
+      ctx.drawImage(canvas, 0, 0, small.width, small.height)
+      return canvasBlob(small, 'image/webp', 0.82)
     }
 
     async function loadThumbs(): Promise<void> {
@@ -889,13 +1101,9 @@ export const drawingGame: GameModule = {
       thumbUrls.clear()
       for (const item of galleryWorks(works)) {
         const blob = await repo.getBlob(`thumb-${item.id}`).catch(() => null)
+        if (disposed) return
         if (blob) thumbUrls.set(item.id, URL.createObjectURL(blob))
       }
-    }
-
-    async function exportWork(item: CreativeWork): Promise<void> {
-      const blob = await repo.getBlob(`thumb-${item.id}`).catch(() => null)
-      if (blob) downloadBlob(blob, creativeDownloadName(creativeDownloadKind(item), item.updatedAt))
     }
 
     async function ensurePhoto(photoId: string): Promise<void> {
@@ -906,6 +1114,10 @@ export const drawingGame: GameModule = {
       } catch {
         // Без фото лист остаётся белым.
       }
+    }
+
+    function playSelect(): void {
+      void audio.playTone(660, { channel: 'sfx', durationSec: 0.08, gain: 0.045 })
     }
 
     function playStroke(): void {
@@ -923,7 +1135,11 @@ export const drawingGame: GameModule = {
       window.clearTimeout(saveTimer)
       window.removeEventListener('resize', fitCanvas)
       for (const url of thumbUrls.values()) URL.revokeObjectURL(url)
+      closeViewer()
+      cropEditor?.close()
+      exportBlobs.clear()
       audio.stopSfx()
+      audio.dispose?.()
       if (root?.parentElement) root.parentElement.removeChild(root)
       root = null
       cleanup = null
@@ -959,9 +1175,28 @@ function swatchButton(label: string, hex: string, onClick: () => void): HTMLButt
   button.type = 'button'
   button.className = 'drawing__swatch'
   button.setAttribute('aria-label', label)
-  button.style.background = hex
+  if (hex) button.style.background = hex
   button.addEventListener('click', onClick)
   return button
+}
+
+function createDrop(className: string): SVGSVGElement {
+  const svg = document.createElementNS(SVG_NS, 'svg')
+  svg.setAttribute('class', className)
+  svg.setAttribute('viewBox', '0 0 24 30')
+  svg.setAttribute('aria-hidden', 'true')
+  const path = document.createElementNS(SVG_NS, 'path')
+  path.setAttribute('d', DROP_PATH)
+  path.setAttribute('stroke', '#fffdf8')
+  path.setAttribute('stroke-width', '2.4')
+  path.setAttribute('stroke-linejoin', 'round')
+  svg.append(path)
+  return svg
+}
+
+function setDropColor(drop: SVGSVGElement, hex: string): void {
+  drop.querySelector('path')?.setAttribute('fill', hex)
+  drop.dataset.color = hex
 }
 
 function navButton(label: string, glyph: string, onClick: () => void): HTMLButtonElement {
@@ -990,36 +1225,20 @@ function toDrawingStroke(stroke: CreativeWork['strokes'][number]): DrawingStroke
     color: stroke.color,
     size: stroke.size,
     points: stroke.points.map((point) => ({ ...point })),
+    ...(stroke.seed === undefined ? {} : { seed: stroke.seed }),
   }
 }
 
-async function shrinkPhoto(file: File): Promise<Blob> {
-  if (typeof createImageBitmap !== 'function') return file
-  const bitmap = await createImageBitmap(file)
-  const scale = Math.min(1, 1280 / Math.max(bitmap.width, bitmap.height))
-  const canvas = document.createElement('canvas')
-  canvas.width = Math.max(1, Math.round(bitmap.width * scale))
-  canvas.height = Math.max(1, Math.round(bitmap.height * scale))
-  const ctx = canvas.getContext('2d')
-  if (ctx) ctx.drawImage(bitmap, 0, 0, canvas.width, canvas.height)
-  bitmap.close()
-  if (!ctx) return file
-  const blob = await new Promise<Blob | null>((resolve) => canvas.toBlob((value) => resolve(value), 'image/jpeg', 0.82))
-  return blob ?? file
-}
-
-function blobToImage(blob: Blob): Promise<HTMLImageElement> {
-  const url = URL.createObjectURL(blob)
-  const image = new Image()
-  return new Promise((resolve, reject) => {
-    image.onload = () => {
-      URL.revokeObjectURL(url)
-      resolve(image)
+function canvasBlob(source: HTMLCanvasElement, type: string, quality?: number): Promise<Blob | null> {
+  return new Promise((resolve) => {
+    if (!source.getContext('2d')) {
+      resolve(null)
+      return
     }
-    image.onerror = () => {
-      URL.revokeObjectURL(url)
-      reject(new Error('photo'))
+    try {
+      source.toBlob((value) => resolve(value), type, quality)
+    } catch {
+      resolve(null)
     }
-    image.src = url
   })
 }

@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
-import { createMemoryCreativeRepository } from '../../src/shared/creative-repository'
-import type { CreativeWork } from '../../src/shared/creative-works'
+import { createMemoryCreativeRepository } from '../../src/games/drawing/creative-repository'
+import type { CreativeWork } from '../../src/games/drawing/creative-works'
 
 const sample: CreativeWork = {
   id: 'drawing-1',

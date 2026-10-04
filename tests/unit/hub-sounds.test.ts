@@ -18,6 +18,11 @@ describe('hub-sounds game music', () => {
     expect(hubSoundUrl.gameMusic()).toContain('game-music.mp3')
   })
 
+  it('«взял» и «положил» — общие файлы для игр с перетаскиванием', () => {
+    expect(hubSoundUrl.pickup()).toMatch(/assets\/audio\/pickup\.mp3$/)
+    expect(hubSoundUrl.drop()).toMatch(/assets\/audio\/drop\.mp3$/)
+  })
+
   it('фон тише в изучаем звуки и лопни шарик', () => {
     expect(gameMusicVolume('sound-world')).toBeCloseTo(0.04275, 4)
     expect(gameMusicVolume('balloon-pop')).toBeCloseTo(0.171, 4)

@@ -14,6 +14,10 @@
   --font-ui: "Fredoka", "Trebuchet MS", "Segoe UI Rounded", system-ui, sans-serif;
   --font-display: "Fredoka", "Trebuchet MS", "Comic Sans MS", cursive, sans-serif;
   font-family: var(--font-ui);
+  /* Сцена: персонажи и объекты считаются от высоты экрана, чтобы на любом iPad
+     картинка выглядела одинаково. Ширина ограничивает только очень узкие окна. */
+  --stage-h: min(100dvh, 70vw);
+  --stage-unit: calc(var(--stage-h) / 100);
 }
 
 * {
@@ -21,15 +25,22 @@
 }
 
 html,
-body,
-#app {
+body {
   margin: 0;
-  min-height: 100%;
-  min-height: 100dvh;
+  height: 100%;
   background: radial-gradient(circle at top, #e8f4fc 0%, var(--bg) 55%);
   color: var(--text);
   /* На iOS rubber-band скролл может давать “подпрыгивание” fullscreen-приложения.
      Блокируем overscroll на уровне документа. */
+  overflow: hidden;
+  overscroll-behavior: none;
+}
+
+/* В standalone-режиме iPad 100dvh не доходит до полосы «домой» — снизу оставалась
+   пустая полоса. Fixed-корень с inset: 0 закрывает весь экран под вырезами. */
+#app {
+  position: fixed;
+  inset: 0;
   overflow: hidden;
   overscroll-behavior: none;
 }

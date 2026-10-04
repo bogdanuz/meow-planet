@@ -20,7 +20,7 @@ alwaysApply: true
    100% показываются только после полного manifest и Service Worker readiness.
 6. После добавления, замены, переименования или удаления **любого** runtime-файла:
    `npm run typecheck` → `npm run test` → `npm run build` → `npm run test:e2e:boot`;
-   UI/игры дополнительно `npm run test:e2e -- --project=chromium`.
+   UI/игры дополнительно затронутые e2e-спеки (объём — `targeted-testing.mdc`).
 7. Не считать offline готовым только по dev-серверу. Проверять production build/preview.
 
 SSOT: `docs/quality/PWA-OFFLINE-GUARDRAILS.md` и

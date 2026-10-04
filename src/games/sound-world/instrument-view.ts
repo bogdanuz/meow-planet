@@ -16,7 +16,7 @@ import {
   PIANO_SCENE_AR,
   type LayerBox,
 } from './instrument-layout'
-import { playInstrumentSfx } from './instrument-sfx'
+import { playInstrumentSfx, type InstrumentSfxOptions } from './instrument-sfx'
 
 export const INSTRUMENT_IDS = new Set([
   'drum',
@@ -60,13 +60,40 @@ function pulse(el: HTMLElement, cls: string, ms: number): void {
   window.setTimeout(() => el.classList.remove(cls), ms)
 }
 
+/** Ксилофон: питч колокольчика по ступеням до-мажора (до, ре, ми, соль, ля). */
+const XYLOPHONE_RATES = [1, 1.122, 1.26, 1.498, 1.682] as const
+
+/** Пауза между шорохами маракаса, пока палец ведёт его по экрану. */
+const MARACA_RUSTLE_MS = 120
+const MARACA_RUSTLE_MIN_PX = 12
+/** Click после pointerdown того же касания — не повторяем звук. */
+const PRESS_CLICK_GUARD_MS = 700
+
+/**
+ * Звук на касание (pointerdown) — без задержки click. Click без касания
+ * (клавиатура, Switch Control) тоже звучит.
+ */
+function bindPress(el: HTMLElement, handler: (x: number, y: number) => void): void {
+  let lastPointerAt = -Infinity
+  el.addEventListener('pointerdown', (event) => {
+    if (event.button !== 0) return
+    lastPointerAt = Date.now()
+    handler(event.clientX, event.clientY)
+  })
+  el.addEventListener('click', (event) => {
+    if (Date.now() - lastPointerAt < PRESS_CLICK_GUARD_MS) return
+    const rect = el.getBoundingClientRect()
+    handler(event.clientX || rect.left + rect.width / 2, event.clientY || rect.top + rect.height / 2)
+  })
+}
+
+/** Каждый палец — своя клавиша/струна и своё глиссандо (аккорды на пианино). */
 function bindGlissando(
   overlay: HTMLElement,
   selector: string,
   onKey: (btn: HTMLButtonElement, event: PointerEvent) => void,
 ): void {
-  let last: HTMLButtonElement | null = null
-  let down = false
+  const lastByPointer = new Map<number, HTMLButtonElement | null>()
 
   const pick = (event: PointerEvent): HTMLButtonElement | null => {
     const raw = document.elementFromPoint(event.clientX, event.clientY)
@@ -75,40 +102,75 @@ function bindGlissando(
 
   overlay.addEventListener('pointerdown', (event) => {
     if (event.button !== 0) return
-    down = true
-    last = null
-    overlay.setPointerCapture(event.pointerId)
-    const btn = pick(event)
-    if (btn) {
-      last = btn
-      onKey(btn, event)
+    try {
+      overlay.setPointerCapture(event.pointerId)
+    } catch {
+      // jsdom / уже захвачен
     }
+    const btn = pick(event)
+    lastByPointer.set(event.pointerId, btn)
+    if (btn) onKey(btn, event)
   })
 
   overlay.addEventListener('pointermove', (event) => {
-    if (!down) return
+    if (!lastByPointer.has(event.pointerId)) return
     const btn = pick(event)
-    if (btn && btn !== last) {
-      last = btn
+    if (btn && btn !== lastByPointer.get(event.pointerId)) {
+      lastByPointer.set(event.pointerId, btn)
       onKey(btn, event)
     }
   })
 
   const end = (event: PointerEvent) => {
-    if (!down) return
-    down = false
-    last = null
+    if (!lastByPointer.delete(event.pointerId)) return
     try {
       overlay.releasePointerCapture(event.pointerId)
     } catch {
       // ignore
     }
-    overlay.querySelectorAll(`${selector}.is-pressed, ${selector}.is-plucked`).forEach((node) => {
-      node.classList.remove('is-pressed', 'is-plucked')
-    })
   }
   overlay.addEventListener('pointerup', end)
   overlay.addEventListener('pointercancel', end)
+}
+
+/** Маракас: каждый палец трясёт свой маракас; ведение пальцем — шорох. */
+function bindMaraca(
+  btn: HTMLButtonElement,
+  onShake: (x: number, y: number) => void,
+  onRustle: (x: number, y: number) => void,
+): void {
+  const active = new Map<number, { x: number; y: number; at: number }>()
+  btn.addEventListener('pointerdown', (event) => {
+    if (event.button !== 0) return
+    try {
+      btn.setPointerCapture(event.pointerId)
+    } catch {
+      // ignore
+    }
+    active.set(event.pointerId, { x: event.clientX, y: event.clientY, at: Date.now() })
+    onShake(event.clientX, event.clientY)
+  })
+  btn.addEventListener('pointermove', (event) => {
+    const prev = active.get(event.pointerId)
+    if (!prev) return
+    const now = Date.now()
+    const dist = Math.hypot(event.clientX - prev.x, event.clientY - prev.y)
+    if (now - prev.at < MARACA_RUSTLE_MS || dist < MARACA_RUSTLE_MIN_PX) return
+    active.set(event.pointerId, { x: event.clientX, y: event.clientY, at: now })
+    onRustle(event.clientX, event.clientY)
+  })
+  const end = (event: PointerEvent) => {
+    active.delete(event.pointerId)
+  }
+  btn.addEventListener('pointerup', end)
+  btn.addEventListener('pointercancel', end)
+  btn.addEventListener('click', (event) => {
+    // Клавиатура: click без касания.
+    if (event.detail === 0 && active.size === 0) {
+      const rect = btn.getBoundingClientRect()
+      onShake(rect.left + rect.width / 2, rect.top + rect.height / 2)
+    }
+  })
 }
 
 function pct(n: number): string {
@@ -138,12 +200,16 @@ function layerButton(layer: LayerBox, extraClass: string): HTMLButtonElement {
   return btn
 }
 
-export function mountInstrumentView(stage: HTMLElement, opts: MountOpts): void {
+/** Убрать инструмент и остановить его анимации (колокольчик не качается и не звенит). */
+export function unmountInstrumentView(stage: HTMLElement): void {
   const prev = stage.querySelector('.sound-world__instrument')
-  if (prev) {
-    prev.dispatchEvent(new Event('sound-world-unmount'))
-    prev.remove()
-  }
+  if (!prev) return
+  prev.dispatchEvent(new Event('sound-world-unmount'))
+  prev.remove()
+}
+
+export function mountInstrumentView(stage: HTMLElement, opts: MountOpts): void {
+  unmountInstrumentView(stage)
 
   const wrap = document.createElement('div')
   wrap.className = 'sound-world__instrument'
@@ -154,22 +220,22 @@ export function mountInstrumentView(stage: HTMLElement, opts: MountOpts): void {
   wrap.append(panel)
   stage.append(wrap)
 
-  const play = (sfxId: string, overlap = false) => {
-    void playInstrumentSfx(opts.audio, sfxId, opts.sfxUrls, { overlap })
+  const play = (sfxId: string, overlap = false, extra: InstrumentSfxOptions = {}) => {
+    void playInstrumentSfx(opts.audio, sfxId, opts.sfxUrls, { ...extra, overlap })
   }
 
   const id = opts.instrumentId
 
   if (id === 'xylophone') {
     panel.classList.add('sound-world__instrument-panel--xylophone')
-    for (let i = 0; i < 5; i += 1) {
+    for (let i = 0; i < XYLOPHONE_RATES.length; i += 1) {
       const bar = document.createElement('button')
       bar.type = 'button'
       bar.className = 'sound-world__xylo-bar touch-btn'
       bar.style.setProperty('--bar-i', String(i))
       bar.setAttribute('aria-label', `Планка ${i + 1}`)
-      bar.addEventListener('click', () => {
-        play('xylophone')
+      bindPress(bar, () => {
+        play('bell', true, { playbackRate: XYLOPHONE_RATES[i] })
         pulse(bar, 'is-struck', 280)
       })
       panel.append(bar)
@@ -194,10 +260,10 @@ export function mountInstrumentView(stage: HTMLElement, opts: MountOpts): void {
         layer,
         `sound-world__drum-pad sound-world__drum-pad--${layer.piece}`,
       )
-      btn.addEventListener('click', (event) => {
+      bindPress(btn, (x, y) => {
         play(layer.sfxId, true)
         pulse(btn, 'is-hit', 520)
-        spawnSoundWave(scene, event.clientX, event.clientY)
+        spawnSoundWave(scene, x, y)
       })
       scene.append(btn)
     }
@@ -214,11 +280,19 @@ export function mountInstrumentView(stage: HTMLElement, opts: MountOpts): void {
         layer,
         `sound-world__maraca sound-world__maraca--${layer.piece}`,
       )
-      btn.addEventListener('click', (event) => {
-        play(layer.sfxId, true)
-        pulse(btn, 'is-shake', 700)
-        spawnSoundWave(scene, event.clientX, event.clientY)
-      })
+      bindMaraca(
+        btn,
+        (x, y) => {
+          play(layer.sfxId, true)
+          pulse(btn, 'is-shake', 700)
+          spawnSoundWave(scene, x, y)
+        },
+        (x, y) => {
+          play(layer.sfxId, true, { clipId: 'maracas-shake' })
+          pulse(btn, 'is-shake', 700)
+          spawnSoundWave(scene, x, y)
+        },
+      )
       scene.append(btn)
     }
     panel.append(scene)
@@ -277,11 +351,11 @@ export function mountInstrumentView(stage: HTMLElement, opts: MountOpts): void {
       raf = requestAnimationFrame(tick)
     }
 
-    hit.addEventListener('click', (event) => {
+    bindPress(hit, (x, y) => {
       play('bell', true)
       lastRing = performance.now()
       pendulum = pendulumImpulse(pendulum)
-      spawnSoundWave(frame, event.clientX, event.clientY)
+      spawnSoundWave(frame, x, y)
       if (!raf) {
         lastT = 0
         raf = requestAnimationFrame(tick)

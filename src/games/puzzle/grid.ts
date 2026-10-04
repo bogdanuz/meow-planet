@@ -1,4 +1,4 @@
-import type { PuzzlePieceCount } from './puzzle-settings'
+import type { PuzzlePieceCount } from '../../shared/storage'
 
 export type PuzzleGrid = {
   cols: number

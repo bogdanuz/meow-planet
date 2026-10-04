@@ -58,6 +58,21 @@ export const MVP_ZONE_GAMES: Readonly<Record<ZoneId, readonly GameId[]>> = {
   'star-workshop': ['sort-colors', 'puzzle', 'shape-build', 'counting', 'drawing'],
 }
 
+/**
+ * Плитки меню: 8 игр по 2 в ряд, порядок — решение владельца 03.10.2026.
+ * «В гостях у Мяу» — отдельная кнопка у персонажа справа (не плитка).
+ */
+export const MENU_TILE_IDS = [
+  'balloon-pop',
+  'sort-colors',
+  'drawing',
+  'puzzle',
+  'counting',
+  'sound-world',
+  'hide-seek',
+  'shape-build',
+] as const satisfies readonly GameId[]
+
 export const GAMES: readonly GameMeta[] = [
   {
     id: 'balloon-pop',
@@ -91,7 +106,7 @@ export const GAMES: readonly GameMeta[] = [
   },
   {
     id: 'shape-build',
-    title: 'Собери фигурку',
+    title: 'Собери что угодно!',
     zoneId: 'star-workshop',
     modules: ['2.5'],
   },

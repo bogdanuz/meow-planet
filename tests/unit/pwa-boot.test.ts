@@ -252,7 +252,7 @@ describe('runBootSequence', () => {
     defineServiceWorker({ ready: Promise.resolve() })
     const fetchMock = vi.fn(async () => manifestResponse([], false))
     vi.stubGlobal('fetch', fetchMock)
-    const { runBootSequence } = await import('../../src/app/pwa-boot')
+    const { runBootSequence, BOOT_STALL_MESSAGE } = await import('../../src/app/pwa-boot')
 
     await expect(
       runBootSequence(() => {}, {
@@ -263,10 +263,65 @@ describe('runBootSequence', () => {
       }),
     ).resolves.toEqual({
       ok: false,
-      errorMessage:
-        'Пылесос сломался. Нажмите «Повторить», чтобы продолжить подготовку игр',
+      errorMessage: BOOT_STALL_MESSAGE,
+      reason: 'failed',
     })
     expect(fetchMock).toHaveBeenCalledTimes(2)
+  })
+
+  it('ошибка только при застое: 30 с без новых файлов, без общего таймаута', async () => {
+    defineServiceWorker({ ready: Promise.resolve() })
+    vi.stubGlobal(
+      'fetch',
+      vi.fn(async () =>
+        manifestResponse(['assets/shell/menu-bg.webp', 'assets/shell/welcome-bg.webp']),
+      ),
+    )
+    let clock = 0
+    const steps: number[] = []
+    const { runBootSequence, BOOT_STALL_MESSAGE } = await import('../../src/app/pwa-boot')
+    const result = await runBootSequence(({ percent }) => steps.push(percent), {
+      isDevelopment: false,
+      waitForServiceWorkerReady: () => new Promise<boolean>(() => {}),
+      readWorkboxCachedUrls: async () => new Set([appUrl('shell/menu-bg.webp')]),
+      waitForNextCachePoll: async () => {
+        clock += 5000
+      },
+      now: () => clock,
+    })
+
+    expect(result).toEqual({ ok: false, errorMessage: BOOT_STALL_MESSAGE, reason: 'stalled' })
+    expect(clock).toBeGreaterThanOrEqual(30_000)
+    expect(clock).toBeLessThan(40_000)
+    expect(steps).not.toContain(100)
+  })
+
+  it('не сдаётся, пока файлы прибывают, даже если загрузка идёт дольше минуты', async () => {
+    defineServiceWorker({ ready: Promise.resolve() })
+    const urls = Array.from({ length: 40 }, (_, index) => `assets/f-${index}.webp`)
+    vi.stubGlobal('fetch', vi.fn(async () => manifestResponse(urls)))
+    let clock = 0
+    let finishReady: ((ready: boolean) => void) | undefined
+    const { runBootSequence } = await import('../../src/app/pwa-boot')
+    const result = await runBootSequence(() => {}, {
+      isDevelopment: false,
+      waitForServiceWorkerReady: () =>
+        new Promise<boolean>((resolve) => {
+          finishReady = resolve
+        }),
+      readWorkboxCachedUrls: async () => {
+        const done = Math.min(urls.length, Math.floor(clock / 5000))
+        if (done === urls.length) finishReady?.(true)
+        return new Set(urls.slice(0, done).map((url) => new URL(`/${url}`, window.location.origin).toString()))
+      },
+      waitForNextCachePoll: async () => {
+        clock += 5000
+      },
+      now: () => clock,
+    })
+
+    expect(result).toEqual({ ok: true })
+    expect(clock).toBeGreaterThan(120_000)
   })
 
   it('не публикует 100% при отказе SW readiness', async () => {

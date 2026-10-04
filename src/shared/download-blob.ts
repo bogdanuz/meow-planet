@@ -7,5 +7,6 @@ export function downloadBlob(blob: Blob, filename: string): void {
   document.body.append(link)
   link.click()
   link.remove()
-  URL.revokeObjectURL(url)
+  // Safari читает файл после click асинхронно: ранний revoke обрывает скачивание.
+  window.setTimeout(() => URL.revokeObjectURL(url), 30_000)
 }

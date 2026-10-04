@@ -1,280 +1,1111 @@
-/* В гостях у Мяu — S14: сцены, часы, mascot-ph, без Tamagotchi */
+/* В гости — рамка S16: сцена 4:3 на весь экран (низ всегда виден), слева назад + звук,
+   справа «Сезон» (во дворе) и шестерёнка; погода — круглые кнопки справа во дворе */
 
-.meow-home {
-  flex: 1;
+.app-shell--meow-home {
+  grid-template-rows: 1fr;
+  gap: 0;
+  height: 100%;
+  max-height: 100%;
+  overflow: hidden;
+  padding: 0;
+}
+
+.app-shell--meow-home .chrome[hidden],
+.app-shell--meow-home .chrome__mascot[hidden] {
+  display: none !important;
+  pointer-events: none !important;
+}
+
+.app-shell--meow-home .chrome__main {
+  display: flex;
+  flex-direction: column;
   min-height: 0;
   height: 100%;
-  display: grid;
-  grid-template-rows: auto auto minmax(0, 1fr);
-  gap: clamp(0.2rem, 0.5vh, 0.4rem);
-  padding: 0;
   overflow: hidden;
 }
 
-.meow-home__time {
-  display: flex;
-  flex-wrap: wrap;
-  gap: clamp(0.35rem, 0.9vw, 0.55rem);
-  justify-content: center;
-  align-items: center;
-}
-
-.meow-home__period {
-  min-width: clamp(3.1rem, 7.5vh, 4rem);
-  min-height: clamp(3.1rem, 7.5vh, 4rem);
-  font-size: clamp(1.5rem, 4vh, 2rem);
-  line-height: 1;
-  padding: 0.2rem;
-  border-radius: 1rem;
-}
-
-.meow-home__period.is-active,
-.meow-home__time .is-active {
-  outline: 3px solid var(--accent);
-  outline-offset: 2px;
-  background: #fff;
-}
-
-.meow-home__now {
-  font-weight: 700;
-  min-height: clamp(2.75rem, 6.5vh, 3.25rem);
-}
-
-.meow-home__status {
-  margin: 0;
-  text-align: center;
-  font-weight: 700;
-  font-size: clamp(0.95rem, 2.2vh, 1.12rem);
-  line-height: 1.2;
-  color: #2a4555;
-  padding: 0 0.35rem;
-}
-
-.meow-home__stage {
-  position: relative;
+.app-shell--meow-home .screen--game {
+  flex: 1;
+  height: 100%;
   min-height: 0;
-  border-radius: 1.25rem;
+  padding-bottom: 0;
   overflow: hidden;
-  display: grid;
-  grid-template-rows: auto 1fr auto;
-  align-items: center;
-  justify-items: center;
-  padding: clamp(0.45rem, 1.2vh, 0.85rem);
-  gap: clamp(0.35rem, 0.9vh, 0.55rem);
-  border: 2px solid color-mix(in srgb, var(--accent) 28%, #1a2a33);
 }
 
-.meow-home__stage[data-scene='bathroom'] {
-  background: linear-gradient(180deg, #dceefb 0 35%, #c5e3f5 35% 100%);
+.meow-home {
+  --bar-h: calc(max(0.85rem, env(safe-area-inset-top)) + 5.4rem + 0.6rem);
+  --edge-l: max(0.85rem, env(safe-area-inset-left));
+  --edge-r: max(1rem, env(safe-area-inset-right));
+
+  position: relative;
+  flex: 1;
+  height: 100%;
+  min-height: 100%;
+  overflow: hidden;
+  container-type: size;
+  user-select: none;
+  -webkit-user-select: none;
+  -webkit-touch-callout: none;
+  background: #f6e7cf;
 }
 
-.meow-home__stage[data-scene='room'] {
-  background: linear-gradient(180deg, #fff4d6 0 40%, #efe6d8 40% 100%);
+.meow-home [hidden] {
+  display: none !important;
 }
 
-.meow-home__stage[data-scene='night'] {
-  background: linear-gradient(180deg, #1a2a44 0 55%, #0f1828 55% 100%);
-  color: #f5f0e6;
+/* ── Сцена: cover по ширине или высоте, прижата к низу ── */
+.mh__scene {
+  position: absolute;
+  left: 50%;
+  bottom: 0;
+  width: max(100cqw, 133.333cqh);
+  aspect-ratio: 4 / 3;
+  transform: translateX(-50%);
+  transition: opacity 0.22s ease;
 }
 
-.meow-home__clock-slot {
-  justify-self: end;
-  align-self: start;
-  width: clamp(4.5rem, 12vw, 6.5rem);
-  min-height: clamp(2.5rem, 6vh, 3.25rem);
-  display: grid;
-  place-items: center;
-  border-radius: 0.65rem;
-  background: rgb(255 255 255 / 88%);
-  box-shadow: inset 0 0 0 2px rgb(26 42 51 / 12%);
-  z-index: 2;
+.mh__scene.is-fading {
+  opacity: 0;
 }
 
-.meow-home__stage[data-scene='night'] .meow-home__clock-slot {
-  background: rgb(30 45 70 / 85%);
-  color: #f5f0e6;
-}
-
-.meow-home__clock {
-  font-variant-numeric: tabular-nums;
-  font-weight: 800;
-  font-size: clamp(1.05rem, 2.8vh, 1.45rem);
-  letter-spacing: 0.04em;
-}
-
-.meow-home__sky {
+.mh__bg {
   position: absolute;
   inset: 0;
+  width: 100%;
+  height: 100%;
   pointer-events: none;
-  background-image:
-    radial-gradient(circle, rgb(255 255 255 / 90%) 1px, transparent 1px),
-    radial-gradient(circle, rgb(255 255 255 / 70%) 1px, transparent 1px);
-  background-size:
-    120px 120px,
-    80px 80px;
-  background-position:
-    10px 20px,
-    40px 60px;
-  animation: meow-stars-drift 12s linear infinite;
-  opacity: 0.85;
 }
 
-@keyframes meow-stars-drift {
-  from {
-    background-position:
-      10px 20px,
-      40px 60px;
-  }
-
-  to {
-    background-position:
-      10px 80px,
-      40px 120px;
-  }
+.mh__layer {
+  position: absolute;
+  inset: 0;
 }
 
-.meow-home__mascot-wrap {
-  position: relative;
-  z-index: 1;
-  grid-row: 2;
+/* Спрайт: x — центр, y — низ (t — верх, c — центр) */
+.mh__sprite,
+.mh__prop,
+.mh__hero,
+.mh__doll,
+.mh__bathing {
+  position: absolute;
+  transform: translate(-50%, -100%);
 }
 
-.meow-home__mascot-wrap .meow-home__mascot {
-  width: clamp(5.5rem, 18vh, 8.5rem);
-  height: clamp(5.5rem, 18vh, 8.5rem);
+.mh__sprite[data-anchor='t'],
+.mh__prop[data-anchor='t'] {
+  transform: translate(-50%, 0);
+  transform-origin: 50% 0;
+}
+
+.mh__sprite[data-anchor='c'],
+.mh__prop[data-anchor='c'] {
+  transform: translate(-50%, -50%);
+}
+
+.mh__sprite {
+  pointer-events: none;
+}
+
+.mh__sprite img,
+.mh__sprite {
+  display: block;
+  height: auto;
+}
+
+.mh__prop {
+  display: block;
+  padding: 0;
+  margin: 0;
+  border: none;
+  background: none;
   cursor: pointer;
+  touch-action: none;
+  -webkit-tap-highlight-color: transparent;
+  transform-origin: 50% 100%;
 }
 
-.meow-home__mascot-wrap.is-covered::after {
+/* Запас для пальца вокруг маленьких предметов */
+.mh__prop::after {
   content: '';
   position: absolute;
-  inset: 20% -5% -10%;
-  border-radius: 1.2rem;
-  background: linear-gradient(180deg, rgb(200 220 255 / 75%), rgb(160 180 220 / 85));
-  z-index: 2;
+  inset: -0.7rem;
+}
+
+.mh__prop img {
+  display: block;
+  width: 100%;
+  height: auto;
   pointer-events: none;
-  animation: meow-blanket 600ms ease-out;
+  filter: drop-shadow(0 3px 3px rgb(80 50 20 / 18%));
 }
 
-.meow-home__mascot-wrap[data-care-flash='wash'] .meow-home__mascot {
-  filter: drop-shadow(0 0 12px rgb(180 230 255 / 90%));
+.mh__prop:active img {
+  transform: scale(0.94);
 }
 
-.meow-home__mascot-wrap[data-care-flash='feed'] .meow-home__mascot {
-  animation: meow-nibble 500ms ease-in-out;
+.mh__prop.is-lifted img {
+  opacity: 0.35;
 }
 
-.meow-home__actions,
-.meow-home__props {
-  display: flex;
-  flex-wrap: wrap;
-  gap: clamp(0.4rem, 1vh, 0.55rem);
-  justify-content: center;
-  z-index: 2;
-  grid-row: 3;
+/* Невидимые зоны на фоне: двери, окно, ванна, холодильник */
+.mh__hot {
+  position: absolute;
+  z-index: 4;
+  padding: 0;
+  border: none;
+  border-radius: 1.2rem;
+  background: transparent;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
 }
 
-.meow-home__care,
-.meow-home__prop {
-  min-width: clamp(3.5rem, 9vh, 4.5rem);
-  min-height: clamp(3.5rem, 9vh, 4.5rem);
-  font-size: clamp(1.65rem, 4.2vh, 2.2rem);
-  line-height: 1;
-  border-radius: 1rem;
-  background: rgb(255 255 255 / 92%);
-  box-shadow: 0 2px 10px rgb(26 42 51 / 12%);
+.mh__hot:active {
+  background: rgb(255 240 190 / 22%);
 }
 
-.meow-home__stage[data-scene='night'] .meow-home__prop {
-  background: rgb(40 55 85 / 88%);
+.mh__food {
+  z-index: 30;
 }
 
-.meow-home__prop--big-star {
-  min-width: clamp(4rem, 10vh, 5rem);
-  min-height: clamp(4rem, 10vh, 5rem);
+/* Подсветка того, что нужно: дверь, предмет, корзинка */
+.mh__hot.is-glow {
+  animation: mh-door-glow 1.6s ease-in-out infinite;
 }
 
-.meow-home__prop.is-twinkle {
-  animation: meow-star-twinkle 600ms ease-out;
+.mh__prop.is-glow img {
+  animation: mh-prop-glow 1.4s ease-in-out infinite;
 }
 
-@keyframes meow-nibble {
+@keyframes mh-door-glow {
   0%,
   100% {
+    background: rgb(255 226 120 / 10%);
+    box-shadow: 0 0 0 0 rgb(255 214 90 / 0%);
+  }
+
+  50% {
+    background: rgb(255 226 120 / 30%);
+    box-shadow: 0 0 2.2rem 0.5rem rgb(255 214 90 / 70%);
+  }
+}
+
+@keyframes mh-prop-glow {
+  0%,
+  100% {
+    filter: drop-shadow(0 0 0 rgb(255 210 80 / 0%));
     transform: scale(1);
   }
 
   50% {
-    transform: scale(1.06);
+    filter: drop-shadow(0 0 0.6rem rgb(255 200 60 / 95%));
+    transform: scale(1.08);
   }
 }
 
-@keyframes meow-blanket {
+/* ── Персонаж ── */
+.mh__hero,
+.mh__doll {
+  pointer-events: none;
+}
+
+.mh__hero-img,
+.mh__frames,
+.mh__doll-body,
+.mh__doll-layer {
+  display: block;
+  width: 100%;
+  height: auto;
+  pointer-events: none;
+}
+
+.mh__doll-body {
+  position: relative;
+  aspect-ratio: 1;
+  transform-origin: 50% 92%;
+  animation: mh-breathe 3.2s ease-in-out infinite;
+}
+
+.mh__doll-layer {
+  position: absolute;
+  inset: 0;
+}
+
+.mh__doll-layer:first-child {
+  position: relative;
+}
+
+.mh__doll[data-mood='cold'] .mh__doll-body {
+  animation: mh-shiver 0.24s linear infinite;
+}
+
+.mh__doll[data-mood='hot'] .mh__doll-body {
+  animation: mh-sway 2.4s ease-in-out infinite;
+}
+
+.mh__doll[data-mood='wet'] .mh__doll-body {
+  animation: mh-shiver 0.5s linear infinite;
+}
+
+.mh__doll.is-hop .mh__doll-body {
+  animation: mh-hop 0.7s ease-out;
+}
+
+.mh__doll-umbrella {
+  position: absolute;
+  left: 54%;
+  top: 0;
+  width: 56%;
+  height: auto;
+  pointer-events: none;
+  transform: rotate(12deg);
+  transform-origin: 20% 100%;
+}
+
+.mh__hit {
+  position: absolute;
+  left: 26%;
+  top: 22%;
+  width: 48%;
+  height: 72%;
+  padding: 0;
+  border: none;
+  border-radius: 40%;
+  background: transparent;
+  cursor: pointer;
+  pointer-events: auto;
+  touch-action: none;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.mh__hit--doll {
+  left: 30%;
+  top: 14%;
+  width: 40%;
+  height: 78%;
+}
+
+.mh__bathing {
+  z-index: 66;
+  pointer-events: none;
+}
+
+.mh__bed .mh__frames {
+  width: 100%;
+}
+
+/* ── Облачко речи и мысли ── */
+.mh__say {
+  position: absolute;
+  z-index: 120;
+  max-width: min(34rem, 42%);
+  padding: 0.85rem 1.3rem;
+  border-radius: 1.6rem;
+  background: rgb(255 253 248 / 97%);
+  box-shadow:
+    0 0 0 3px rgb(126 184 218 / 75%),
+    0 10px 22px rgb(26 74 107 / 18%);
+  transform: translate(-74%, calc(-100% - 1rem));
+  pointer-events: none;
+  animation: mh-pop-in 0.28s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+/* Хвостик над головой; облачко речи — левее, облачко мыслей — правее головы */
+.mh__say::after {
+  content: '';
+  position: absolute;
+  left: 74%;
+  bottom: -0.7rem;
+  width: 1.4rem;
+  height: 1.4rem;
+  background: rgb(255 253 248 / 97%);
+  box-shadow: 3px 3px 0 0 rgb(126 184 218 / 75%);
+  transform: translateX(-50%) rotate(45deg);
+}
+
+.mh__say-text {
+  margin: 0;
+  font-size: clamp(1.15rem, 2.4cqw, 1.6rem);
+  font-weight: 700;
+  line-height: 1.25;
+  color: #23343d;
+  text-align: center;
+}
+
+.mh__think {
+  position: absolute;
+  z-index: 115;
+  width: clamp(6.5rem, 12cqw, 10rem);
+  padding: 0;
+  border: none;
+  background: none;
+  cursor: pointer;
+  transform: translate(0, -100%);
+  animation: mh-think 2.6s ease-in-out infinite;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.mh__think-bg {
+  display: block;
+  width: 100%;
+  height: auto;
+  filter: drop-shadow(0 6px 10px rgb(26 74 107 / 22%));
+}
+
+.mh__think-icon {
+  position: absolute;
+  left: 50%;
+  top: 40%;
+  width: 52%;
+  height: auto;
+  transform: translate(-50%, -50%);
+}
+
+.mh__think.is-remove .mh__think-icon {
+  opacity: 0.55;
+}
+
+.mh__think.is-remove::after {
+  content: '';
+  position: absolute;
+  left: 22%;
+  top: 40%;
+  width: 56%;
+  height: 0.4rem;
+  border-radius: 1rem;
+  background: #e0605a;
+  transform: rotate(-30deg);
+}
+
+@keyframes mh-think {
+  0%,
+  100% {
+    transform: translate(0, -100%);
+  }
+
+  50% {
+    transform: translate(0, calc(-100% - 0.5rem));
+  }
+}
+
+/* ── Эффекты ── */
+.mh__fx {
+  position: absolute;
+  z-index: 118;
+  width: 4%;
+  pointer-events: none;
+  animation: mh-fx-rise 1.3s ease-out forwards;
+}
+
+@keyframes mh-fx-rise {
+  0% {
+    opacity: 0;
+    transform: translate(-50%, 0) scale(0.4);
+  }
+
+  25% {
+    opacity: 1;
+    transform: translate(-50%, -30%) scale(1.1);
+  }
+
+  100% {
+    opacity: 0;
+    transform: translate(-50%, -260%) scale(0.9);
+  }
+}
+
+.mh__ghost {
+  position: fixed;
+  z-index: 200;
+  height: auto;
+  pointer-events: none;
+  transform: translate(-50%, -60%) scale(1.08);
+  filter: drop-shadow(0 10px 12px rgb(60 40 20 / 28%));
+}
+
+/* Сон: комната темнеет, ночник — тёплое пятно */
+.mh__dim {
+  position: absolute;
+  inset: 0;
+  z-index: 100;
+  background: rgb(18 24 60 / 0%);
+  pointer-events: none;
+  transition: background 0.8s ease;
+}
+
+.meow-home[data-sleep='1'] .mh__dim {
+  background: rgb(18 24 60 / 45%);
+}
+
+.meow-home[data-sleep='1'][data-nightlight='1'] .mh__dim {
+  background: radial-gradient(circle at 81% 36%, rgb(255 210 120 / 18%) 0 9%, rgb(18 24 60 / 32%) 26%);
+}
+
+.meow-home[data-room='bedroom'][data-nightlight='1']:not([data-sleep='1']) .mh__dim {
+  background: radial-gradient(circle at 81% 36%, rgb(255 214 120 / 30%) 0 6%, rgb(255 214 120 / 0%) 18%);
+}
+
+/* ── Двор: погода и природа ── */
+.mh__precip {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  pointer-events: none;
+}
+
+.mh__precip img {
+  position: absolute;
+  top: -6%;
+  width: var(--size, 1%);
+  height: auto;
+  opacity: 0.85;
+  animation: mh-rain 0.9s linear infinite;
+}
+
+.mh__precip[data-kind='snow'] img {
+  opacity: 1;
+  filter: drop-shadow(0 0 3px rgb(60 100 160 / 55%));
+  animation: mh-snow 5.5s linear infinite;
+}
+
+.mh__layer[data-wind='1'] .mh__precip img {
+  animation-name: mh-rain-wind;
+}
+
+.mh__layer[data-wind='1'] .mh__precip[data-kind='snow'] img {
+  animation-name: mh-snow-wind;
+  animation-duration: 3.2s;
+}
+
+@keyframes mh-rain {
+  to {
+    transform: translateY(1150%);
+  }
+}
+
+@keyframes mh-rain-wind {
+  to {
+    transform: translate(-260%, 1150%) rotate(18deg);
+  }
+}
+
+@keyframes mh-snow {
+  0% {
+    transform: translate(0, 0);
+  }
+
+  50% {
+    transform: translate(60%, 3200%);
+  }
+
+  100% {
+    transform: translate(0, 6600%);
+  }
+}
+
+@keyframes mh-snow-wind {
+  to {
+    transform: translate(-1400%, 6600%) rotate(180deg);
+  }
+}
+
+.mh__gust {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  pointer-events: none;
+}
+
+.mh__gust img {
+  position: absolute;
+  left: 105%;
+  width: 3.4%;
+  height: auto;
+  animation: mh-leaf-fly 3.4s linear infinite;
+}
+
+@keyframes mh-leaf-fly {
+  to {
+    transform: translate(-3400%, 260%) rotate(-540deg);
+  }
+}
+
+.mh__wind-mark {
+  opacity: 0.75;
+  animation: mh-wind-mark 2.2s ease-in-out infinite;
+}
+
+@keyframes mh-wind-mark {
+  0%,
+  100% {
+    transform: translate(-40%, -100%);
+    opacity: 0.2;
+  }
+
+  50% {
+    transform: translate(-70%, -100%);
+    opacity: 0.85;
+  }
+}
+
+.mh__layer[data-wind='1'] .mh__laundry {
+  animation: mh-laundry 1.1s ease-in-out infinite;
+}
+
+@keyframes mh-laundry {
+  0%,
+  100% {
+    transform: translate(-50%, 0) skewX(0);
+  }
+
+  50% {
+    transform: translate(-50%, 0) skewX(-10deg);
+  }
+}
+
+.mh__layer[data-wind='1'] .mh__pinwheel img,
+.mh__pinwheel.is-spin img {
+  animation: mh-spin 0.8s linear infinite;
+}
+
+@keyframes mh-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.mh__kite {
+  animation: mh-kite 2.6s ease-in-out infinite;
+}
+
+@keyframes mh-kite {
+  0%,
+  100% {
+    transform: translate(-50%, -100%) rotate(-8deg);
+  }
+
+  50% {
+    transform: translate(-30%, -112%) rotate(10deg);
+  }
+}
+
+.mh__cloud {
+  animation: mh-cloud 9s ease-in-out infinite;
+}
+
+.mh__cloud--slow {
+  animation-duration: 13s;
+}
+
+.meow-home[data-night='1'] .mh__cloud {
+  filter: brightness(0.62) saturate(0.8);
+}
+
+@keyframes mh-cloud {
+  0%,
+  100% {
+    transform: translate(-50%, -100%);
+  }
+
+  50% {
+    transform: translate(-42%, -100%);
+  }
+}
+
+.mh__sun img {
+  animation: mh-sun 6s ease-in-out infinite;
+}
+
+@keyframes mh-sun {
+  0%,
+  100% {
+    transform: rotate(-6deg) scale(1);
+  }
+
+  50% {
+    transform: rotate(6deg) scale(1.05);
+  }
+}
+
+.mh__star img,
+.mh__firefly img {
+  animation: mh-twinkle 2.2s ease-in-out infinite;
+  animation-delay: inherit;
+}
+
+@keyframes mh-twinkle {
+  0%,
+  100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+
+  50% {
+    opacity: 0.55;
+    transform: scale(0.85);
+  }
+}
+
+.mh__firefly {
+  animation: mh-float 4s ease-in-out infinite;
+}
+
+.mh__butterfly {
+  animation: mh-float 3s ease-in-out infinite;
+}
+
+@keyframes mh-float {
+  0%,
+  100% {
+    transform: translate(-50%, -100%);
+  }
+
+  33% {
+    transform: translate(-20%, -130%);
+  }
+
+  66% {
+    transform: translate(-80%, -115%);
+  }
+}
+
+.mh__layer.is-lamp .mh__lamp img {
+  filter: drop-shadow(0 0 1.4rem rgb(255 220 120 / 90%));
+}
+
+.mh__icicle {
+  transform-origin: 50% 0;
+}
+
+.mh__layer[data-sky='sun'] .mh__icicle {
+  animation: mh-drip 2.4s ease-in-out infinite;
+}
+
+@keyframes mh-drip {
+  0%,
+  80%,
+  100% {
+    transform: translate(-50%, 0) scaleY(1);
+  }
+
+  90% {
+    transform: translate(-50%, 0) scaleY(1.08);
+  }
+}
+
+.mh__swing {
+  transform-origin: 50% 0;
+}
+
+.mh__swing.is-swing {
+  animation: mh-swing 2.4s ease-in-out;
+}
+
+@keyframes mh-swing {
+  0%,
+  100% {
+    transform: translate(-50%, 0) rotate(0);
+  }
+
+  20% {
+    transform: translate(-50%, 0) rotate(22deg);
+  }
+
+  45% {
+    transform: translate(-50%, 0) rotate(-18deg);
+  }
+
+  70% {
+    transform: translate(-50%, 0) rotate(12deg);
+  }
+
+  88% {
+    transform: translate(-50%, 0) rotate(-5deg);
+  }
+}
+
+.mh__snowman.is-empty img {
+  opacity: 0.35;
+  transform: scale(0.6);
+  transform-origin: 50% 100%;
+}
+
+/* Общие короткие анимации по тапу */
+.is-bounce {
+  animation: mh-bounce 0.7s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+.is-hop,
+.is-splash,
+.is-twinkle,
+.is-drink {
+  animation: mh-bounce 0.7s ease-out;
+}
+
+.is-fly {
+  animation: mh-fly 1.8s ease-in-out;
+}
+
+.is-ride,
+.is-sail,
+.is-crawl {
+  animation: mh-ride 1.6s ease-in-out;
+}
+
+.is-burst img {
+  animation: mh-burst 1.2s ease-out;
+}
+
+.is-pour img {
+  animation: mh-pour 1.2s ease-in-out;
+}
+
+@keyframes mh-bounce {
+  0%,
+  100% {
+    translate: 0 0;
+    scale: 1;
+  }
+
+  35% {
+    translate: 0 -12%;
+    scale: 1.08;
+  }
+
+  65% {
+    translate: 0 2%;
+    scale: 0.97;
+  }
+}
+
+@keyframes mh-fly {
+  0%,
+  100% {
+    translate: 0 0;
+    opacity: 1;
+  }
+
+  45% {
+    translate: 260% -220%;
+    opacity: 0;
+  }
+
+  55% {
+    translate: -260% -220%;
+    opacity: 0;
+  }
+}
+
+@keyframes mh-ride {
+  0%,
+  100% {
+    translate: 0 0;
+  }
+
+  50% {
+    translate: -60% 0;
+  }
+}
+
+@keyframes mh-burst {
+  0% {
+    transform: scale(1);
+  }
+
+  30% {
+    transform: scale(1.25, 0.7);
+  }
+
+  60% {
+    transform: scale(0.9, 1.15);
+  }
+
+  100% {
+    transform: scale(1);
+  }
+}
+
+@keyframes mh-pour {
+  0%,
+  100% {
+    transform: rotate(0);
+  }
+
+  40%,
+  70% {
+    transform: rotate(-28deg);
+  }
+}
+
+@keyframes mh-breathe {
+  0%,
+  100% {
+    transform: scale(1, 1);
+  }
+
+  50% {
+    transform: scale(1.012, 0.988);
+  }
+}
+
+@keyframes mh-shiver {
+  0%,
+  100% {
+    transform: translateX(0);
+  }
+
+  25% {
+    transform: translateX(-0.6%);
+  }
+
+  75% {
+    transform: translateX(0.6%);
+  }
+}
+
+@keyframes mh-sway {
+  0%,
+  100% {
+    transform: rotate(-1.5deg);
+  }
+
+  50% {
+    transform: rotate(1.5deg);
+  }
+}
+
+@keyframes mh-hop {
+  0%,
+  100% {
+    transform: translateY(0) scale(1);
+  }
+
+  40% {
+    transform: translateY(-7%) scale(0.98, 1.03);
+  }
+
+  70% {
+    transform: translateY(0) scale(1.03, 0.97);
+  }
+}
+
+@keyframes mh-pop-in {
   from {
     opacity: 0;
-    transform: translateY(8px);
+    scale: 0.85;
   }
 
   to {
     opacity: 1;
-    transform: translateY(0);
+    scale: 1;
   }
 }
 
-@keyframes meow-star-twinkle {
+/* ── Шапка ── */
+.mh__bar {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 8;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  padding: max(0.85rem, env(safe-area-inset-top)) var(--edge-r) 0 var(--edge-l);
+  pointer-events: none;
+}
+
+.mh__bar-nav,
+.mh__bar-tools {
+  display: flex;
+  align-items: center;
+  gap: 0.55rem;
+  pointer-events: auto;
+}
+
+.mh__season-btn .game-tool__icon {
+  object-fit: cover;
+  border-radius: 0.8rem;
+}
+
+.mh__season-pop {
+  position: absolute;
+  top: var(--bar-h);
+  right: var(--edge-r);
+  z-index: 9;
+  display: flex;
+  gap: 0.6rem;
+  padding: 0.6rem;
+  border-radius: 1.4rem;
+  background: rgb(255 252 246 / 97%);
+  box-shadow:
+    0 0 0 3px rgb(126 184 218 / 70%),
+    0 12px 24px rgb(26 74 107 / 20%);
+  animation: mh-pop-in 0.28s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+.mh__season-choice {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.3rem;
+  padding: 0.35rem;
+  border: none;
+  border-radius: 1rem;
+  background: transparent;
+  cursor: pointer;
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: #23343d;
+}
+
+.mh__season-choice img {
+  width: clamp(6.5rem, 12cqw, 9rem);
+  aspect-ratio: 4 / 3;
+  border-radius: 0.8rem;
+  object-fit: cover;
+}
+
+.mh__season-choice.is-active {
+  box-shadow: 0 0 0 4px #4f9bc8;
+  background: rgb(79 155 200 / 10%);
+}
+
+/* ── Корзинка с одеждой ── */
+.mh__basket-pop {
+  position: absolute;
+  top: var(--bar-h);
+  left: 50%;
+  z-index: 9;
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 0.5rem;
+  max-width: min(60rem, 80cqw);
+  padding: 0.6rem;
+  border-radius: 1.4rem;
+  background: rgb(255 252 246 / 96%);
+  box-shadow:
+    0 0 0 3px rgb(126 184 218 / 70%),
+    0 12px 24px rgb(26 74 107 / 20%);
+  transform: translateX(-50%);
+  animation: mh-pop-in 0.28s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+.mh__wear {
+  position: relative;
+  display: grid;
+  place-items: center;
+  width: 5.2rem;
+  height: 5.2rem;
+  padding: 0.35rem;
+  border: none;
+  border-radius: 1.1rem;
+  background: rgb(255 255 255 / 70%);
+  cursor: pointer;
+  touch-action: none;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.mh__wear img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  pointer-events: none;
+}
+
+.mh__wear[data-worn='1'] {
+  background: rgb(126 200 140 / 28%);
+  box-shadow: 0 0 0 3px #6cbf7f;
+}
+
+.mh__wear[data-worn='1']::after {
+  content: '✓';
+  position: absolute;
+  right: 0.2rem;
+  top: 0.05rem;
+  font-size: 1.1rem;
+  font-weight: 800;
+  color: #3f9a55;
+}
+
+.mh__wear.is-glow {
+  animation: mh-wear-glow 1.3s ease-in-out infinite;
+}
+
+.mh__wear.is-lifted img {
+  opacity: 0.35;
+}
+
+@keyframes mh-wear-glow {
   0%,
   100% {
-    transform: scale(1);
-    filter: brightness(1);
+    box-shadow: 0 0 0 3px rgb(255 200 60 / 60%);
   }
 
   50% {
-    transform: scale(1.15);
-    filter: brightness(1.35);
+    box-shadow:
+      0 0 0 5px rgb(255 200 60 / 100%),
+      0 0 1.4rem 0.3rem rgb(255 200 60 / 70%);
   }
+}
+
+/* ── Погода: круглые кнопки справа ── */
+.mh__weather {
+  position: absolute;
+  right: var(--edge-r);
+  top: 50%;
+  z-index: 8;
+  display: flex;
+  flex-direction: column;
+  gap: 0.8rem;
+  transform: translateY(-40%);
+}
+
+.mh__weather-btn {
+  display: grid;
+  place-items: center;
+  width: 5.4rem;
+  height: 5.4rem;
+  padding: 0.7rem;
+  border: none;
+  border-radius: 50%;
+  background: rgb(255 252 246 / 92%);
+  box-shadow:
+    0 0 0 3px #7eb8da,
+    0 6px 14px rgb(26 74 107 / 16%);
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.mh__weather-btn img {
+  width: 76%;
+  height: 76%;
+  object-fit: contain;
+  pointer-events: none;
+}
+
+.mh__weather-btn[data-on='1'] {
+  background: rgb(221 240 255 / 98%);
+  box-shadow:
+    0 0 0 5px #4f9bc8,
+    0 8px 16px rgb(26 74 107 / 22%);
+}
+
+.mh__weather-btn:active {
+  transform: scale(0.93);
+}
+
+/* Тихий режим и reduced motion — без постоянных анимаций */
+.meow-home--still *,
+.meow-home--still *::after {
+  animation-duration: 0.01ms !important;
+  animation-iteration-count: 1 !important;
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .meow-home__sky {
-    animation: none;
+  .meow-home * {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
   }
-
-  .meow-home__prop.is-twinkle,
-  .meow-home__mascot-wrap[data-care-flash='feed'] .meow-home__mascot {
-    animation: none;
-  }
-}
-
-/* Дверь дома Мяу: на улицу (времена года) и обратно. */
-.meow-home[data-place='outdoor'] {
-  grid-template-rows: minmax(0, 1fr);
-}
-
-.meow-home > [hidden] {
-  display: none !important;
-}
-
-.meow-home__door.touch-btn {
-  position: absolute;
-  right: clamp(0.5rem, 1.5vw, 1rem);
-  bottom: clamp(0.5rem, 1.5vh, 1rem);
-  z-index: 3;
-  width: 4.5rem;
-  height: 4.5rem;
-  min-width: 4.5rem;
-  min-height: 4.5rem;
-  padding: 0;
-  border-radius: 1.2rem;
-  font-size: 2.4rem;
-  line-height: 1;
-  background: rgb(255 252 246 / 92%);
-  box-shadow:
-    0 0 0 3px rgb(160 110 60 / 55%),
-    0 6px 14px rgb(26 42 51 / 16%);
-}
-
-.meow-home__door--home.touch-btn {
-  position: static;
-  align-self: center;
-  margin-bottom: 0.4rem;
 }
